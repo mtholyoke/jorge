@@ -1,0 +1,12 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * This script runs Jorge, MHC’s command-line tool for automating development tasks.
+ */
+
+require_once __DIR__ . '/../src/Jorge.php';
+
+use MountHolyoke\Jorge;
+
+$jorge = new MountHolyoke\Jorge();

@@ -1,0 +1,15 @@
+{
+  "name": "mtholyoke/jorge",
+  "description": "MHC’s command-line tool for automating development tasks",
+  "keywords": [ "cli", "mtholyoke" ],
+  "homepage": "https://www.mtholyoke.edu",
+  "license": "MIT",
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "require": {
+    "php": ">=7.1.0"
+  },
+  "bin": [
+    "bin/jorge"
+  ]
+}
