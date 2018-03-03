@@ -11,4 +11,4 @@ use MountHolyoke\Jorge\Jorge;
 
 $jorge = new Jorge();
 $jorge->configure();
-$jorge->run();
+$jorge->run($jorge->input, $jorge->output);
