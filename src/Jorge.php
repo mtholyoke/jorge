@@ -52,7 +52,7 @@ class Jorge extends Application {
     while (!empty($wd) && $cwd = implode('/', $wd)) {
       $path = $cwd . '/.jorge';
       if (is_dir($path) && is_readable($path)) {
-        $this->logger->debug("Project root: '$cwd'");
+        $this->logger->info("Project root: '$cwd'");
         return $cwd;
       }
       array_pop($wd);
