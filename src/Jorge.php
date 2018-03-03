@@ -3,6 +3,7 @@
 namespace MountHolyoke\Jorge;
 
 use MountHolyoke\Jorge\Command\HonkCommand;
+use MountHolyoke\Jorge\Command\ResetCommand;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Logger\ConsoleLogger;
@@ -36,6 +37,7 @@ class Jorge extends Application {
     }
 
     $this->add(new HonkCommand());
+    $this->add(new ResetCommand());
   }
 
   /**
@@ -50,11 +52,12 @@ class Jorge extends Application {
     while (!empty($wd) && $cwd = implode('/', $wd)) {
       $path = $cwd . '/.jorge';
       if (is_dir($path) && is_readable($path)) {
+        $this->logger->debug("Project root: '$cwd'");
         return $cwd;
       }
       array_pop($wd);
     }
-    $this->logger->warning("Can’t find project root.");
+    $this->logger->warning("Can’t find project root");
     return FALSE;
   }
 
