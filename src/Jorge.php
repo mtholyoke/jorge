@@ -36,6 +36,17 @@ class Jorge extends Application {
       $this->config = $this->loadConfigFile('config.yml');
     }
 
+    // If the config file specifies additional config, load that too.
+    if (array_key_exists('include_config', $this->config)) {
+      if (!is_array($this->config['include_config'])) {
+        $this->config['include_config'] = [ $this->config['include_config'] ];
+      }
+      foreach ($this->config['include_config'] as $configFile) {
+        $this->logger->debug('Including config file ' . $configFile);
+        $this->config = array_merge_recursive($this->config, $this->loadConfigFile($configFile));
+      }
+    }
+
     $this->add(new HonkCommand());
     $this->add(new ResetCommand());
   }
@@ -52,7 +63,7 @@ class Jorge extends Application {
     while (!empty($wd) && $cwd = implode('/', $wd)) {
       $path = $cwd . '/.jorge';
       if (is_dir($path) && is_readable($path)) {
-        $this->logger->info("Project root: '$cwd'");
+        $this->logger->notice("Project root: '$cwd'");
         return $cwd;
       }
       array_pop($wd);
@@ -62,8 +73,10 @@ class Jorge extends Application {
   }
 
   private function loadConfigFile($file) {
+    // TODO: sanitize filename!
     $pathfile = $this->rootPath . '/.jorge/' . $file;
     if (is_file($pathfile) && is_readable($pathfile)) {
+      // TODO: sanitize values, too!
       return Yaml::parseFile($pathfile);
     }
     return [];
