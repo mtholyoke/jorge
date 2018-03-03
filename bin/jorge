@@ -5,10 +5,10 @@
  * This script runs Jorge, MHC’s command-line tool for automating development tasks.
  */
 
-require_once __DIR__ . '/../src/Jorge.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
-use MountHolyoke\Jorge;
+use MountHolyoke\Jorge\Jorge;
 
-$jorge = new MountHolyoke\Jorge();
+$jorge = new Jorge();
 $jorge->configure();
 $jorge->run();

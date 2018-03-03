@@ -1,8 +1,6 @@
 <?php
 
-namespace MountHolyoke;
-
-require_once __DIR__ . '/../vendor/autoload.php';
+namespace MountHolyoke\Jorge;
 
 use Symfony\Component\Console\Application;
 use Symfony\Component\Yaml\Yaml;
