@@ -3,7 +3,10 @@
 namespace MountHolyoke\Jorge\Command;
 
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class ResetCommand extends Command {
@@ -22,7 +25,13 @@ class ResetCommand extends Command {
     $this
       ->setName('reset')
       ->setDescription('Aligns code, database, and files to a specified state')
-      ->setHelp('This command updates the local git environment to the latest master, copies the latest database and files from {site}.dev environment on Pantheon, and imports the default config for a hands-on development instance.')
+      ->setDefinition(new InputDefinition([
+        new InputOption('branch',   'b', InputOption::VALUE_OPTIONAL, 'Git branch to use'),
+        new InputOption('database', 'd', InputOption::VALUE_OPTIONAL, 'Environment to load database from'),
+        new InputOption('files',    'f', InputOption::VALUE_OPTIONAL, 'Environment to copy files from'),
+        new InputOption('password', 'p', InputOption::VALUE_OPTIONAL, 'Admin password'),
+      ]))
+      ->setHelp('This command updates the local git environment to the latest master, copies the latest database and files from the specified environment on Pantheon, and imports the default config suitable for a hands-on development instance.')
     ;
 
     // Defaults can be overridden by config.yml
@@ -48,6 +57,9 @@ class ResetCommand extends Command {
       foreach (array_keys($this->params) as $var) {
         if (array_key_exists($var, $config) && !empty($config[$var])) {
           $this->params[$var] = $config[$var];
+        }
+        if ($input->hasOption($var) && $input->getOption($var)) {
+          $this->params[$var] = $input->getOption($var);
         }
       }
     }
