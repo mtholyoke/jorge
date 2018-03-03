@@ -10,3 +10,5 @@ require_once __DIR__ . '/../src/Jorge.php';
 use MountHolyoke\Jorge;
 
 $jorge = new MountHolyoke\Jorge();
+$jorge->configure();
+$jorge->run();

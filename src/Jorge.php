@@ -2,15 +2,18 @@
 
 namespace MountHolyoke;
 
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use Symfony\Component\Console\Application;
+
 /**
  * Class Terminus
  * @package MountHolyoke
  */
-class Jorge {
-
+class Jorge extends Application {
   /**
-   * Object constructor
+   * Reads configuration
    */
-  public function __construct() {
+  public function configure() {
   }
 }
