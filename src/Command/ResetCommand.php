@@ -3,6 +3,7 @@
 namespace MountHolyoke\Jorge\Command;
 
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputInterface;
@@ -163,6 +164,8 @@ class ResetCommand extends Command {
    * TODO: This will need to be abstracted somewhere else when we have more than
    * one Jorge command that needs it. Probably we can be a lot smarter about
    * verbosity, too.
+   *
+   * @throws RuntimeException
    */
   private function processStep($step, $verbosity) {
     $this->logger->notice('$ ' . $step);
@@ -183,10 +186,12 @@ class ResetCommand extends Command {
       exec($step, $result, $status);
     }
     if ($status) {
-      $this->logger->error('Command exited with nonzero status: ' . $status);
-      if (!empty($result)) {
-        $this->logger->error($result);
+      $error = 'Command exited with nonzero status.';
+      if (is_array($result)) {
+        $result = implode("\n", $result);
       }
+      $message = sprintf("> %s\n%s\n%s", $step, $error, $result);
+      throw new RuntimeException($message, $status);
     }
   }
 }

@@ -84,8 +84,6 @@ If a username is provided but no password is supplied, Jorge will prompt you for
 
 - Install with Composer
 
-- Handle the various failure conditions of the `reset` steps
-
 - Tests (see [Testing Commands](https://symfony.com/doc/current/console.html#testing-commands) for example)
 
 - Better awareness of initial/current state: use APIs for Git, Lando, &c., instead of commands
