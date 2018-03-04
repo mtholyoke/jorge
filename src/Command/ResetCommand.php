@@ -11,16 +11,16 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 
 class ResetCommand extends Command {
-  // Useful properties of the Jorge application object
+  # Useful properties of the Jorge application object
   protected $rootPath;
   protected $logger;
   protected $verbosity;
-  // Config parameters necessary for this command
+  # Config parameters necessary for this command
   protected $appType;
   protected $params;
 
   /**
-   * Establishes the `reset` command and updates config if necessary.
+   * Establishes the `reset` command with its command-line options and default parameters.
    */
   protected function configure() {
     $this
@@ -36,7 +36,7 @@ class ResetCommand extends Command {
       ->setHelp('This command updates the local git environment to the latest master, copies the latest database and files from the specified environment on Pantheon, and imports the default config suitable for a hands-on development instance.')
     ;
 
-    // Defaults can be overridden by config.yml
+    # Defaults can be overridden by config.yml
     $this->params = [
       'branch'   => 'master',
       'database' => 'dev',
@@ -48,7 +48,7 @@ class ResetCommand extends Command {
   }
 
   /**
-   * Prepares the `reset` command.
+   * Processes config and command-line options to set parameters.
    */
   protected function initialize(InputInterface $input, OutputInterface $output) {
     $jorge = $this->getApplication();
@@ -73,6 +73,10 @@ class ResetCommand extends Command {
     }
   }
 
+  /**
+   * Prompts the user if an admin account is specified in the parameters without
+   * a password. If the user does not provide one, the password won’t be reset.
+   */
   protected function interact(InputInterface $input, OutputInterface $output) {
     if (!empty($this->params['username']) && empty($this->params['password'])) {
       $helper = $this->getHelper('question');
@@ -93,6 +97,7 @@ class ResetCommand extends Command {
         $this->executeDrupal8($verbosity);
         break;
       case 'jorge':
+        // TODO: test whether this is a separate dev instance of Jorge.
         $this->logger->warning('Can’t reset self');
         break;
       case '':
@@ -103,10 +108,14 @@ class ResetCommand extends Command {
     }
   }
 
+  /**
+   * Creates the list of steps necessary to reset a Drupal 8 project, then calls
+   * a separate function to enact them.
+   */
   protected function executeDrupal8($verbosity = OutputInterface::VERBOSITY_NORMAL) {
     $cwd = getcwd();
 
-    // Do some stuff in the project root
+    # Do some stuff in the project root
     if ($cwd != $this->rootPath) {
       $this->logger->notice('$ cd ' . $this->rootPath);
       chdir($this->rootPath);
@@ -125,7 +134,7 @@ class ResetCommand extends Command {
       $this->processStep($step, $verbosity);
     }
 
-    // Do some stuff in the web subdirectory
+    # Do some stuff in the web subdirectory
     $this->logger->notice('$ cd web');
     chdir('web');
     $steps = [
@@ -141,16 +150,20 @@ class ResetCommand extends Command {
       $this->processStep($step, $verbosity);
     }
 
-    // Not technically necessary, but friendly.
+    # Not technically necessary, but friendly.
     if ($cwd != $this->rootPath) {
       $this->logger->notice('$ cd ' . $cwd);
       chdir($cwd);
     }
   }
 
-  // TODO: This will need to be abstracted somewhere else when we have more than
-  // one Jorge command that needs it. Probably we can be a lot smarter about
-  // verbosity, too.
+  /**
+   * Performs a step, with appropriate verbosity.
+   *
+   * TODO: This will need to be abstracted somewhere else when we have more than
+   * one Jorge command that needs it. Probably we can be a lot smarter about
+   * verbosity, too.
+   */
   private function processStep($step, $verbosity) {
     $this->logger->notice('$ ' . $step);
     $result = '';

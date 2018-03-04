@@ -1,0 +1,14 @@
+# Jorge Configuration
+
+# This is a sample configuration for a Drupal 8 project.
+# Note the inclusion of local.yml, which can be in .gitignore so it’s safer
+# for a developer to keep their local admin username and password.
+---
+appType: drupal8
+reset:
+  branch: master
+  database: live
+  files: live
+  rsync: TRUE
+include_config:
+  - local.yml

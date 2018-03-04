@@ -17,6 +17,10 @@ class Jorge extends Application {
   public $output;
   public $rootPath;
 
+  /**
+   * Instantiates the object, including IO objects which would not normally
+   * exist until a command was run, so we can provide verbose output.
+   */
   public function __construct() {
     parent::__construct();
     $this->input = new ArgvInput();
@@ -24,13 +28,13 @@ class Jorge extends Application {
     $this->configureIO($this->input, $this->output);
     $this->logger = new ConsoleLogger($this->output);
   }
+
   /**
    * Reads configuration and adds commands.
    */
   public function configure() {
-    // TODO: figure out what else we need to set for a nice interface.
     $this->setName('Jorge');
-    $this->setVersion('0.0.1');
+    $this->setVersion('0.1.0-dev');
 
     if ($this->rootPath = $this->findRootPath()) {
       $this->config = $this->loadConfigFile('config.yml');
@@ -54,9 +58,8 @@ class Jorge extends Application {
   /**
    * Traverses up the directory tree from current location until it finds the
    * project root, defined as a directory that contains a .jorge directory.
-   * Returns FALSE if none found.
    *
-   * @return string|FALSE
+   * @return string|FALSE full path to document root, or FALSE if none found
    */
   private function findRootPath() {
     $wd = explode('/', getcwd());
@@ -68,16 +71,23 @@ class Jorge extends Application {
       }
       array_pop($wd);
     }
-    $this->logger->warning("Can’t find project root");
+    $this->logger->warning('Can’t find project root');
     return FALSE;
   }
 
+  /**
+   * Loads the contents of a config file.
+   *
+   * @return array
+   */
   private function loadConfigFile($file) {
-    // TODO: sanitize filename!
+    $file = preg_replace('/^[\.\/]*/', '', $file);
     $pathfile = $this->rootPath . '/.jorge/' . $file;
     if (is_file($pathfile) && is_readable($pathfile)) {
-      // TODO: sanitize values, too!
+      // TODO: sanitize values?
       return Yaml::parseFile($pathfile);
+    } else {
+      $this->logger->warning('Can’t read config file ' . $pathfile);
     }
     return [];
   }

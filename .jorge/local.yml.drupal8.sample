@@ -1,0 +1,10 @@
+# Jorge Configuration
+
+# This is a sample local configuration for a Drupal 8 project, which is
+# included by the main config.yml file. If it contains sensitive information
+# (such as username and password), it should be excluded from the Git repo
+# using .gitignore.
+---
+reset:
+  username: admin
+  password: abc123
