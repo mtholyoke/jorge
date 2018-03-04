@@ -8,6 +8,7 @@ use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\Question;
 
 class ResetCommand extends Command {
   // Useful properties of the Jorge application object
@@ -29,7 +30,8 @@ class ResetCommand extends Command {
         new InputOption('branch',   'b', InputOption::VALUE_OPTIONAL, 'Git branch to use'),
         new InputOption('database', 'd', InputOption::VALUE_OPTIONAL, 'Environment to load database from'),
         new InputOption('files',    'f', InputOption::VALUE_OPTIONAL, 'Environment to copy files from'),
-        new InputOption('password', 'p', InputOption::VALUE_OPTIONAL, 'Admin password'),
+        new InputOption('username', 'u', InputOption::VALUE_OPTIONAL, 'Admin account to have local password set'),
+        new InputOption('password', 'p', InputOption::VALUE_OPTIONAL, 'Local password for admin account'),
       ]))
       ->setHelp('This command updates the local git environment to the latest master, copies the latest database and files from the specified environment on Pantheon, and imports the default config suitable for a hands-on development instance.')
     ;
@@ -40,7 +42,8 @@ class ResetCommand extends Command {
       'database' => 'dev',
       'files'    => 'dev',
       'rsync'    => TRUE,
-      'password' => 'password',
+      'username' => '',
+      'password' => '',
     ];
   }
 
@@ -67,6 +70,16 @@ class ResetCommand extends Command {
     $this->logger->debug('Parameters for reset:');
     foreach (array_keys($this->params) as $var) {
       $this->logger->debug(sprintf("  %-8s => '%s'", $var, $this->params[$var]));
+    }
+  }
+
+  protected function interact(InputInterface $input, OutputInterface $output) {
+    if (!empty($this->params['username']) && empty($this->params['password'])) {
+      $helper = $this->getHelper('question');
+      $question = new Question('Enter a password for ' . $this->params['username'] . ': ');
+      // $question->setHidden(TRUE);
+      // $question->setHiddenFallback(TRUE);
+      $this->params['password'] = $helper->ask($input, $output, $question);
     }
   }
 
@@ -119,9 +132,11 @@ class ResetCommand extends Command {
       'lando drush cr',
       'lando drush csim config_dev --yes',
       'lando drush updb --yes',
-      'lando drush upwd Administrator --password="' . $this->params['password'] . '"',
-      'lando drush cr',
     ];
+    if (!empty($this->params['username']) && !empty($this->params['password'])) {
+      $steps[] = 'lando drush upwd ' . $this->params['username'] . ' --password="' . $this->params['password'] . '"';
+    }
+    $steps[] = 'lando drush cr';
     foreach ($steps as $step) {
       $this->processStep($step, $verbosity);
     }
