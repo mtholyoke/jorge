@@ -12,17 +12,28 @@ Jorge is an experimental command-line tool for managing the complex interaction 
 
 2. `cd jorge` (or whatever other directory you cloned into)
 
-3. `composer install`
+3. `bin/setup.sh`
 
-4. Get the full path to your Jorge directory with `pwd`
+4. `composer install`
 
-5. `sudo ln -s {that-full-path}/bin/jorge /usr/local/bin/jorge` (you may need to enter your workstation password).
+5. Get the full path to your Jorge directory with `pwd`
 
-That's it. The command `jorge` should now exist and give you a list of things it can do.
+6. `sudo ln -s {that-full-path}/bin/jorge /usr/local/bin/jorge` (you may need to enter your workstation password).
 
-### Install with Composer
+The command `jorge` should now exist and give you a list of things it can do. Also you can make edits to Jorge’s source code.
 
-This way isn’t implemented yet.
+### Install with Composer/CGR
+
+This is not a thing to `require` within a project; it’s a tool for your workstation. Composer facilitates that with `composer global require`, but that command is somewhat flawed in the way it manages things, so we prefer [`cgr`](https://pantheon.io/blog/fixing-composer-global-command).
+
+To install it, run `composer global require consolidation/cgr` and it will be added in the `.composer` directory off your home directory. You will also need to tell the system that you’re adding executables to a new place. In your home directory, there can be a file named `.profile` which is run every time you log in. Edit that file (create it if it doesn’t exist) and add a line at the end:
+```bash
+export PATH="$PATH:~/.composer/vendor/bin"
+```
+
+In order for it to take effect, you can either log out and back in, or run `source .profile`. You can test that it worked by running `which cgr`; it should tell you `/Users/{you}/.composer/vendor/bin/cgr`.
+
+After all that, you should be able to run `cgr mtholyoke/jorge`. If it is successfully installed, `jorge --version` will report “Can’t find project root” and a version.
 
 ## Configuration
 

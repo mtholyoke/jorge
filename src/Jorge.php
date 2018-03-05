@@ -34,7 +34,7 @@ class Jorge extends Application {
    */
   public function configure() {
     $this->setName('Jorge');
-    $this->setVersion('0.1.0-dev');
+    $this->setVersion('0.1.0');
 
     if ($this->rootPath = $this->findRootPath()) {
       $this->config = $this->loadConfigFile('config.yml');
