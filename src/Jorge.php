@@ -37,7 +37,7 @@ class Jorge extends Application {
     $this->setVersion('0.1.0');
 
     if ($this->rootPath = $this->findRootPath()) {
-      $this->config = $this->loadConfigFile('config.yml');
+      $this->config = $this->loadConfigFile('.jorge/config.yml');
     }
 
     // If the config file specifies additional config, load that too.
@@ -46,8 +46,8 @@ class Jorge extends Application {
         $this->config['include_config'] = [ $this->config['include_config'] ];
       }
       foreach ($this->config['include_config'] as $configFile) {
-        $this->logger->debug('Including config file ' . $configFile);
-        $this->config = array_merge_recursive($this->config, $this->loadConfigFile($configFile));
+        $this->logger->debug('Including config file .jorge/' . $configFile);
+        $this->config = array_merge_recursive($this->config, $this->loadConfigFile('.jorge/' . $configFile));
       }
     }
 
@@ -78,11 +78,13 @@ class Jorge extends Application {
   /**
    * Loads the contents of a config file.
    *
+   * @param string filename relative to project root
    * @return array
    */
-  private function loadConfigFile($file) {
-    $file = preg_replace('/^[\.\/]*/', '', $file);
-    $pathfile = $this->rootPath . '/.jorge/' . $file;
+  public function loadConfigFile($file) {
+    # Strip leading '/', './', or '../'.
+    $file = preg_replace('/^(\/|\.\/|\.\.\/)*/', '', $file);
+    $pathfile = $this->rootPath . '/' . $file;
     if (is_file($pathfile) && is_readable($pathfile)) {
       // TODO: sanitize values?
       return Yaml::parseFile($pathfile);

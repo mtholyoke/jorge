@@ -39,11 +39,11 @@ After all that, you should be able to run `cgr mtholyoke/jorge`. If it is succes
 
 Jorge has no global configuration; it works on the project level only.
 
-The project’s root directory should contain a folder `.jorge`, which should have a file `config.yml`. Samples are included in Jorge’s own `.jorge` directory.
+The project’s root directory should contain a subdirectory `.jorge`, which should have a file `config.yml`. Samples are included in Jorge’s own `.jorge` directory.
 
 In `.jorge/config.yml`, you **must** have the key `appType`. Currently, only `drupal8` and `jorge` are recognized as values.
 
-Optionally, you may also have the key `include_config`, which specifies a list of additional configuration files to include. Values in those files will override any settings in the main `config.yml`.
+Optionally, you may also have the key `include_config`, which specifies a list of additional configuration files to include from the `.jorge` directory, to be loaded in the order specified. Values in those files will override any previously loaded settings, including the main `config.yml`.
 
 ### Drupal 8 Configuration
 

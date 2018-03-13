@@ -16,6 +16,6 @@ if (is_dir(__DIR__ . '/../vendor')) {
 
 use MountHolyoke\Jorge\Jorge;
 
-$jorge = new Jorge();
-$jorge->configure();
-$jorge->run($jorge->input, $jorge->output);
+$JORGE = new Jorge();
+$JORGE->configure();
+$JORGE->run($JORGE->input, $JORGE->output);
