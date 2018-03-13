@@ -12,12 +12,17 @@ use Symfony\Component\Console\Application;
  */
 class Tool {
   protected $application = NULL;
+  protected $config;
   protected $enabled = FALSE;
   protected $executable;
   protected $helperSet = NULL;
   protected $name;
+  protected $status;
 
-  public function __construct($name = '') {
+  /**
+   * @param string|NULL the name of the tool
+   */
+  public function __construct($name = NULL) {
     if (!empty($name)) {
       $this->name = $name;
     }
@@ -32,12 +37,43 @@ class Tool {
   protected function configure() {
   }
 
+  /**
+   * Runs the tool and returns the result array and status.
+   */
+  protected function exec($argv = NULL) {
+    $command = $this->executable . ' ' . $argv;
+    exec($command, $output, $status);
+    return [
+      'command' => $command,
+      'output'  => $output,
+      'status'  => $status,
+    ];
+  }
+
+  /**
+   * @return mixed the saved executable command for the tool
+   */
   protected function getExecutable() {
     return $this->executable;
   }
 
+  /**
+   * @return mixed the name of the tool
+   */
   public function getName() {
     return $this->name;
+  }
+
+  /**
+   * @param boolean whether to call updateStatus() before returning
+   * @param mixed arguments for updateStatus() if necessary
+   * @return mixed the current status
+   */
+  public function getStatus($refresh = FALSE, $args = NULL) {
+    if (empty($this->status) || $refresh) {
+      $this->updateStatus($args);
+    }
+    return $this->status;
   }
 
   /**
@@ -50,6 +86,9 @@ class Tool {
   protected function initialize() {
   }
 
+  /**
+   * @return boolean whether the tool can be fully used
+   */
   public function isEnabled() {
     return $this->enabled;
   }
@@ -106,6 +145,7 @@ class Tool {
    * Sets the command-line executable for this tool.
    *
    * @param string a command the current user has permission to run
+   * @return $this
    */
   protected function setExecutable($executable) {
     $executable = escapeshellcmd($executable);
@@ -124,6 +164,7 @@ class Tool {
         ['%executable' => $executable, '%tool' => $this->getName()]
       );
     }
+    return $this;
   }
 
   /**
@@ -137,7 +178,23 @@ class Tool {
     return $this;
   }
 
-  public function status($args) {
-    return $this->isEnabled();
+  /**
+   * Sets the current status.
+   *
+   * @param mixed the status to save
+   * @return $this
+   */
+  public function setStatus($status) {
+    $this->status = $status;
+    return $this;
+  }
+
+  /**
+   * Computes and saves a status.
+   *
+   * @param mixed any arguments necessary to determine the status
+   */
+  public function updateStatus($args = NULL) {
+    $this->setStatus($this->isEnabled());
   }
 }
