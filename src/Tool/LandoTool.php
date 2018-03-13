@@ -6,7 +6,7 @@ use MountHolyoke\Jorge\Tool\Tool;
 use Symfony\Component\Yaml\Yaml;
 
 class LandoTool extends Tool {
-  public $config;
+  protected $config;
 
   /**
    * Establishes the `lando` tool.
@@ -19,9 +19,17 @@ class LandoTool extends Tool {
    * Reads the Lando config file, and enables the tool if config is present.
    */
   protected function initialize() {
-    $this->config = $this->application->loadConfigFile('.lando.yml', NULL);
-    if (!empty($this->config)) {
-      $this->enabled = TRUE;
+    $enable = TRUE;
+
+    if (empty($this->getExecutable())) {
+      $enable = FALSE;
     }
+
+    $this->config = $this->application->loadConfigFile('.lando.yml', NULL);
+    if (empty($this->config)) {
+      $enable = FALSE;
+    }
+
+    $this->enabled = $enable;
   }
 }

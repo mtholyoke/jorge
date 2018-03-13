@@ -71,11 +71,12 @@ class Jorge extends Application {
    *
    * Adapted from Symfony\Component\Console\Application::add().
    *
-   * @param Tool an instance of the tool to add.
-   * @return Tool the tool as added.
+   * @param Tool an instance of the tool to add
+   * @param string executable command if different from name
+   * @return Tool the tool as added
    */
-  private function addTool(Tool $tool) {
-    $name = $tool->setApplication($this)->getName();
+  private function addTool(Tool $tool, $executable = '') {
+    $name = $tool->setApplication($this, $executable)->getName();
     if (empty($name)) {
       throw new LogicException(sprintf('The tool defined in "%s" has an invalid or empty name.', get_class($tool)));
     }
