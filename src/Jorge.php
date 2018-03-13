@@ -6,7 +6,10 @@ use MountHolyoke\Jorge\Command\HonkCommand;
 use MountHolyoke\Jorge\Command\ResetCommand;
 use MountHolyoke\Jorge\Tool\LandoTool;
 use MountHolyoke\Jorge\Tool\Tool;
+use Psr\Log\LogLevel;
 use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Exception\LogicException;
+use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -16,6 +19,7 @@ class Jorge extends Application {
   public $config = [];
   public $input;
   public $logger;
+  private $messages = [];
   public $output;
   public $rootPath;
   private $tools;
@@ -40,7 +44,7 @@ class Jorge extends Application {
     $this->setVersion('0.1.0');
 
     if ($this->rootPath = $this->findRootPath()) {
-      $this->config = $this->loadConfigFile('.jorge/config.yml');
+      $this->config = $this->loadConfigFile('.jorge/config.yml', LogLevel::ERROR);
     }
 
     // If the config file specifies additional config, load that too.
@@ -48,9 +52,11 @@ class Jorge extends Application {
       if (!is_array($this->config['include_config'])) {
         $this->config['include_config'] = [ $this->config['include_config'] ];
       }
-      foreach ($this->config['include_config'] as $configFile) {
-        $this->logger->debug('Including config file .jorge/' . $configFile);
-        $this->config = array_merge_recursive($this->config, $this->loadConfigFile('.jorge/' . $configFile));
+      foreach ($this->config['include_config'] as $file) {
+        $configFile = '.jorge/' . $file;
+        $this->logger->debug('Including config file {%filename}', ['%filename' => $configFile]);
+        $addition = $this->loadConfigFile($configFile);
+        $this->config = array_merge_recursive($this->config, $addition);
       }
     }
 
@@ -60,10 +66,18 @@ class Jorge extends Application {
     $this->addTool(new LandoTool());
   }
 
+  /**
+   * Adds a command-line tool to be used by commands.
+   *
+   * Adapted from Symfony\Component\Console\Application::add().
+   *
+   * @param Tool an instance of the tool to add.
+   * @return Tool the tool as added.
+   */
   private function addTool(Tool $tool) {
-    $tool->setApplication($this);
-    if (!($name = $tool->getName())) {
-      throw new LogicException(sprintf('The tool defined in "%s" cannot have an empty name.', get_class($tool)));
+    $name = $tool->setApplication($this)->getName();
+    if (empty($name)) {
+      throw new LogicException(sprintf('The tool defined in "%s" has an invalid or empty name.', get_class($tool)));
     }
     $this->tools[$name] = $tool;
     return $tool;
@@ -80,7 +94,7 @@ class Jorge extends Application {
     while (!empty($wd) && $cwd = implode('/', $wd)) {
       $path = $cwd . '/.jorge';
       if (is_dir($path) && is_readable($path)) {
-        $this->logger->notice("Project root: '$cwd'");
+        $this->logger->notice('Project root: {%root}', ['%root' => $cwd]);
         return $cwd;
       }
       array_pop($wd);
@@ -93,18 +107,31 @@ class Jorge extends Application {
    * Loads the contents of a config file.
    *
    * @param string filename relative to project root
+   * @param string log level if any messages are generated
    * @return array
    */
-  public function loadConfigFile($file) {
+  public function loadConfigFile($file, $level = LogLevel::WARNING) {
     # Strip leading '/', './', or '../'.
     $file = preg_replace('/^(\/|\.\/|\.\.\/)*/', '', $file);
     $pathfile = $this->rootPath . '/' . $file;
     if (is_file($pathfile) && is_readable($pathfile)) {
       // TODO: sanitize values?
       return Yaml::parseFile($pathfile);
-    } else {
-      $this->logger->warning('Can’t read config file ' . $pathfile);
     }
+    $this->log($level, 'Can’t read config file {%filename}', ['%filename' => $pathfile]);
     return [];
   }
+
+  /**
+   * Sends a message to the logger.
+   *
+   * @param string|NULL what log level to use, or NULL to ignore.
+   * @param string the message
+   * @param array variable substitutions for the message
+   */
+   public function log($level, $message, array $context = []) {
+     if ($level !== NULL) {
+       $this->logger->log($level, $message, $context);
+     }
+   }
 }
