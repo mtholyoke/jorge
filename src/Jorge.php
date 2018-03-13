@@ -4,6 +4,8 @@ namespace MountHolyoke\Jorge;
 
 use MountHolyoke\Jorge\Command\HonkCommand;
 use MountHolyoke\Jorge\Command\ResetCommand;
+use MountHolyoke\Jorge\Tool\LandoTool;
+use MountHolyoke\Jorge\Tool\Tool;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Logger\ConsoleLogger;
@@ -16,6 +18,7 @@ class Jorge extends Application {
   public $logger;
   public $output;
   public $rootPath;
+  private $tools;
 
   /**
    * Instantiates the object, including IO objects which would not normally
@@ -53,6 +56,17 @@ class Jorge extends Application {
 
     $this->add(new HonkCommand());
     $this->add(new ResetCommand());
+
+    $this->addTool(new LandoTool());
+  }
+
+  private function addTool(Tool $tool) {
+    $tool->setApplication($this);
+    if (!($name = $tool->getName())) {
+      throw new LogicException(sprintf('The tool defined in "%s" cannot have an empty name.', get_class($tool)));
+    }
+    $this->tools[$name] = $tool;
+    return $tool;
   }
 
   /**
