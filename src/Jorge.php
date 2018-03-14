@@ -105,6 +105,18 @@ class Jorge extends Application {
   }
 
   /**
+   * @param string the name of a tool
+   * @return Tool|NULL the tool
+   */
+  public function getTool($name) {
+    if (array_key_exists($name, $this->tools) && !empty($this->tools[$name])) {
+      return $this->tools[$name];
+    }
+    $this->logger->warning('Can’t get tool "{%tool}"', ['%tool' => $name]);
+    return NULL;
+  }
+
+  /**
    * Loads the contents of a config file.
    *
    * @param string filename relative to project root

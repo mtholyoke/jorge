@@ -114,12 +114,17 @@ class ResetCommand extends Command {
    * a separate function to enact them.
    */
   protected function executeDrupal8($verbosity = OutputInterface::VERBOSITY_NORMAL) {
+    $jorge = $this->getApplication();
+    $lando = $jorge->getTool('lando');
     $cwd = getcwd();
 
     # Do some stuff in the project root
     if ($cwd != $this->rootPath) {
       $this->logger->notice('$ cd ' . $this->rootPath);
       chdir($this->rootPath);
+    }
+    if (!$lando->getStatus()->running) {
+      $lando->run('start');
     }
     $lando_pull = 'lando pull --code=none --database=' . $this->params['database'] . ' --files=' . $this->params['files'];
     if ($this->params['rsync']) {
