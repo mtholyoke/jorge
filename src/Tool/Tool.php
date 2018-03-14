@@ -123,7 +123,7 @@ class Tool {
    */
    protected function log($level, $message, array $context = []) {
      if ($level !== NULL) {
-       $this->log($level, $message, $context);
+       $this->getApplication()->log($level, $message, $context);
      }
    }
 
