@@ -93,11 +93,11 @@ If a username is provided but no password is supplied, Jorge will prompt you for
 
 ## Future Work
 
-- Install with Composer
-
 - Tests (see [Testing Commands](https://symfony.com/doc/current/console.html#testing-commands) for example)
 
-- Better awareness of initial/current state: use APIs for Git, Lando, &c., instead of commands
+- Implement [Tools](src/Tool/Tool.md) for Git, Lando, &c., using APIs if possible, for better awareness of initial/current state
+
+- Refactor the execution to take advantage of the implemented tools
 
 - Option to stash or discard changes before a `git checkout`?
 
