@@ -38,6 +38,20 @@ class Tool {
   }
 
   /**
+   * Disables the tool.
+   */
+  protected function disable() {
+    $this->enabled = TRUE;
+  }
+
+  /**
+   * Enables the tool.
+   */
+  protected function enable() {
+    $this->enabled = TRUE;
+  }
+
+  /**
    * Runs the tool and returns the result array and status.
    */
   protected function exec($argv = NULL) {
@@ -48,6 +62,13 @@ class Tool {
       'output'  => $output,
       'status'  => $status,
     ];
+  }
+
+  /**
+   * @return Application the application
+   */
+  protected function getApplication() {
+    return $this->application;
   }
 
   /**
@@ -94,6 +115,19 @@ class Tool {
   }
 
   /**
+   * Sends a message to the application’s logger.
+   *
+   * @param string|NULL what log level to use, or NULL to ignore.
+   * @param string the message
+   * @param array variable substitutions for the message
+   */
+   protected function log($level, $message, array $context = []) {
+     if ($level !== NULL) {
+       $this->log($level, $message, $context);
+     }
+   }
+
+  /**
    * Runs the tool with the given subcommands/options.
    */
   public function run($argv = NULL) {
@@ -101,7 +135,7 @@ class Tool {
       $command = $this->executable . ' ' . $argv;
       system($command);
     } else {
-      $this->application->log(
+      $this->log(
         LogLevel::WARNING,
         'Tool "{%tool}" is not enabled',
         ['%tool' => $this->getName()]
@@ -124,7 +158,7 @@ class Tool {
    * @param string command the user would type to use this tool
    * @return this
    */
-  public function setApplication(Application $application = NULL, $executable = '') {
+  public function setApplication(Application $application = NULL, $executable = NULL) {
     if (!empty($application)) {
       $this->application = $application;
       $this->helperSet = $application->getHelperSet();
@@ -152,13 +186,13 @@ class Tool {
     exec("which $executable", $output, $status);
     if ($status === 0 && count($output) == 1) {
       $this->executable = $output[0];
-      $this->application->log(
+      $this->log(
         LogLevel::DEBUG,
         'Executable for tool "{%tool}" is "{%executable}"',
         ['%tool' => $this->getName(), '%executable' => $this->getExecutable()]
       );
     } else {
-      $this->application->log(
+      $this->log(
         LogLevel::WARNING,
         'Cannot set executable "{%executable}" for tool "{%tool}"',
         ['%executable' => $executable, '%tool' => $this->getName()]

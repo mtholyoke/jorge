@@ -18,18 +18,17 @@ class LandoTool extends Tool {
    * Reads the Lando config file, and enables the tool if config is present.
    */
   protected function initialize() {
-    $enable = TRUE;
+    $this->enable();
 
     if (empty($this->getExecutable())) {
-      $enable = FALSE;
+      $this->disable();
     }
 
-    $this->config = $this->application->loadConfigFile('.lando.yml', NULL);
+    # Fail silently if the current project doesn’t use Lando.
+    $this->config = $this->getApplication()->loadConfigFile('.lando.yml', NULL);
     if (empty($this->config)) {
-      $enable = FALSE;
+      $this->disable();
     }
-
-    $this->enabled = $enable;
   }
 
   /**
@@ -61,7 +60,7 @@ class LandoTool extends Tool {
       if ($this->isEnabled()) {
         $name = $this->config['name'];
       } else {
-        $this->application->log(
+        $this->log(
           LogLevel::WARNING,
           'No Lando environment configured or specified'
         );
@@ -76,7 +75,7 @@ class LandoTool extends Tool {
       }
     }
     if (!$set) {
-      $this->application->log(
+      $this->log(
         LogLevel::WARNING,
         'Unable to determine status for Lando environment "{%name}"',
         ['%name' => $name]
