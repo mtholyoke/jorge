@@ -38,7 +38,7 @@ only apply to Drush, you can escape -v/--verbose as above.
   }
 
   /**
-   *
+   * Initializes the `drush` command.
    */
   protected function initialize(InputInterface $input, OutputInterface $output) {
     $this->verbosity = $output->getVerbosity();
@@ -65,6 +65,18 @@ only apply to Drush, you can escape -v/--verbose as above.
    * Executes the `drush` command.
    */
   protected function execute(InputInterface $input, OutputInterface $output) {
-    $output->writeln('Excuting lando drush ' . $this->drush_command);
+    $lando  = $this->jorge->getTool('lando');
+    $drush  = trim('drush ' . $this->drush_command);
+    $webdir = $this->jorge->getPath('web', TRUE);
+
+    if (!$lando->isEnabled()) {
+      $this->jorge->log(LogLevel::ERROR, 'Cannot run Drush without Lando');
+      return;
+    }
+    chdir($webdir);
+    if (!$lando->getStatus()->running) {
+      $lando->run('start');
+    }
+    $lando->run($drush);
   }
 }
