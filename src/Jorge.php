@@ -2,6 +2,7 @@
 
 namespace MountHolyoke\Jorge;
 
+use MountHolyoke\Jorge\Command\DrushCommand;
 use MountHolyoke\Jorge\Command\HonkCommand;
 use MountHolyoke\Jorge\Command\ResetCommand;
 use MountHolyoke\Jorge\Tool\LandoTool;
@@ -60,6 +61,7 @@ class Jorge extends Application {
       }
     }
 
+    $this->add(new DrushCommand());
     $this->add(new HonkCommand());
     $this->add(new ResetCommand());
 
