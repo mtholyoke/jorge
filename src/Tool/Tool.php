@@ -41,7 +41,7 @@ class Tool {
    * Disables the tool.
    */
   protected function disable() {
-    $this->enabled = TRUE;
+    $this->enabled = FALSE;
   }
 
   /**
