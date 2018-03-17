@@ -4,8 +4,6 @@ namespace MountHolyoke\Jorge\Command;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\RuntimeException;
-use Symfony\Component\Console\Input\InputArgument;
-use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -27,17 +25,15 @@ class ResetCommand extends Command {
     $this
       ->setName('reset')
       ->setDescription('Aligns code, database, and files to a specified state')
-      ->setDefinition(new InputDefinition([
-        new InputOption('branch',   'b', InputOption::VALUE_OPTIONAL, 'Git branch to use'),
-        new InputOption('database', 'd', InputOption::VALUE_OPTIONAL, 'Environment to load database from'),
-        new InputOption('files',    'f', InputOption::VALUE_OPTIONAL, 'Environment to copy files from'),
-        new InputOption('username', 'u', InputOption::VALUE_OPTIONAL, 'Admin account to have local password set'),
-        new InputOption('password', 'p', InputOption::VALUE_OPTIONAL, 'Local password for admin account'),
-      ]))
+      ->addOption('branch',   'b', InputOption::VALUE_OPTIONAL, 'Git branch to use', 'master')
+      ->addOption('database', 'd', InputOption::VALUE_OPTIONAL, 'Environment to load database from', 'dev')
+      ->addOption('files',    'f', InputOption::VALUE_OPTIONAL, 'Environment to copy files from', 'dev')
+      ->addOption('username', 'u', InputOption::VALUE_OPTIONAL, 'Admin account to have local password set')
+      ->addOption('password', 'p', InputOption::VALUE_OPTIONAL, 'Local password for admin account')
       ->setHelp('This command updates the local git environment to the latest master, copies the latest database and files from the specified environment on Pantheon, and imports the default config suitable for a hands-on development instance.')
     ;
 
-    # Defaults can be overridden by config.yml
+    # These can be set by config.yml, and set or overridden by command line options
     $this->params = [
       'branch'   => 'master',
       'database' => 'dev',
