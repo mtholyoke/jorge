@@ -11,11 +11,10 @@ class LandoTool extends Tool {
   /**
    * Adds the appropriate verbosity option.
    *
-   * @param int verbosity constant from OutputInterface
    * @param string lando arguments just before execution
    * @return string
    */
-  protected function applyVerbosity($verbosity, $argv = '') {
+  protected function applyVerbosity($argv = '') {
     $verbosityMap = [
       OutputInterface::VERBOSITY_QUIET        => '2>&1',
       OutputInterface::VERBOSITY_NORMAL       => '',
@@ -24,8 +23,8 @@ class LandoTool extends Tool {
       OutputInterface::VERBOSITY_DEBUG        => '-- -vvvv',
     ];
 
-    if (array_key_exists($verbosity, $verbosityMap)) {
-      return trim($argv . ' ' . $verbosityMap[$verbosity]);
+    if (array_key_exists($this->verbosity, $verbosityMap)) {
+      return trim($argv . ' ' . $verbosityMap[$this->verbosity]);
     }
     return $argv;
   }
@@ -48,7 +47,7 @@ class LandoTool extends Tool {
     }
 
     # Fail silently if the current project doesn’t use Lando.
-    $this->config = $this->getApplication()->loadConfigFile('.lando.yml', NULL);
+    $this->config = $this->jorge->loadConfigFile('.lando.yml', NULL);
     if (empty($this->config)) {
       $this->disable();
     }
