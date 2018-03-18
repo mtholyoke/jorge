@@ -2,6 +2,7 @@
 
 namespace MountHolyoke\Jorge;
 
+use MountHolyoke\Jorge\Command\DrushCommand;
 use MountHolyoke\Jorge\Command\HonkCommand;
 use MountHolyoke\Jorge\Command\ResetCommand;
 use MountHolyoke\Jorge\Tool\LandoTool;
@@ -60,6 +61,7 @@ class Jorge extends Application {
       }
     }
 
+    $this->add(new DrushCommand());
     $this->add(new HonkCommand());
     $this->add(new ResetCommand());
 
@@ -105,6 +107,37 @@ class Jorge extends Application {
   }
 
   /**
+   * Get the project root directory, plus an optional subdirectory.
+   *
+   * Should only be called if the command/tool requires a root path to operate.
+   *
+   * @param string|NULL subdirectory to test and include
+   * @param boolean throw an exception if subdirectory doesn't exist
+   * @return string the fully qualified path
+   * @throws \DomainException code requies a path but none exists
+   */
+  public function getPath($subdir = NULL, $required = FALSE) {
+    if ($path = $this->rootPath) {
+      $subdir = $this->sanitizePath($subdir);
+      if (!empty($subdir)) {
+        if (is_dir($path . '/' . $subdir)) {
+          $path .= '/' . $subdir;
+        } else {
+          $s = ['%subdir' => $subdir];
+          if ($required) {
+            throw new \DomainException('Subdirectory "{%subdir}" is required.', $s);
+          } else {
+            $this->logger->warning('No "{%subdir}" subdirectory in root path', $s);
+          }
+        }
+      }
+      return $path;
+    } else {
+      throw new \DomainException('Project root path is required.');
+    }
+  }
+
+  /**
    * @param string the name of a tool
    * @return Tool|NULL the tool
    */
@@ -124,8 +157,7 @@ class Jorge extends Application {
    * @return array
    */
   public function loadConfigFile($file, $level = LogLevel::WARNING) {
-    # Strip leading '/', './', or '../'.
-    $file = preg_replace('/^(\/|\.\/|\.\.\/)*/', '', $file);
+    $file = $this->sanitizePath($file);
     $pathfile = $this->rootPath . '/' . $file;
     if (is_file($pathfile) && is_readable($pathfile)) {
       // TODO: sanitize values?
@@ -146,5 +178,18 @@ class Jorge extends Application {
      if ($level !== NULL) {
        $this->logger->log($level, $message, $context);
      }
+   }
+
+   /**
+    * Sanitizes a path or filename so it's safe to use.
+    *
+    * @param string path to sanitize
+    * @return string sanitized path
+    */
+   public function sanitizePath($path) {
+     # Strip leading '/', './', or '../'.
+     $path = preg_replace('/^(\/|\.\/|\.\.\/)*/', '', $path);
+     // TODO: what else?
+     return $path;
    }
 }

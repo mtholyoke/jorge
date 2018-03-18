@@ -4,6 +4,8 @@ namespace MountHolyoke\Jorge\Tool;
 
 use Psr\Log\LogLevel;
 use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Exception\LogicException;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Base class for tools.
@@ -21,12 +23,27 @@ class Tool {
 
   /**
    * @param string|NULL the name of the tool
+   * @throws LogicException when the tool name is empty
    */
   public function __construct($name = NULL) {
     if (!empty($name)) {
       $this->name = $name;
     }
     $this->configure();
+    if (empty($this->getName())) {
+      throw new LogicException('Tool name cannot be empty');
+    }
+  }
+
+  /**
+   * Alters the arguments/options to reflect the desired verbosity setting
+   *
+   * @param int verbosity constant from OutputInterface
+   * @param mixed arguments/options for the command
+   * @return mixed arguments/options plus verbosity
+   */
+  protected function applyVerbosity($verbosity, $argv = NULL) {
+    return $argv;
   }
 
   /**
@@ -41,7 +58,7 @@ class Tool {
    * Disables the tool.
    */
   protected function disable() {
-    $this->enabled = TRUE;
+    $this->enabled = FALSE;
   }
 
   /**
@@ -52,10 +69,14 @@ class Tool {
   }
 
   /**
-   * Runs the tool and returns the result array and status.
+   * Executes the tool command and returns the result array and status.
+   *
+   * @param string arguments and options for the command
+   * @return array the command with its output and exit status
    */
-  protected function exec($argv = NULL) {
-    $command = $this->executable . ' ' . $argv;
+  protected function exec($argv = '') {
+    $command = trim($this->getExecutable() . ' ' . $argv);
+    $this->log(LogLevel::NOTICE, '$ {%command}', ['%command' => $command]);
     exec($command, $output, $status);
     return [
       'command' => $command,
@@ -115,7 +136,7 @@ class Tool {
   }
 
   /**
-   * Sends a message to the application’s logger.
+   * Sends a message prefixed with tool name to the application’s logger.
    *
    * @param string|NULL what log level to use, or NULL to ignore.
    * @param string the message
@@ -123,32 +144,43 @@ class Tool {
    */
    protected function log($level, $message, array $context = []) {
      if ($level !== NULL) {
+       $message = '{' . $this->getName() . '} ' . $message;
        $this->getApplication()->log($level, $message, $context);
      }
    }
 
   /**
-   * Runs the tool with the given subcommands/options.
+   * Checks that the tool is enabled before running it.
+   *
+   * @param string arguments and options for the command
+   * @return int exit status from the command
    */
-  public function run($argv = NULL) {
-    if ($this->isEnabled()) {
-      $command = $this->executable . ' ' . $argv;
-      system($command);
-    } else {
-      $this->log(
-        LogLevel::WARNING,
-        'Tool "{%tool}" is not enabled',
-        ['%tool' => $this->getName()]
-      );
+  public function run($argv = '') {
+    if (!$this->isEnabled()) {
+      $this->log(LogLevel::WARNING, 'Tool not enabled');
+      return;
     }
+    return $this->runThis($argv);
   }
 
   /**
-   * Runs the tool as in run(), but without checking isEnabled().
+   * Runs the tool with the given subcommands/options.
+   *
+   * @param string arguments and options for the command
+   * @return int exit status from the command
    */
-  public function runAlways($argv = NULL) {
-    $command = $this->executable . ' ' . $argv;
-    system($command);
+  public function runThis($argv = '') {
+    $output    = $this->getApplication()->output;
+    $verbosity = $output->getVerbosity();
+    $command   = $this->applyVerbosity($verbosity, $argv);
+
+    $result = $this->exec($command);
+
+    if ($verbosity != OutputInterface::VERBOSITY_QUIET) {
+      $output->writeln(implode("\n", $result['output']));
+    }
+
+    return $result['status'];
   }
 
   /**
@@ -188,14 +220,14 @@ class Tool {
       $this->executable = $output[0];
       $this->log(
         LogLevel::DEBUG,
-        'Executable for tool "{%tool}" is "{%executable}"',
-        ['%tool' => $this->getName(), '%executable' => $this->getExecutable()]
+        'Executable is "{%executable}"',
+        ['%executable' => $this->getExecutable()]
       );
     } else {
       $this->log(
         LogLevel::WARNING,
-        'Cannot set executable "{%executable}" for tool "{%tool}"',
-        ['%executable' => $executable, '%tool' => $this->getName()]
+        'Cannot set executable "{%executable}"',
+        ['%executable' => $executable]
       );
     }
     return $this;

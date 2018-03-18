@@ -47,15 +47,15 @@ protected function updateStatus($args = NULL) {
 }
 ```
 
-`log()` passes a loggable message to the application’s logger. `use Psr\Log\LogLevel;` for named levels as constants.
+`log()` passes a loggable message to the application’s logger. The message will have the name of the tool automatically prefixed. `use Psr\Log\LogLevel;` for named levels as constants.
 
 ### Basic Functionality
 
 `exec('foo')` runs the command-line tool with `foo` as its argument string and returns an array of the results. It ignores the application’s verbosity setting, so is most useful for internal operations where you need information to make a decision about further actions.
 
-`run('foo')` checks whether the tool is enabled, and if so, runs the command-line tool with `foo` as its argument string, dumps all output to the user, and returns only the status code. **TODO:** verbosity.
+`run('foo')` checks whether the tool is enabled, and if so, runs the command-line tool with `foo` as its argument string, dumps any output to the user, and returns only the status code.
 
-`runAlways('foo')` is like `run()` but skips the enablement check. **TODO:** verbosity.
+`runThis('foo')` is like `run()` but skips the enablement check.
 
 ## Using a Tool
 
