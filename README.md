@@ -6,23 +6,7 @@ Jorge is an experimental command-line tool for managing the complex interaction 
 
 ## Installation
 
-### Install with Git
-
-1. In your Projects directory, `git clone` this repo.
-
-2. `cd jorge` (or whatever other directory you cloned into)
-
-3. `bin/setup.sh`
-
-4. `composer install`
-
-5. Get the full path to your Jorge directory with `pwd`
-
-6. `sudo ln -s {that-full-path}/bin/jorge /usr/local/bin/jorge` (you may need to enter your workstation password).
-
-The command `jorge` should now exist and give you a list of things it can do. Also you can make edits to Jorge’s source code.
-
-### Install with Composer/CGR
+### Recommended: Install with Composer/CGR
 
 This is not a thing to `require` within a project; it’s a tool for your workstation. Composer facilitates that with `composer global require`, but that command is somewhat flawed in the way it manages things, so we prefer [`cgr`](https://pantheon.io/blog/fixing-composer-global-command).
 
@@ -34,6 +18,13 @@ export PATH="$PATH:~/.composer/vendor/bin"
 In order for it to take effect, you can either log out and back in, or run `source .profile`. You can test that it worked by running `which cgr`; it should tell you `/Users/{you}/.composer/vendor/bin/cgr`.
 
 After all that, you should be able to run `cgr mtholyoke/jorge`. If it is successfully installed, `jorge --version` will report “Can’t find project root” and a version.
+
+
+### For Development: Install with Git
+
+You can also clone this repo for development and run Jorge directly from that copy. Rather than adding `~/Projects/jorge/bin` to your path, I recommend making a symlink to _`{...}`_`/bin/jorge` (the actual program) from `/usr/local/bin` or some other location already in your path.
+
+If you're going to do any development, also run `bin/setup.sh` once to install the standard Git hooks.
 
 ## Configuration
 
@@ -74,17 +65,30 @@ reset:
   password: asdf1234
 ```
 
+
 ## Commands
+
+### `jorge drush `_`{drush-command}`_
+
+Runs `lando drush `_`{drush-command}`_ inside the `web` directory (so it has access to Drupal), regardless of whether you’re currently in that directory.
+
+Starts Lando if it is not already running.
+
+Accepts the `-y`/`--yes` option natively, but other Drush options need to be escaped. See `jorge help drush` for details.
+
 
 ### `jorge reset`
 
 Sets up the local development environment as specified in the configuration file(s) described above.
+
+Starts Lando if it is not already running.
 
 Your project must be in a clean state: if Git can’t change branches, the whole thing will fail.
 
 Optionally takes command-line switches which will override those settings (except `rsync`); see `jorge help reset` for details.
 
 If a username is provided but no password is supplied, Jorge will prompt you for one. If you leave that blank also, the password will not be reset.
+
 
 ### _Not Implemented Yet_
 
@@ -95,7 +99,7 @@ If a username is provided but no password is supplied, Jorge will prompt you for
 
 - Tests (see [Testing Commands](https://symfony.com/doc/current/console.html#testing-commands) for example)
 
-- Implement [Tools](src/Tool/Tool.md) for Git, Lando, &c., using APIs if possible, for better awareness of initial/current state
+- Implement [Tools](src/Tool/) for Git, Lando, &c., using APIs if possible, for better awareness of initial/current state
 
 - Refactor the execution to take advantage of the implemented tools
 
