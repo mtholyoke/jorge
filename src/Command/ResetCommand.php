@@ -4,6 +4,7 @@ namespace MountHolyoke\Jorge\Command;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\RuntimeException;
+use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -136,20 +137,26 @@ class ResetCommand extends Command {
       $this->processStep($step, $verbosity);
     }
 
-    # Do some stuff in the web subdirectory
-    $this->logger->notice('$ cd web');
-    chdir('web');
-    $steps = [
-      'lando drush cr',
-      'lando drush csim config_dev --yes',
-      'lando drush updb --yes',
+    $drush = $jorge->find('drush');
+    $drushSequence = [
+      ['drush_command' => ['cr']                                 ],
+      ['drush_command' => ['csim', 'config_dev'], '--yes' => TRUE],
+      ['drush_command' => ['updb'],               '--yes' => TRUE],
     ];
     if (!empty($this->params['username']) && !empty($this->params['password'])) {
-      $steps[] = 'lando drush upwd ' . $this->params['username'] . ' --password="' . $this->params['password'] . '"';
+      $drushSequence[] = [
+        'drush_command' => [
+          'upwd',
+          $this->params['username'],
+          '--password="' . $this->params['password'] . '"',
+        ],
+      ];
     }
-    $steps[] = 'lando drush cr';
-    foreach ($steps as $step) {
-      $this->processStep($step, $verbosity);
+    $drushSequence[] = ['drush_command' => ['cr']];
+
+    foreach ($drushSequence as $step) {
+      $drushInput = new ArrayInput($step);
+      $drush->run($drushInput, $jorge->output);
     }
 
     # Not technically necessary, but friendly.
