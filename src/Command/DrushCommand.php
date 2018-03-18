@@ -77,6 +77,7 @@ only apply to Drush, you can escape -v/--verbose as above.
    * Executes the `drush` command.
    *
    * Assembles the drush command and passes it to the 'lando' tool.
+   * @todo If I have a sequence of calls, could I share the Lando bootstrap?
    *
    * @param \Symfony\Component\Console\Input\InputInterface   $input
    * @param \Symfony\Component\Console\Output\OutputInterface $output
