@@ -17,12 +17,11 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Yaml\Yaml;
 
 class Jorge extends Application {
-  public $config = [];
+  private $config = [];
   public $input;
-  public $logger;
-  private $messages = [];
+  private $logger;
   public $output;
-  public $rootPath;
+  private $rootPath;
   private $tools;
 
   /**
@@ -104,6 +103,19 @@ class Jorge extends Application {
     }
     $this->logger->warning('Can’t find project root');
     return FALSE;
+  }
+
+  /**
+   * Return a parameter from configuration.
+   *
+   * @param string $key The key to get from config
+   * @param mixed $default The value to return if key not present
+   */
+  public function getConfig($key, $default = NULL) {
+    if (array_key_exists($key, $this->config)) {
+      return $this->config[$key];
+    }
+    return $default;
   }
 
   /**
