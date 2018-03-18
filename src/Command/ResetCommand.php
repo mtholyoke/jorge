@@ -12,11 +12,23 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 
+/**
+ * Provides a Jorge command that can reset a development environment to a clean state.
+ *
+ * For Drupal 8, it assumes Git, Composer, and Lando for a Pantheon-hosted site.
+ *
+ * @link https://github.com/mtholyoke/jorge
+ *
+ * @author Jason Proctor <jproctor@mtholyoke.edu>
+ * @copyright 2018 Trustees of Mount Holyoke College
+ */
 class ResetCommand extends Command {
   use JorgeTrait;
 
-  # Config parameters necessary for this command
+  /** @var string $appType Type of project being reset */
   protected $appType;
+
+  /** @var array $params Specifies the desired end state of the reset */
   protected $params;
 
   /**
@@ -48,8 +60,10 @@ class ResetCommand extends Command {
   /**
    * Processes config and command-line options to set parameters.
    *
-   * @param InputInterface $input
-   * @param OutputInterface $output
+   * @uses \MountHolyoke\Jorge\Helper\JorgeTrait::initializeJorge()
+   *
+   * @param \Symfony\Component\Console\Input\InputInterface   $input
+   * @param \Symfony\Component\Console\Output\OutputInterface $output
    */
   protected function initialize(InputInterface $input, OutputInterface $output) {
     $this->initializeJorge();
@@ -71,8 +85,13 @@ class ResetCommand extends Command {
   }
 
   /**
+   * Interacts with the user.
+   *
    * Prompts the user if an admin account is specified in the parameters without
    * a password. If the user does not provide one, the password won’t be reset.
+   *
+   * @param \Symfony\Component\Console\Input\InputInterface   $input
+   * @param \Symfony\Component\Console\Output\OutputInterface $output
    */
   protected function interact(InputInterface $input, OutputInterface $output) {
     if (!empty($this->params['username']) && empty($this->params['password'])) {
@@ -86,11 +105,17 @@ class ResetCommand extends Command {
 
   /**
    * Executes the `reset` command.
+   *
+   * Selects a function which will execute the desired series of actions.
+   *
+   * @param \Symfony\Component\Console\Input\InputInterface   $input
+   * @param \Symfony\Component\Console\Output\OutputInterface $output
+   * @return null|int
    */
   protected function execute(InputInterface $input, OutputInterface $output) {
     switch ($this->appType) {
       case 'drupal8':
-        $this->executeDrupal8();
+        return $this->executeDrupal8();
         break;
       case 'jorge':
         // TODO: test whether this is a separate dev instance of Jorge.
@@ -107,11 +132,19 @@ class ResetCommand extends Command {
         );
         break;
     }
+    return 1;
   }
 
   /**
-   * Creates the list of steps necessary to reset a Drupal 8 project, then calls
-   * a separate function to enact them.
+   * Defines and runs the sequence necessary to reset a Drupal 8 site.
+   *
+   * Assumes Git, Composer, and Lando for a Pantheon-hosted site.
+   * @todo Finish implementing Lando tool
+   * @todo Implement tools for Git and Composer
+   * @todo Construct a real return value
+   * @todo Refactor into a DDL?
+   *
+   * @return null|int
    */
   protected function executeDrupal8() {
     $lando = $this->jorge->getTool('lando');
@@ -161,11 +194,12 @@ class ResetCommand extends Command {
   /**
    * Performs a step, with appropriate verbosity.
    *
-   * TODO: This will need to be abstracted somewhere else when we have more than
-   * one Jorge command that needs it. Probably we can be a lot smarter about
-   * verbosity, too.
+   * @todo Fix the verbosity to be consistent with Tool
+   * @todo Refactor to receive a DDL?
    *
-   * @throws RuntimeException
+   * @param string $step The assembled command to execute
+   * @return null|int
+   * @throws \Symfony\Component\Console\Exception\RuntimeException
    */
   private function processStep($step) {
     $this->log(LogLevel::NOTICE, '$ ' . $step);
@@ -184,5 +218,6 @@ class ResetCommand extends Command {
       $message = sprintf("> %s\n%s\n%s", $step, $error, $result);
       throw new RuntimeException($message, $status);
     }
+    return $status;
   }
 }

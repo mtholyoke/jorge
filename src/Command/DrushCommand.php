@@ -10,9 +10,18 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
+/**
+ * Provides a Jorge command that can execute Drush commands.
+ *
+ * @link https://github.com/mtholyoke/jorge
+ *
+ * @author Jason Proctor <jproctor@mtholyoke.edu>
+ * @copyright 2018 Trustees of Mount Holyoke College
+ */
 class DrushCommand extends Command {
   use JorgeTrait;
 
+  /** @var string $drush_command The actual drush command with its arguments and options */
   protected $drush_command = '';
 
   /**
@@ -41,6 +50,13 @@ only apply to Drush, you can escape -v/--verbose as above.
 
   /**
    * Initializes the `drush` command.
+   *
+   * Parses the command-line arguments and options to assemble the actual
+   * command string to send to Drush.
+   * @uses \MountHolyoke\Jorge\Helper\JorgeTrait::initializeJorge()
+   *
+   * @param \Symfony\Component\Console\Input\InputInterface   $input
+   * @param \Symfony\Component\Console\Output\OutputInterface $output
    */
   protected function initialize(InputInterface $input, OutputInterface $output) {
     $this->initializeJorge();
@@ -59,6 +75,12 @@ only apply to Drush, you can escape -v/--verbose as above.
 
   /**
    * Executes the `drush` command.
+   *
+   * Assembles the drush command and passes it to the 'lando' tool.
+   *
+   * @param \Symfony\Component\Console\Input\InputInterface   $input
+   * @param \Symfony\Component\Console\Output\OutputInterface $output
+   * @return null|int
    */
   protected function execute(InputInterface $input, OutputInterface $output) {
     $lando  = $this->jorge->getTool('lando');
@@ -73,6 +95,6 @@ only apply to Drush, you can escape -v/--verbose as above.
     if (!$lando->getStatus()->running) {
       $lando->run('start');
     }
-    $lando->run($drush);
+    return $lando->run($drush);
   }
 }

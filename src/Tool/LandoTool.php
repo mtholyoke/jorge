@@ -7,11 +7,19 @@ use Psr\Log\LogLevel;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
 
+/**
+ * Provides a Jorge tool that can execute Lando commands.
+ *
+ * @link https://github.com/mtholyoke/jorge
+ *
+ * @author Jason Proctor <jproctor@mtholyoke.edu>
+ * @copyright 2018 Trustees of Mount Holyoke College
+ */
 class LandoTool extends Tool {
   /**
    * Adds the appropriate verbosity option.
    *
-   * @param string lando arguments just before execution
+   * @param string $argv Lando arguments just before execution
    * @return string
    */
   protected function applyVerbosity($argv = '') {
@@ -56,8 +64,8 @@ class LandoTool extends Tool {
   /**
    * Parse the output from `lando list`, which is not quite JSON.
    *
-   * @param array raw output from exec()
-   * @return array status objects
+   * @param array $lines Raw output from `lando list`
+   * @return array
    */
   protected function parseLandoList(array $lines = []) {
     # Don’t check the last line
@@ -71,9 +79,14 @@ class LandoTool extends Tool {
   }
 
   /**
-   * {@inheritdoc}
+   * Computes and saves a status.
+   *
+   * Calls `lando list`, parses the results, and then identifies if
+   * any of the results match the Lando environment we’re working in.
+   *
+   * @param string $name The name of the Lando environment
    */
-  public function updateStatus($name = NULL) {
+  public function updateStatus($name = '') {
     $exec = $this->exec('list');
     if ($exec['status'] == 0) {
       $list = $this->parseLandoList($exec['output']);

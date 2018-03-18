@@ -12,20 +12,45 @@ use Symfony\Component\Console\Output\OutputInterface;
  * Base class for tools.
  *
  * Mostly an adaptation of Symfony\Component\Console\Command\Command.
+ *
+ * This class is potentially usable without subclassing it, by providing
+ * a name and an executable when it's added to the application. Overrides
+ * to some or all of the following methods make it more useful:
+ *   configure()
+ *   initialize()
+ *   updateStatus()
+ *   applyVerbosity()
+ * See further implementation details in README.md.
+ *
+ * @link https://github.com/mtholyoke/jorge
+ *
+ * @author Jason Proctor <jproctor@mtholyoke.edu>
+ * @copyright 2018 Trustees of Mount Holyoke College
  */
 class Tool {
   use JorgeTrait;
 
+  /** @var mixed $config Tool-specific configuration */
   protected $config;
+
+    /** @var boolean $enabled Indicates the tool is applicable to the current project */
   protected $enabled = FALSE;
+
+    /** @var string $executable The executable command associated with this tool */
   protected $executable;
+
+    /** @var \Symfony\Component\Console\Helper\HelperSet $helperSet */
   protected $helperSet = NULL;
+
+    /** @var string $name The name of the tool, used as an index in the application */
   protected $name;
+
+    /** @var mixed $status Tool-specific status report */
   protected $status;
 
   /**
-   * @param string|NULL the name of the tool
-   * @throws LogicException when the tool name is empty
+   * @param string|NULL $name The name of the tool
+   * @throws \Symfony\Component\Console\Exception\LogicException when the tool name is empty
    */
   public function __construct($name = NULL) {
     if (!empty($name)) {
@@ -38,10 +63,10 @@ class Tool {
   }
 
   /**
-   * Alters the arguments/options to reflect the desired verbosity setting
+   * Alters the arguments/options to include the verbosity setting.
    *
-   * @param string arguments/options for the command
-   * @return mixed arguments/options plus verbosity
+   * @param string $argv Arguments/options for the command
+   * @return string
    */
   protected function applyVerbosity($argv = '') {
     return $argv;
@@ -72,8 +97,8 @@ class Tool {
   /**
    * Executes the tool command and returns the result array and status.
    *
-   * @param string arguments and options for the command
-   * @return array the command with its output and exit status
+   * @param string $argv Arguments and options for the command
+   * @return array The command with its output and exit status
    */
   protected function exec($argv = '') {
     $command = trim($this->getExecutable() . ' ' . $argv);
@@ -87,33 +112,33 @@ class Tool {
   }
 
   /**
-   * @return Application the application
+   * @return \Symfony\Component\Console\Application
    */
   protected function getApplication() {
     return $this->application;
   }
 
   /**
-   * @return mixed the saved executable command for the tool
+   * @return string
    */
   protected function getExecutable() {
     return $this->executable;
   }
 
   /**
-   * @return mixed the name of the tool
+   * @return string
    */
   public function getName() {
     return $this->name;
   }
 
   /**
-   * @param boolean whether to call updateStatus() before returning
-   * @param mixed arguments for updateStatus() if necessary
-   * @return mixed the current status
+   * @param boolean $update Whether to call updateStatus() before returning
+   * @param mixed   $args   Arguments for updateStatus() if necessary
+   * @return mixed
    */
-  public function getStatus($refresh = FALSE, $args = NULL) {
-    if (empty($this->status) || $refresh) {
+  public function getStatus($update = FALSE, $args = NULL) {
+    if (empty($this->status) || $update) {
       $this->updateStatus($args);
     }
     return $this->status;
@@ -130,7 +155,7 @@ class Tool {
   }
 
   /**
-   * @return boolean whether the tool can be fully used
+   * @return boolean
    */
   public function isEnabled() {
     return $this->enabled;
@@ -139,8 +164,8 @@ class Tool {
   /**
    * Checks that the tool is enabled before running it.
    *
-   * @param string arguments and options for the command
-   * @return int exit status from the command
+   * @param string $argv Arguments and options for the command
+   * @return null|int
    */
   public function run($argv = '') {
     if (!$this->isEnabled()) {
@@ -153,8 +178,8 @@ class Tool {
   /**
    * Runs the tool with the given subcommands/options.
    *
-   * @param string arguments and options for the command
-   * @return int exit status from the command
+   * @param string $argv Arguments and options for the command
+   * @return null|int
    */
   public function runThis($argv = '') {
     $command = $this->applyVerbosity($argv);
@@ -171,11 +196,13 @@ class Tool {
   /**
    * Connects the tool with the application.
    *
-   * @param Application the running instance of Jorge
-   * @param string command the user would type to use this tool
-   * @return this
+   * @uses \MountHolyoke\Jorge\Helper\JorgeTrait::initializeJorge()
+   *
+   * @param \Symfony\Component\Console\Application $application
+   * @param string $executable command the user would type to use this tool
+   * @return $this
    */
-  public function setApplication(Application $application, $executable = NULL) {
+  public function setApplication(Application $application, $executable = '') {
     $this->application = $application;
     $this->helperSet = $application->getHelperSet();
     $this->initializeJorge();
@@ -194,7 +221,7 @@ class Tool {
   /**
    * Sets the command-line executable for this tool.
    *
-   * @param string a command the current user has permission to run
+   * @param string $executable A command the current user has permission to run
    * @return $this
    */
   protected function setExecutable($executable) {
@@ -231,7 +258,7 @@ class Tool {
   /**
    * Sets the current status.
    *
-   * @param mixed the status to save
+   * @param mixed $status The status to save
    * @return $this
    */
   public function setStatus($status) {
@@ -242,7 +269,7 @@ class Tool {
   /**
    * Computes and saves a status.
    *
-   * @param mixed any arguments necessary to determine the status
+   * @param mixed $args Any arguments necessary to determine the status
    */
   public function updateStatus($args = NULL) {
     $this->setStatus($this->isEnabled());
