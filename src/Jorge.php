@@ -12,17 +12,41 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Exception\LogicException;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
 
+/**
+ * Extends \Symfony\Component\Console\Application with new functionality.
+ *
+ * Jorge is used as a fancy shell script—it consolidates common sequences
+ * of commands necessary to maintain a local development environment for
+ * other applications.
+ *
+ * @link https://github.com/mtholyoke/jorge
+ *
+ * @author Jason Proctor <jproctor@mtholyoke.edu>
+ * @copyright 2018 Trustees of Mount Holyoke College
+ */
 class Jorge extends Application {
-  public $config = [];
-  public $input;
-  public $logger;
-  private $messages = [];
-  public $output;
-  public $rootPath;
+  /** @var array $config Project configuration from .jorge/config.yml */
+  private $config = [];
+
+  /** @var \Symfony\Component\Console\Input\InputInterface $input */
+  private $input;
+
+  /** @var \Symfony\Component\Console\Logger\ConsoleLogger $logger */
+  private $logger;
+
+  /** @var \Symfony\Component\Console\Output\OutputInterface $output */
+  private $output;
+
+  /** @var string $rootPath The fully qualified path of the project root */
+  private $rootPath;
+
+  /** @var array $tools The instances of Tool\Tool available to this app. */
   private $tools;
 
   /**
@@ -69,15 +93,15 @@ class Jorge extends Application {
   }
 
   /**
-   * Adds a command-line tool to be used by commands.
+   * Adds a Tool\Tool representation of a command-line tool.
    *
-   * Adapted from Symfony\Component\Console\Application::add().
+   * Adapted from \Symfony\Component\Console\Application::add().
    *
-   * @param Tool an instance of the tool to add
-   * @param string executable command if different from name
-   * @return Tool the tool as added
+   * @param Tool\Tool $tool       An instance of the tool to add
+   * @param string    $executable Command if different from name
+   * @return Tool\Tool
    */
-  private function addTool(Tool $tool, $executable = '') {
+  public function addTool(Tool $tool, $executable = '') {
     $name = $tool->setApplication($this, $executable)->getName();
     if (empty($name)) {
       throw new LogicException(sprintf('The tool defined in "%s" has an invalid or empty name.', get_class($tool)));
@@ -90,7 +114,7 @@ class Jorge extends Application {
    * Traverses up the directory tree from current location until it finds the
    * project root, defined as a directory that contains a .jorge directory.
    *
-   * @return string|FALSE full path to document root, or FALSE if none found
+   * @return string|false full path to document root, or FALSE if none found
    */
   private function findRootPath() {
     $wd = explode('/', getcwd());
@@ -107,14 +131,34 @@ class Jorge extends Application {
   }
 
   /**
-   * Get the project root directory, plus an optional subdirectory.
+   * Return a parameter from configuration.
+   *
+   * @param string $key     The key to get from config
+   * @param mixed  $default The value to return if key not present
+   */
+  public function getConfig($key, $default = NULL) {
+    if (array_key_exists($key, $this->config)) {
+      return $this->config[$key];
+    }
+    return $default;
+  }
+
+  /**
+   * @return \Symfony\Component\Console\Output\OutputInterface
+   */
+  public function getOutput() {
+    return $this->output;
+  }
+
+  /**
+   * Return a complete path to the specified subdirectory of the project root.
    *
    * Should only be called if the command/tool requires a root path to operate.
    *
-   * @param string|NULL subdirectory to test and include
-   * @param boolean throw an exception if subdirectory doesn't exist
-   * @return string the fully qualified path
-   * @throws \DomainException code requies a path but none exists
+   * @param string|null $subdir   Subdirectory to include in the path if it exists
+   * @param boolean     $required Throw an exception if subdirectory doesn't exist
+   * @return string
+   * @throws \DomainException if code requies a path but none exists
    */
   public function getPath($subdir = NULL, $required = FALSE) {
     if ($path = $this->rootPath) {
@@ -138,8 +182,8 @@ class Jorge extends Application {
   }
 
   /**
-   * @param string the name of a tool
-   * @return Tool|NULL the tool
+   * @param string $name The name of a tool
+   * @return Tool\Tool|null
    */
   public function getTool($name) {
     if (array_key_exists($name, $this->tools) && !empty($this->tools[$name])) {
@@ -150,10 +194,10 @@ class Jorge extends Application {
   }
 
   /**
-   * Loads the contents of a config file.
+   * Loads the contents of a config file from the project root.
    *
-   * @param string filename relative to project root
-   * @param string log level if any messages are generated
+   * @param string $file  Filename relative to project root
+   * @param string $level Log level if any messages are generated
    * @return array
    */
   public function loadConfigFile($file, $level = LogLevel::WARNING) {
@@ -170,26 +214,43 @@ class Jorge extends Application {
   /**
    * Sends a message to the logger.
    *
-   * @param string|NULL what log level to use, or NULL to ignore.
-   * @param string the message
-   * @param array variable substitutions for the message
+   * @param string|null $level   What log level to use, or NULL to ignore
+   * @param string      $message May need $context interpolation
+   * @param array       $context Variable substitutions for $message
+   * @see Symfony\Component\Console\Logger\ConsoleLogger
    */
-   public function log($level, $message, array $context = []) {
-     if ($level !== NULL) {
-       $this->logger->log($level, $message, $context);
-     }
-   }
+  public function log($level, $message, array $context = []) {
+    if ($level !== NULL) {
+      $this->logger->log($level, $message, $context);
+    }
+  }
 
    /**
-    * Sanitizes a path or filename so it's safe to use.
+    * Encapsulates the parent::run() method so we don’t have to expose the
+    * instantiated IO interface objects.
     *
-    * @param string path to sanitize
-    * @return string sanitized path
+    * {@inheritDoc}
     */
-   public function sanitizePath($path) {
-     # Strip leading '/', './', or '../'.
-     $path = preg_replace('/^(\/|\.\/|\.\.\/)*/', '', $path);
-     // TODO: what else?
-     return $path;
-   }
+  public function run(InputInterface $input = NULL, OutputInterface $output = NULL) {
+    if (empty($input)) {
+      $input = $this->input;
+    }
+    if (empty($output)) {
+      $output = $this->output;
+    }
+    parent::run($input, $output);
+  }
+
+   /**
+    * Sanitizes a path or filename so it’s safe to use.
+    *
+    * @param string $path The path to sanitize
+    * @return string
+    */
+  protected function sanitizePath($path) {
+    # Strip leading '/', './', or '../'.
+    $path = preg_replace('/^(\/|\.\/|\.\.\/)*/', '', $path);
+    // TODO: what else?
+    return $path;
+  }
 }

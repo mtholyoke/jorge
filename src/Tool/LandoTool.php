@@ -7,15 +7,22 @@ use Psr\Log\LogLevel;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
 
+/**
+ * Provides a Jorge tool that can execute Lando commands.
+ *
+ * @link https://github.com/mtholyoke/jorge
+ *
+ * @author Jason Proctor <jproctor@mtholyoke.edu>
+ * @copyright 2018 Trustees of Mount Holyoke College
+ */
 class LandoTool extends Tool {
   /**
    * Adds the appropriate verbosity option.
    *
-   * @param int verbosity constant from OutputInterface
-   * @param string lando arguments just before execution
+   * @param string $argv Lando arguments just before execution
    * @return string
    */
-  protected function applyVerbosity($verbosity, $argv = '') {
+  protected function applyVerbosity($argv = '') {
     $verbosityMap = [
       OutputInterface::VERBOSITY_QUIET        => '2>&1',
       OutputInterface::VERBOSITY_NORMAL       => '',
@@ -24,8 +31,8 @@ class LandoTool extends Tool {
       OutputInterface::VERBOSITY_DEBUG        => '-- -vvvv',
     ];
 
-    if (array_key_exists($verbosity, $verbosityMap)) {
-      return trim($argv . ' ' . $verbosityMap[$verbosity]);
+    if (array_key_exists($this->verbosity, $verbosityMap)) {
+      return trim($argv . ' ' . $verbosityMap[$this->verbosity]);
     }
     return $argv;
   }
@@ -48,7 +55,7 @@ class LandoTool extends Tool {
     }
 
     # Fail silently if the current project doesn’t use Lando.
-    $this->config = $this->getApplication()->loadConfigFile('.lando.yml', NULL);
+    $this->config = $this->jorge->loadConfigFile('.lando.yml', NULL);
     if (empty($this->config)) {
       $this->disable();
     }
@@ -57,8 +64,8 @@ class LandoTool extends Tool {
   /**
    * Parse the output from `lando list`, which is not quite JSON.
    *
-   * @param array raw output from exec()
-   * @return array status objects
+   * @param array $lines Raw output from `lando list`
+   * @return array
    */
   protected function parseLandoList(array $lines = []) {
     # Don’t check the last line
@@ -72,9 +79,14 @@ class LandoTool extends Tool {
   }
 
   /**
-   * {@inheritdoc}
+   * Computes and saves a status.
+   *
+   * Calls `lando list`, parses the results, and then identifies if
+   * any of the results match the Lando environment we’re working in.
+   *
+   * @param string $name The name of the Lando environment
    */
-  public function updateStatus($name = NULL) {
+  public function updateStatus($name = '') {
     $exec = $this->exec('list');
     if ($exec['status'] == 0) {
       $list = $this->parseLandoList($exec['output']);

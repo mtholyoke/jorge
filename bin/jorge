@@ -18,4 +18,4 @@ use MountHolyoke\Jorge\Jorge;
 
 $JORGE = new Jorge();
 $JORGE->configure();
-$JORGE->run($JORGE->input, $JORGE->output);
+$JORGE->run();

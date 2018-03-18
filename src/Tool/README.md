@@ -16,7 +16,7 @@ class SampleTool extends Tool {
 }
 ```
 
-When a tool is instantiated, its `configure()` method is called. If the application does not provide a name for the tool, then `configure()` _must_ call `$this->setName()`. Note: the environment is available to `configure()` for establishing any default configuration, but the application (including its deduced project root, &c.) is not available yet.
+When a tool is instantiated, its `configure()` method is called. If the application does not provide a name for the tool, then your implementation of `configure()` _must_ call `$this->setName()`. Note: the environment is available to `configure()` for establishing any default configuration, but the application (including its deduced project root, &c.) is not available yet.
 
 ```php
 protected function configure() {
@@ -34,12 +34,10 @@ protected function initialize() {
 }
 ```
 
-`isEnabled()` indicates whether the tool is properly configured within the application to interact with the project. Not all functionality requires this: for example, a tool implementing `git` could be used for `git help` regardless of whether the application is being run in a Git repo, but `git pull` clearly requires that condition.
-
-`getStatus()` runs `updateStatus()` if it has not previously been run (or if you call it with `TRUE` as the first argument) and returns the result of the most recent status update. `updateStatus()` defaults to `isEnabled()`, but can be overridden to provide something more useful to the specific tool.
+`getStatus()` (see below) runs `updateStatus()` (if it has not previously been run) and returns the result of the most recent status update. `updateStatus()` defaults to `isEnabled()`, but can be overridden to provide something more useful to the specific tool, including optional arguments.
 
 ```php
-protected function updateStatus($args = NULL) {
+public function updateStatus($args = NULL) {
   # Status is TRUE if we’re currently working in the project root.
   $cwd = getcwd();
   $root = $this->getApplication()->rootPath;
@@ -47,15 +45,41 @@ protected function updateStatus($args = NULL) {
 }
 ```
 
-`log()` passes a loggable message to the application’s logger. The message will have the name of the tool automatically prefixed. `use Psr\Log\LogLevel;` for named levels as constants.
+Many tools have options for specifying more (or less) verbosity in the results. As a Symfony Console Application, Jorge has five levels: quiet, normal, verbose, very verbose, and debug. Create a mapping from those to the options for the tool.
+```php
+protected function applyVerbosity($argv = '') {
+  if ($this->verbosity == OutputInterface::VERBOSITY_QUIET) {
+    $argv .= ' -q';
+  elseif ($this->verbosity == OutputInterface::VERBOSITY_DEBUG) {
+    $argv .= ' --debug';
+  }
+  return $argv;
+}
+```
 
-### Basic Functionality
+### Useful Public Methods
 
-`exec('foo')` runs the command-line tool with `foo` as its argument string and returns an array of the results. It ignores the application’s verbosity setting, so is most useful for internal operations where you need information to make a decision about further actions.
+`getName()` returns the name assigned when the tool was instantiated.
 
-`run('foo')` checks whether the tool is enabled, and if so, runs the command-line tool with `foo` as its argument string, dumps any output to the user, and returns only the status code.
+`getStatus($update, $args)` returns the saved status. The first time it runs, and any subsequent time when the first parameter is `TRUE`, it calls `updateStatus($args)`.
+
+`isEnabled()` indicates whether the tool is properly configured within the application to interact with the project. Not all functionality requires this: for example, a tool implementing `git` could be used for `git help` regardless of whether the application is being run in a Git repo, but `git pull` clearly requires that condition.
+
+`run('foo')` checks whether the tool is enabled, and if so, runs the command-line tool with `applyVerbosity('foo')` as its argument string, dumps any output to the user (unless verbosity is quiet), and returns only the status code.
 
 `runThis('foo')` is like `run()` but skips the enablement check.
+
+`updateStatus($args)`, described above.
+
+### Useful Protected Methods
+
+`disable()` makes `isEnabled()` return `FALSE`.
+
+`enable()` makes `isEnabled()` return `TRUE`.
+
+`exec('foo')` runs the command-line tool with `foo` as its argument string and returns an array of the results. It ignores the application’s verbosity setting and suppresses `stdout`, so it is most useful for internal operations such as your implementation of `updateStatus()`.
+
+`log($level, $message, $context)` (provided by `JorgeTrait`) passes a loggable message to the application’s logger. The message will have the name of the tool automatically prefixed. `use Psr\Log\LogLevel;` for named levels as constants.
 
 ## Using a Tool
 
