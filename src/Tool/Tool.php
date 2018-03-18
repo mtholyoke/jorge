@@ -2,9 +2,11 @@
 
 namespace MountHolyoke\Jorge\Tool;
 
+use MountHolyoke\Jorge\Helper\JorgeTrait;
 use Psr\Log\LogLevel;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Exception\LogicException;
+use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -13,7 +15,8 @@ use Symfony\Component\Console\Output\OutputInterface;
  * Mostly an adaptation of Symfony\Component\Console\Command\Command.
  */
 class Tool {
-  protected $application = NULL;
+  use JorgeTrait;
+
   protected $config;
   protected $enabled = FALSE;
   protected $executable;
@@ -38,11 +41,10 @@ class Tool {
   /**
    * Alters the arguments/options to reflect the desired verbosity setting
    *
-   * @param int verbosity constant from OutputInterface
-   * @param mixed arguments/options for the command
+   * @param string arguments/options for the command
    * @return mixed arguments/options plus verbosity
    */
-  protected function applyVerbosity($verbosity, $argv = NULL) {
+  protected function applyVerbosity($argv = '') {
     return $argv;
   }
 
@@ -125,7 +127,7 @@ class Tool {
    * usually the first opportunity to determine whether the tool is enabled,
    * meaning it is used in the current project being supported by Jorge.
    */
-  protected function initialize() {
+  protected function initialize(InputInterface $input, OutputInterface $output) {
   }
 
   /**
@@ -136,20 +138,6 @@ class Tool {
   }
 
   /**
-   * Sends a message prefixed with tool name to the application’s logger.
-   *
-   * @param string|NULL what log level to use, or NULL to ignore.
-   * @param string the message
-   * @param array variable substitutions for the message
-   */
-   protected function log($level, $message, array $context = []) {
-     if ($level !== NULL) {
-       $message = '{' . $this->getName() . '} ' . $message;
-       $this->getApplication()->log($level, $message, $context);
-     }
-   }
-
-  /**
    * Checks that the tool is enabled before running it.
    *
    * @param string arguments and options for the command
@@ -157,7 +145,7 @@ class Tool {
    */
   public function run($argv = '') {
     if (!$this->isEnabled()) {
-      $this->log(LogLevel::WARNING, 'Tool not enabled');
+      $this->log(LogLevel::ERROR, 'Tool not enabled');
       return;
     }
     return $this->runThis($argv);
@@ -170,14 +158,12 @@ class Tool {
    * @return int exit status from the command
    */
   public function runThis($argv = '') {
-    $output    = $this->getApplication()->output;
-    $verbosity = $output->getVerbosity();
-    $command   = $this->applyVerbosity($verbosity, $argv);
+    $command = $this->applyVerbosity($argv);
 
     $result = $this->exec($command);
 
-    if ($verbosity != OutputInterface::VERBOSITY_QUIET) {
-      $output->writeln(implode("\n", $result['output']));
+    if ($this->verbosity != OutputInterface::VERBOSITY_QUIET) {
+      $this->jorge->output->writeln(implode("\n", $result['output']));
     }
 
     return $result['status'];
@@ -190,11 +176,10 @@ class Tool {
    * @param string command the user would type to use this tool
    * @return this
    */
-  public function setApplication(Application $application = NULL, $executable = NULL) {
-    if (!empty($application)) {
-      $this->application = $application;
-      $this->helperSet = $application->getHelperSet();
-    }
+  public function setApplication(Application $application, $executable = NULL) {
+    $this->application = $application;
+    $this->helperSet = $application->getHelperSet();
+    $this->initializeJorge($application->input, $application->output);
 
     if (empty($this->getExecutable())) {
       if (empty($executable)) {
@@ -203,7 +188,7 @@ class Tool {
       $this->setExecutable($executable);
     }
 
-    $this->initialize();
+    $this->initialize($application->input, $application->output);
     return $this;
   }
 
@@ -225,7 +210,7 @@ class Tool {
       );
     } else {
       $this->log(
-        LogLevel::WARNING,
+        LogLevel::ERROR,
         'Cannot set executable "{%executable}"',
         ['%executable' => $executable]
       );
