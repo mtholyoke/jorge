@@ -2,6 +2,7 @@
 
 namespace MountHolyoke\Jorge\Command;
 
+use MountHolyoke\Jorge\Helper\JorgeTrait;
 use Psr\Log\LogLevel;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -10,8 +11,9 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class DrushCommand extends Command {
+  use JorgeTrait;
+
   protected $drush_command = '';
-  protected $jorge;
 
   /**
    * Establishes the `drush` command.
@@ -41,8 +43,8 @@ only apply to Drush, you can escape -v/--verbose as above.
    * Initializes the `drush` command.
    */
   protected function initialize(InputInterface $input, OutputInterface $output) {
-    $this->verbosity = $output->getVerbosity();
-    $this->jorge = $this->getApplication();
+    $this->initializeJorge($input, $output);
+
     $arguments = $input->getArgument('drush_command');
     if (!empty($arguments)) {
       if ($input->hasOption('yes') && $input->getOption('yes')) {
@@ -53,12 +55,6 @@ only apply to Drush, you can escape -v/--verbose as above.
     if ($this->verbosity > OutputInterface::VERBOSITY_NORMAL) {
       $this->drush_command = trim($this->drush_command . ' --verbose');
     }
-
-    $this->jorge->log(
-      LogLevel::DEBUG,
-      'Drush command: "{%command}"',
-      ['%command' => $this->drush_command]
-    );
   }
 
   /**
@@ -70,7 +66,7 @@ only apply to Drush, you can escape -v/--verbose as above.
     $webdir = $this->jorge->getPath('web', TRUE);
 
     if (!$lando->isEnabled()) {
-      $this->jorge->log(LogLevel::ERROR, 'Cannot run Drush without Lando');
+      $this->log(LogLevel::ERROR, 'Cannot run without Lando');
       return;
     }
     chdir($webdir);
