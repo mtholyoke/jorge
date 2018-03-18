@@ -4,9 +4,32 @@ namespace MountHolyoke\Jorge\Tool;
 
 use MountHolyoke\Jorge\Tool\Tool;
 use Psr\Log\LogLevel;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
 
 class LandoTool extends Tool {
+  /**
+   * Adds the appropriate verbosity option.
+   *
+   * @param int verbosity constant from OutputInterface
+   * @param string lando arguments just before execution
+   * @return string
+   */
+  protected function applyVerbosity($verbosity, $argv = '') {
+    $verbosityMap = [
+      OutputInterface::VERBOSITY_QUIET        => '2>&1',
+      OutputInterface::VERBOSITY_NORMAL       => '',
+      OutputInterface::VERBOSITY_VERBOSE      => '-- -v',
+      OutputInterface::VERBOSITY_VERY_VERBOSE => '-- -vv',
+      OutputInterface::VERBOSITY_DEBUG        => '-- -vvvv',
+    ];
+
+    if (array_key_exists($verbosity, $verbosityMap)) {
+      return trim($argv . ' ' . $verbosityMap[$verbosity]);
+    }
+    return $argv;
+  }
+
   /**
    * Establishes the `lando` tool.
    */
