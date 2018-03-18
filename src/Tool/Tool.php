@@ -162,7 +162,7 @@ class Tool {
     $result = $this->exec($command);
 
     if ($this->verbosity != OutputInterface::VERBOSITY_QUIET) {
-      $this->jorge->output->writeln(implode("\n", $result['output']));
+      $this->writeln($result['output']);
     }
 
     return $result['status'];

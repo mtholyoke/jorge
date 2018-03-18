@@ -12,15 +12,17 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Exception\LogicException;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
 
 class Jorge extends Application {
   private $config = [];
-  public $input;
+  private $input;
   private $logger;
-  public $output;
+  private $output;
   private $rootPath;
   private $tools;
 
@@ -119,6 +121,13 @@ class Jorge extends Application {
   }
 
   /**
+   * @return OutputInterface
+   */
+  public function getOutput() {
+    return $this->output;
+  }
+
+  /**
    * Get the project root directory, plus an optional subdirectory.
    *
    * Should only be called if the command/tool requires a root path to operate.
@@ -190,6 +199,19 @@ class Jorge extends Application {
      if ($level !== NULL) {
        $this->logger->log($level, $message, $context);
      }
+   }
+
+   /**
+    * {@inheritdoc}
+    */
+   public function run(InputInterface $input = NULL, OutputInterface $output = NULL) {
+     if (empty($input)) {
+       $input = $this->input;
+     }
+     if (empty($output)) {
+       $output = $this->output;
+     }
+     parent::run($input, $output);
    }
 
    /**

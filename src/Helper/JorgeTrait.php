@@ -20,22 +20,32 @@ trait JorgeTrait{
    */
   protected function initializeJorge() {
     $this->jorge = $this->getApplication();
-    $this->verbosity = $this->jorge->output->getVerbosity();
+    $this->verbosity = $this->jorge->getOutput()->getVerbosity();
   }
 
   /**
    * Sends a message prefixed with command name to the application’s logger.
    *
-   * @param string|NULL what log level to use, or NULL to ignore.
-   * @param string the message
-   * @param array variable substitutions for the message
+   * @param string|NULL $level   What log level to use, or NULL to ignore
+   * @param string      $message May need $context interpolation
+   * @param array       $context Variable substitutions for $message
+   * @see Symfony\Component\Console\Logger\ConsoleLogger
    */
-   protected function log($level, $message, array $context = []) {
-     if ($level !== NULL) {
-       $message = '{' . $this->getName() . '} ' . $message;
-       $this->jorge->log($level, $message, $context);
-     }
-   }
+  protected function log($level, $message, array $context = []) {
+    if ($level !== NULL) {
+      $message = '{' . $this->getName() . '} ' . $message;
+      $this->jorge->log($level, $message, $context);
+    }
+  }
 
-
+  /**
+   * Sends text directly to the application's output interface.
+   *
+   * @param string|array $messages The message as an array of lines of a single string
+   * @param int          $options  A bitmask of options
+   * @see Symfony\Component\Console\Output\OutputInterface
+   */
+  protected function writeln($messages, $options = 0) {
+    $this->jorge->getOutput()->writeln($messages, $options);
+  }
 }

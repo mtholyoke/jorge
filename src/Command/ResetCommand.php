@@ -154,7 +154,7 @@ class ResetCommand extends Command {
 
     foreach ($drushSequence as $step) {
       $drushInput = new ArrayInput($step);
-      $drush->run($drushInput, $this->jorge->output);
+      $drush->run($drushInput, $this->jorge->getOutput());
     }
   }
 
