@@ -2,6 +2,8 @@
 
 namespace MountHolyoke\Jorge\Command;
 
+use MountHolyoke\Jorge\Helper\JorgeTrait;
+use Psr\Log\LogLevel;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -11,10 +13,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 
 class ResetCommand extends Command {
-  # Useful properties of the Jorge application object
-  protected $rootPath;
-  protected $logger;
-  protected $verbosity;
+  use JorgeTrait;
+
   # Config parameters necessary for this command
   protected $appType;
   protected $params;
@@ -47,27 +47,26 @@ class ResetCommand extends Command {
 
   /**
    * Processes config and command-line options to set parameters.
+   *
+   * @param InputInterface $input
+   * @param OutputInterface $output
    */
   protected function initialize(InputInterface $input, OutputInterface $output) {
-    $jorge = $this->getApplication();
-    $this->rootPath = $jorge->rootPath;
-    $this->logger   = $jorge->logger;
-    $this->appType  = array_key_exists('appType', $jorge->config) ? $jorge->config['appType'] : '';
-    if (array_key_exists('reset', $jorge->config)) {
-      $config = $jorge->config['reset'];
-      foreach (array_keys($this->params) as $var) {
-        if (array_key_exists($var, $config) && !empty($config[$var])) {
-          $this->params[$var] = $config[$var];
-        }
-        if ($input->hasOption($var) && $input->getOption($var)) {
-          $this->params[$var] = $input->getOption($var);
-        }
+    $this->initializeJorge();
+    $this->appType = $this->jorge->getConfig('appType', '');
+    $config = $this->jorge->getConfig('reset', []);
+    foreach (array_keys($this->params) as $var) {
+      if (array_key_exists($var, $config) && !empty($config[$var])) {
+        $this->params[$var] = $config[$var];
+      }
+      if ($input->hasOption($var) && $input->getOption($var)) {
+        $this->params[$var] = $input->getOption($var);
       }
     }
 
-    $this->logger->debug('Parameters for reset:');
+    $this->log(LogLevel::DEBUG, 'Parameters:');
     foreach (array_keys($this->params) as $var) {
-      $this->logger->debug(sprintf("  %-8s => '%s'", $var, $this->params[$var]));
+      $this->log(LogLevel::DEBUG, sprintf("  %-8s => '%s'", $var, $this->params[$var]));
     }
   }
 
@@ -89,20 +88,24 @@ class ResetCommand extends Command {
    * Executes the `reset` command.
    */
   protected function execute(InputInterface $input, OutputInterface $output) {
-    $verbosity = $output->getVerbosity();
     switch ($this->appType) {
       case 'drupal8':
-        $this->executeDrupal8($verbosity);
+        $this->executeDrupal8();
         break;
       case 'jorge':
         // TODO: test whether this is a separate dev instance of Jorge.
-        $this->logger->warning('Can’t reset self');
+        $this->log(LogLevel::WARNING, 'Can’t reset self');
         break;
       case '':
-        $this->logger->error('No application type specified');
+        $this->log(LogLevel::ERROR, 'No application type specified');
         break;
       default:
-        $this->logger->error('Unrecognized application type "' . $this->appType . '"');
+        $this->log(
+          LogLevel::ERROR,
+          'Unrecognized application type "{%appType}"',
+          ['%appType' => $this->appType]
+        );
+        break;
     }
   }
 
@@ -110,16 +113,11 @@ class ResetCommand extends Command {
    * Creates the list of steps necessary to reset a Drupal 8 project, then calls
    * a separate function to enact them.
    */
-  protected function executeDrupal8($verbosity = OutputInterface::VERBOSITY_NORMAL) {
-    $jorge = $this->getApplication();
-    $lando = $jorge->getTool('lando');
-    $cwd = getcwd();
+  protected function executeDrupal8() {
+    $lando = $this->jorge->getTool('lando');
 
     # Do some stuff in the project root
-    if ($cwd != $this->rootPath) {
-      $this->logger->notice('$ cd ' . $this->rootPath);
-      chdir($this->rootPath);
-    }
+    chdir($this->jorge->getPath());
     if (!$lando->getStatus()->running) {
       $lando->run('start');
     }
@@ -134,10 +132,10 @@ class ResetCommand extends Command {
       $lando_pull,
     ];
     foreach ($steps as $step) {
-      $this->processStep($step, $verbosity);
+      $this->processStep($step);
     }
 
-    $drush = $jorge->find('drush');
+    $drush = $this->jorge->find('drush');
     $drushSequence = [
       ['drush_command' => ['cr']                                 ],
       ['drush_command' => ['csim', 'config_dev'], '--yes' => TRUE],
@@ -156,13 +154,7 @@ class ResetCommand extends Command {
 
     foreach ($drushSequence as $step) {
       $drushInput = new ArrayInput($step);
-      $drush->run($drushInput, $jorge->output);
-    }
-
-    # Not technically necessary, but friendly.
-    if ($cwd != $this->rootPath) {
-      $this->logger->notice('$ cd ' . $cwd);
-      chdir($cwd);
+      $drush->run($drushInput, $this->jorge->output);
     }
   }
 
@@ -175,20 +167,11 @@ class ResetCommand extends Command {
    *
    * @throws RuntimeException
    */
-  private function processStep($step, $verbosity) {
-    $this->logger->notice('$ ' . $step);
+  private function processStep($step) {
+    $this->log(LogLevel::NOTICE, '$ ' . $step);
     $result = '';
 
-    if ($verbosity >= OutputInterface::VERBOSITY_VERBOSE) {
-      if (substr($step, 0, 6) == 'lando ') {
-        $v = '';
-        if ($verbosity == OutputInterface::VERBOSITY_VERY_VERBOSE) {
-          $v = ' -- -v';
-        } elseif ($verbosity == OutputInterface::VERBOSITY_DEBUG) {
-          $v = ' -- -vvvv';
-        }
-        $step .= $v;
-      }
+    if ($this->verbosity >= OutputInterface::VERBOSITY_VERBOSE) {
       system($step, $status);
     } else {
       exec($step, $result, $status);
