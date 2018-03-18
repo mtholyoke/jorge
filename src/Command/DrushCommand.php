@@ -43,7 +43,7 @@ only apply to Drush, you can escape -v/--verbose as above.
    * Initializes the `drush` command.
    */
   protected function initialize(InputInterface $input, OutputInterface $output) {
-    $this->initializeJorge($input, $output);
+    $this->initializeJorge();
 
     $arguments = $input->getArgument('drush_command');
     if (!empty($arguments)) {

@@ -6,7 +6,6 @@ use MountHolyoke\Jorge\Helper\JorgeTrait;
 use Psr\Log\LogLevel;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Exception\LogicException;
-use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -127,7 +126,7 @@ class Tool {
    * usually the first opportunity to determine whether the tool is enabled,
    * meaning it is used in the current project being supported by Jorge.
    */
-  protected function initialize(InputInterface $input, OutputInterface $output) {
+  protected function initialize() {
   }
 
   /**
@@ -179,7 +178,7 @@ class Tool {
   public function setApplication(Application $application, $executable = NULL) {
     $this->application = $application;
     $this->helperSet = $application->getHelperSet();
-    $this->initializeJorge($application->input, $application->output);
+    $this->initializeJorge();
 
     if (empty($this->getExecutable())) {
       if (empty($executable)) {
@@ -188,7 +187,7 @@ class Tool {
       $this->setExecutable($executable);
     }
 
-    $this->initialize($application->input, $application->output);
+    $this->initialize();
     return $this;
   }
 

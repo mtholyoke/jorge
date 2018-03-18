@@ -3,7 +3,6 @@
 namespace MountHolyoke\Jorge\Helper;
 
 use Psr\Log\LogLevel;
-use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -18,13 +17,10 @@ trait JorgeTrait{
    *
    * This should be called from the initialize() method in each. Note that for
    * tools it’s called during setup phase, but commands don’t call it until run().
-   *
-   * @param InputInterface
-   * @param OutputInterface
    */
-  protected function initializeJorge(InputInterface $input, OutputInterface $output) {
+  protected function initializeJorge() {
     $this->jorge = $this->getApplication();
-    $this->verbosity = $output->getVerbosity();
+    $this->verbosity = $this->jorge->output->getVerbosity();
   }
 
   /**
