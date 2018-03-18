@@ -47,7 +47,7 @@ protected function updateStatus($args = NULL) {
 }
 ```
 
-`log()` passes a loggable message to the application’s logger. `use Psr\Log\LogLevel;` for named levels as constants.
+`log()` passes a loggable message to the application’s logger. The message will have the name of the tool automatically prefixed. `use Psr\Log\LogLevel;` for named levels as constants.
 
 ### Basic Functionality
 
