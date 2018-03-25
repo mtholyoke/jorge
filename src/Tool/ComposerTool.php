@@ -36,6 +36,9 @@ class ComposerTool extends Tool {
     $factory = new Factory();
     $rootPath = $this->jorge->getPath();
     $composerJson = $rootPath . '/composer.json';
+    if (!is_file($composerJson)) {
+      return;
+    }
     $composer = $factory->createComposer(new NullIO, $composerJson, FALSE, $rootPath);
     $this->composerApplication = new ComposerApplication();
     $this->composerApplication->setComposer($composer);
