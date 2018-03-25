@@ -68,13 +68,24 @@ class LandoTool extends Tool {
    * @return array
    */
   protected function parseLandoList(array $lines = []) {
-    # Don’t check the last line
-    for ($i = 0; $i < (count($lines) - 1); $i++) {
-      if ($lines[$i] == '}') {
-        $lines[$i] .= ', ';
-      }
+    # Skip over Lando complaining about updates.
+    while ($lines[0] != '[' && $lines[0] != '{') {
+      array_shift($lines);
     }
-    $string = '[' . implode('', $lines) . ']';
+
+    if ($lines[0] == '[') {
+      # Newer versions of lando actually return a list we can parse.
+      $string = implode('', $lines);
+    } else {
+      # Older versions contain a series of {}s with no delimiters. Make a list.
+      # Don’t check the last line
+      for ($i = 0; $i < (count($lines) - 1); $i++) {
+        if ($lines[$i] == '}') {
+          $lines[$i] .= ', ';
+        }
+      }
+      $string = '[' . implode('', $lines) . ']';
+    }
     return json_decode($string);
   }
 
