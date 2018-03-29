@@ -114,6 +114,9 @@ class ResetCommand extends Command {
    */
   protected function execute(InputInterface $input, OutputInterface $output) {
     switch ($this->appType) {
+      case 'drupal7':
+        return $this->executeDrupal7();
+        break;
       case 'drupal8':
         return $this->executeDrupal8();
         break;
@@ -133,6 +136,56 @@ class ResetCommand extends Command {
         break;
     }
     return 1;
+  }
+
+  /**
+   * Defines and runs the sequence necessary to reset a Drupal 7 site.
+   *
+   * Assumes Git and Lando for a Pantheon-hosted site.
+   * @todo Implement tools for Git
+   * @todo Construct a real return value
+   * @todo Refactor into a DDL?
+   *
+   * @return null|int
+   */
+  protected function executeDrupal7() {
+    $lando = $this->jorge->getTool('lando');
+
+    # Do some stuff in the project root
+    chdir($this->jorge->getPath());
+    if (!$lando->getStatus()->running) {
+      $lando->run('start');
+    }
+    $steps = [
+      'git checkout ' . $this->params['branch'],
+      'git pull',
+    ];
+    foreach ($steps as $step) {
+      $this->processStep($step);
+    }
+    $lando_pull = 'pull --code=none --database=' . $this->params['database'] . ' --files=' . $this->params['files'];
+    if ($this->params['rsync']) {
+      $lando_pull .= ' --rsync';
+    }
+    $lando->run($lando_pull);
+
+    $drush = $this->jorge->find('drush');
+    $drushSequence = [['drush_command' => ['cc', 'all']]];
+    if (!empty($this->params['username']) && !empty($this->params['password'])) {
+      $drushSequence[] = [
+        'drush_command' => [
+          'upwd',
+          $this->params['username'],
+          '--password="' . $this->params['password'] . '"',
+        ],
+      ];
+    }
+    $drushSequence[] = ['drush_command' => ['cc', 'all']];
+
+    foreach ($drushSequence as $step) {
+      $drushInput = new ArrayInput($step);
+      $drush->run($drushInput, $this->jorge->getOutput());
+    }
   }
 
   /**
