@@ -139,28 +139,30 @@ class ResetCommand extends Command {
    * Defines and runs the sequence necessary to reset a Drupal 8 site.
    *
    * Assumes Git, Composer, and Lando for a Pantheon-hosted site.
-   * @todo Implement tools for Git and Composer
+   * @todo Implement a Git tool
    * @todo Construct a real return value
    * @todo Refactor into a DDL?
    *
    * @return null|int
    */
   protected function executeDrupal8() {
+    $composer = $this->jorge->getTool('composer');
     $lando = $this->jorge->getTool('lando');
 
     # Do some stuff in the project root
     chdir($this->jorge->getPath());
     if (!$lando->getStatus()->running) {
       $lando->run('start');
+      $lando->updateStatus();
     }
     $steps = [
       'git checkout ' . $this->params['branch'],
       'git pull',
-      'composer install',
     ];
     foreach ($steps as $step) {
       $this->processStep($step);
     }
+    $composer->run(['command' => 'install']);
     $lando_pull = 'pull --code=none --database=' . $this->params['database'] . ' --files=' . $this->params['files'];
     if ($this->params['rsync']) {
       $lando_pull .= ' --rsync';

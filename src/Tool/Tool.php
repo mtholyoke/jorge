@@ -65,10 +65,10 @@ class Tool {
   /**
    * Alters the arguments/options to include the verbosity setting.
    *
-   * @param string $argv Arguments/options for the command
-   * @return string
+   * @param mixed $argv Arguments/options for the command
+   * @return mixed
    */
-  protected function applyVerbosity($argv = '') {
+  protected function applyVerbosity($argv) {
     return $argv;
   }
 
@@ -97,7 +97,7 @@ class Tool {
   /**
    * Executes the tool command and returns the result array and status.
    *
-   * @param string $argv Arguments and options for the command
+   * @param mixed $argv Arguments and options for the command
    * @return array The command with its output and exit status
    */
   protected function exec($argv = '') {
@@ -164,10 +164,10 @@ class Tool {
   /**
    * Checks that the tool is enabled before running it.
    *
-   * @param string $argv Arguments and options for the command
+   * @param mixed $argv Arguments and options for the command
    * @return null|int
    */
-  public function run($argv = '') {
+  public function run($argv) {
     if (!$this->isEnabled()) {
       $this->log(LogLevel::ERROR, 'Tool not enabled');
       return;
@@ -178,10 +178,10 @@ class Tool {
   /**
    * Runs the tool with the given subcommands/options.
    *
-   * @param string $argv Arguments and options for the command
+   * @param mixed $argv Arguments and options for the command
    * @return null|int
    */
-  public function runThis($argv = '') {
+  public function runThis($argv) {
     $command = $this->applyVerbosity($argv);
 
     $result = $this->exec($command);
