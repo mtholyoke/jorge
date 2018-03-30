@@ -30,7 +30,7 @@ use Symfony\Component\Yaml\Yaml;
  *
  * @author Jason Proctor <jproctor@mtholyoke.edu>
  * @copyright 2018 Trustees of Mount Holyoke College
- * @version 0.3.0
+ * @version 0.3.1
  */
 class Jorge extends Application {
   /** @var array $config Project configuration from .jorge/config.yml */
@@ -68,7 +68,7 @@ class Jorge extends Application {
    */
   public function configure() {
     $this->setName('Jorge');
-    $this->setVersion('0.3.0');
+    $this->setVersion('0.3.1');
 
     if ($this->rootPath = $this->findRootPath()) {
       $this->config = $this->loadConfigFile('.jorge/config.yml', LogLevel::ERROR);
