@@ -153,15 +153,15 @@ class ResetCommand extends Command {
 
     # Do some stuff in the project root
     chdir($this->jorge->getPath());
+    if (!$git->getStatus()->clean) {
+      $this->log(LogLevel::ERROR, "Working directory not clean. Aborting.");
+      return;
+    }
+    $git->run(['checkout', $this->params['branch']]);
+    $git->run(['pull']);
     if (!$lando->getStatus()->running) {
       $lando->run('start');
-    }
-    $steps = [
-      'git checkout ' . $this->params['branch'],
-      'git pull',
-    ];
-    foreach ($steps as $step) {
-      $this->processStep($step);
+      $lando->updateStatus();
     }
     $lando_pull = 'pull --code=none --database=' . $this->params['database'] . ' --files=' . $this->params['files'];
     if ($this->params['rsync']) {
