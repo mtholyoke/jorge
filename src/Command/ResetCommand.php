@@ -159,10 +159,7 @@ class ResetCommand extends Command {
     }
     $git->run(['checkout', $this->params['branch']]);
     $git->run(['pull']);
-    if (!$lando->getStatus()->running) {
-      $lando->run('start');
-      $lando->updateStatus();
-    }
+    $lando->requireStarted();
     $lando_pull = 'pull --code=none --database=' . $this->params['database'] . ' --files=' . $this->params['files'];
     if ($this->params['rsync']) {
       $lando_pull .= ' --rsync';
@@ -211,10 +208,7 @@ class ResetCommand extends Command {
     $git->run(['checkout', $this->params['branch']]);
     $git->run(['pull']);
     $composer->run(['command' => 'install']);
-    if (!$lando->getStatus()->running) {
-      $lando->run('start');
-      $lando->updateStatus();
-    }
+    $lando->requireStarted();
     $lando_pull = 'pull --code=none --database=' . $this->params['database'] . ' --files=' . $this->params['files'];
     if ($this->params['rsync']) {
       $lando_pull .= ' --rsync';

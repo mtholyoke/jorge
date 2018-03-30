@@ -90,6 +90,16 @@ class LandoTool extends Tool {
   }
 
   /**
+   * Ensures that Lando is started in the current project.
+   */
+  public function requireStarted() {
+    if (!$this->getStatus(TRUE)->running) {
+      $this->run('start');
+      $this->updateStatus();
+    }
+  }
+
+  /**
    * Computes and saves a status.
    *
    * Calls `lando list`, parses the results, and then identifies if
