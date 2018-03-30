@@ -38,9 +38,9 @@ class ResetCommand extends Command {
     $this
       ->setName('reset')
       ->setDescription('Aligns code, database, and files to a specified state')
-      ->addOption('branch',   'b', InputOption::VALUE_OPTIONAL, 'Git branch to use', 'master')
-      ->addOption('database', 'd', InputOption::VALUE_OPTIONAL, 'Environment to load database from', 'dev')
-      ->addOption('files',    'f', InputOption::VALUE_OPTIONAL, 'Environment to copy files from', 'dev')
+      ->addOption('branch',   'b', InputOption::VALUE_OPTIONAL, 'Git branch to use <fg=yellow>[default: "master"]</>')
+      ->addOption('database', 'd', InputOption::VALUE_OPTIONAL, 'Environment to load database from <fg=yellow>[default: "dev"]</>')
+      ->addOption('files',    'f', InputOption::VALUE_OPTIONAL, 'Environment to copy files from <fg=yellow>[default: "dev"]</>')
       ->addOption('username', 'u', InputOption::VALUE_OPTIONAL, 'Admin account to have local password set')
       ->addOption('password', 'p', InputOption::VALUE_OPTIONAL, 'Local password for admin account')
       ->setHelp('This command updates the local git environment to the latest master, copies the latest database and files from the specified environment on Pantheon, and imports the default config suitable for a hands-on development instance.')
@@ -149,6 +149,7 @@ class ResetCommand extends Command {
    * @return null|int
    */
   protected function executeDrupal7() {
+    $git = $this->jorge->getTool('git');
     $lando = $this->jorge->getTool('lando');
 
     # Do some stuff in the project root
