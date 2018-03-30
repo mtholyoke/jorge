@@ -139,7 +139,6 @@ class ResetCommand extends Command {
    * Defines and runs the sequence necessary to reset a Drupal 8 site.
    *
    * Assumes Git, Composer, and Lando for a Pantheon-hosted site.
-   * @todo Implement a Git tool
    * @todo Construct a real return value
    * @todo Refactor into a DDL?
    *
@@ -190,35 +189,5 @@ class ResetCommand extends Command {
       $drushInput = new ArrayInput($step);
       $drush->run($drushInput, $this->jorge->getOutput());
     }
-  }
-
-  /**
-   * Performs a step, with appropriate verbosity.
-   *
-   * @todo Fix the verbosity to be consistent with Tool
-   * @todo Refactor to receive a DDL?
-   *
-   * @param string $step The assembled command to execute
-   * @return null|int
-   * @throws \Symfony\Component\Console\Exception\RuntimeException
-   */
-  private function processStep($step) {
-    $this->log(LogLevel::NOTICE, '$ ' . $step);
-    $result = '';
-
-    if ($this->verbosity >= OutputInterface::VERBOSITY_VERBOSE) {
-      system($step, $status);
-    } else {
-      exec($step, $result, $status);
-    }
-    if ($status) {
-      $error = 'Command exited with nonzero status.';
-      if (is_array($result)) {
-        $result = implode("\n", $result);
-      }
-      $message = sprintf("> %s\n%s\n%s", $step, $error, $result);
-      throw new RuntimeException($message, $status);
-    }
-    return $status;
   }
 }
