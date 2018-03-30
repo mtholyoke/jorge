@@ -17,24 +17,59 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class GitTool extends Tool {
   /**
-   * {@inheritDoc}
+   * Alters the arguments/options to include the verbosity setting.
+   *
+   * Git’s verbosity options vary based on which command is running.
+   * If this method is called witb an array, the first element is the
+   * command and all others are its arguments/options. The return value
+   * is the string that will actually be used on the command line. This
+   * saves us from needing to override exec() to handle multiple things.
+   * If this method is called with a string, it’s returned unchanged.
+   * @todo Add more Git commands
+   *
+   * @param mixed $argv The command and arguments/options
+   * @return string The entire command line as it should be run
    */
   protected function applyVerbosity($argv = '') {
-    $flag = '';
-    switch ($this->verbosity) {
-      case OutputInterface::VERBOSITY_QUIET:
-      case OutputInterface::VERBOSITY_NORMAL:
+    # If we get a string, we don’t know which git command it is, so
+    # we can’t apply verbosity. Return it unchanged.
+    if (!is_array($argv) || empty($argv)) {
+      return $argv;
+    }
+
+    $verbosityMap = [
+      OutputInterface::VERBOSITY_QUIET        => '2>&1',
+      OutputInterface::VERBOSITY_NORMAL       => '',
+      OutputInterface::VERBOSITY_VERBOSE      => '-v',
+      OutputInterface::VERBOSITY_VERY_VERBOSE => '-v',
+      OutputInterface::VERBOSITY_DEBUG        => '-v',
+    ];
+
+    # Update the verbosity map based on the command.
+    $command = array_shift($argv);
+    switch ($command) {
+      case 'checkout':
+        $verbosityMap[OutputInterface::VERBOSITY_QUIET]        = '-q 2>&1';
+        $verbosityMap[OutputInterface::VERBOSITY_VERBOSE]      = '';
+        $verbosityMap[OutputInterface::VERBOSITY_VERY_VERBOSE] = '';
+        $verbosityMap[OutputInterface::VERBOSITY_DEBUG]        = '';
+        break;
+      case 'pull':
+        # Use the default above.
+        break;
+      case 'status':
+        $verbosityMap[OutputInterface::VERBOSITY_VERY_VERBOSE] = '-vv';
+        $verbosityMap[OutputInterface::VERBOSITY_DEBUG]        = '-vv';
+        break;
       default:
-        break;
-      case OutputInterface::VERBOSITY_VERBOSE:
-        $flag = '-v';
-        break;
-      case OutputInterface::VERBOSITY_VERY_VERBOSE:
-      case OutputInterface::VERBOSITY_DEBUG:
-        $flag = '-vv';
+        # Use the default above.
         break;
     }
-    return trim($argv . ' ' . $flag);
+
+    if (array_key_exists($this->verbosity, $verbosityMap)) {
+      $argv[] = $verbosityMap[$this->verbosity];
+    }
+    return trim($command . ' ' . implode(' ', $argv));
   }
 
   /**
