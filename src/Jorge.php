@@ -6,6 +6,7 @@ use MountHolyoke\Jorge\Command\DrushCommand;
 use MountHolyoke\Jorge\Command\HonkCommand;
 use MountHolyoke\Jorge\Command\ResetCommand;
 use MountHolyoke\Jorge\Tool\ComposerTool;
+use MountHolyoke\Jorge\Tool\GitTool;
 use MountHolyoke\Jorge\Tool\LandoTool;
 use MountHolyoke\Jorge\Tool\Tool;
 use Psr\Log\LogLevel;
@@ -92,6 +93,7 @@ class Jorge extends Application {
     $this->add(new ResetCommand());
 
     $this->addTool(new ComposerTool());
+    $this->addTool(new GitTool());
     $this->addTool(new LandoTool());
   }
 
