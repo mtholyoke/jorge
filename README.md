@@ -10,19 +10,22 @@ Jorge is an experimental command-line tool for managing the complex interaction 
 
 This is not a thing to `require` within a project; it’s a tool for your workstation. Composer facilitates that with `composer global require`, but that command is somewhat flawed in the way it manages things, so we prefer [`cgr`](https://pantheon.io/blog/fixing-composer-global-command).
 
-To install it, run `composer global require consolidation/cgr` and it will be added in the `.composer` directory off your home directory. You will also need to tell the system that you’re adding executables to a new place. In your home directory, there can be a file named `.profile` which is run every time you log in. Edit that file (create it if it doesn’t exist) and add a line at the end:
+To install it, run `composer global require consolidation/cgr` and it will be added in the `.composer` directory off your home directory. You will also need to tell the system that you’re adding executables to a new place. In your home directory, there can be a file named `.bash_profile` or `.profile` which is run every time you log in. Edit that file (create one if neither exists) and add a line at the end:
 ```bash
 export PATH="$PATH:~/.composer/vendor/bin"
 ```
 
-In order for it to take effect, you can either log out and back in, or run `source .profile`. You can test that it worked by running `which cgr`; it should tell you `/Users/{you}/.composer/vendor/bin/cgr`.
+In order for the new `PATH` to take effect, you can either log out and back in, or run `source .bash_profile` (or `source .profile`). You can test that it worked by running `cgr --help`; it should give you help instead of an error message.
 
 After all that, you should be able to run `cgr mtholyoke/jorge`. If it is successfully installed, `jorge --version` will report “Can’t find project root” and a version.
 
 
 ### For Development: Install with Git
 
-You can also clone this repo for development and run Jorge directly from that copy. Rather than adding `~/Projects/jorge/bin` to your path, I recommend making a symlink to _`{...}`_`/bin/jorge` (the actual program) from `/usr/local/bin` or some other location already in your path.
+You can also clone this repo for development and run Jorge directly from that copy. Rather than adding `~/Projects/jorge/bin` (or whatever your Projects directory is; run `pwd` to check) to your path, I recommend making a symlink to `bin/jorge` (the actual program) from `/usr/local/bin` or some other location already in your path:
+```bash
+ln -s ~/Projects/jorge/bin/jorge /usr/local/bin/jorge
+```
 
 If you're going to do any development, also run `bin/setup.sh` once to install the standard Git hooks.
 
@@ -32,11 +35,11 @@ Jorge has no global configuration; it works on the project level only.
 
 The project’s root directory should contain a subdirectory `.jorge`, which should have a file `config.yml`. Samples are included in Jorge’s own `.jorge` directory.
 
-In `.jorge/config.yml`, you **must** have the key `appType`. Currently, only `drupal8` and `jorge` are recognized as values.
+In `.jorge/config.yml`, you **must** have the key `appType`. Currently, only `drupal7`, `drupal8`, and `jorge` are recognized as values.
 
 Optionally, you may also have the key `include_config`, which specifies a list of additional configuration files to include from the `.jorge` directory, to be loaded in the order specified. Values in those files will override any previously loaded settings, including the main `config.yml`.
 
-### Drupal 8 Configuration
+### Drupal 7 or 8 Configuration
 
 A config file may include the key `reset`, which contains a block that provides any of five optional parameters to the `reset` command (described below):
 - `branch  ` - Which Git branch to reset your current codebase to (default `master`)
@@ -70,9 +73,7 @@ reset:
 
 ### `jorge drush `_`{drush-command}`_
 
-Runs `lando drush `_`{drush-command}`_ inside the `web` directory (so it has access to Drupal), regardless of whether you’re currently in that directory.
-
-Starts Lando if it is not already running.
+In a Composer-powered Drupal 8 project, `lando drush `_`{drush-command}`_ needs to be run inside the `web` directory (so it has access to Drupal), regardless of whether you’re currently in that directory. This command runs it from outside that directory, (after starting Lando if it’s not already running).
 
 Accepts the `-y`/`--yes` option natively, but other Drush options need to be escaped. See `jorge help drush` for details.
 
