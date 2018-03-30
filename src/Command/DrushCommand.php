@@ -70,6 +70,7 @@ only apply to Drush, you can escape -v/--verbose as above.
     chdir($webdir);
     if (!$lando->getStatus()->running) {
       $lando->run('start');
+      $lando->updateStatus();
     }
     return $lando->run($drush);
   }

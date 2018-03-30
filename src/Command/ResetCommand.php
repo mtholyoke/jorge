@@ -192,27 +192,28 @@ class ResetCommand extends Command {
    * Defines and runs the sequence necessary to reset a Drupal 8 site.
    *
    * Assumes Git, Composer, and Lando for a Pantheon-hosted site.
-   * @todo Implement tools for Git and Composer
    * @todo Construct a real return value
    * @todo Refactor into a DDL?
    *
    * @return null|int
    */
   protected function executeDrupal8() {
+    $composer = $this->jorge->getTool('composer');
+    $git = $this->jorge->getTool('git');
     $lando = $this->jorge->getTool('lando');
 
     # Do some stuff in the project root
     chdir($this->jorge->getPath());
+    if (!$git->getStatus()->clean) {
+      $this->log(LogLevel::ERROR, "Working directory not clean. Aborting.");
+      return;
+    }
+    $git->run(['checkout', $this->params['branch']]);
+    $git->run(['pull']);
+    $composer->run(['command' => 'install']);
     if (!$lando->getStatus()->running) {
       $lando->run('start');
-    }
-    $steps = [
-      'git checkout ' . $this->params['branch'],
-      'git pull',
-      'composer install',
-    ];
-    foreach ($steps as $step) {
-      $this->processStep($step);
+      $lando->updateStatus();
     }
     $lando_pull = 'pull --code=none --database=' . $this->params['database'] . ' --files=' . $this->params['files'];
     if ($this->params['rsync']) {
@@ -241,35 +242,5 @@ class ResetCommand extends Command {
       $drushInput = new ArrayInput($step);
       $drush->run($drushInput, $this->jorge->getOutput());
     }
-  }
-
-  /**
-   * Performs a step, with appropriate verbosity.
-   *
-   * @todo Fix the verbosity to be consistent with Tool
-   * @todo Refactor to receive a DDL?
-   *
-   * @param string $step The assembled command to execute
-   * @return null|int
-   * @throws \Symfony\Component\Console\Exception\RuntimeException
-   */
-  private function processStep($step) {
-    $this->log(LogLevel::NOTICE, '$ ' . $step);
-    $result = '';
-
-    if ($this->verbosity >= OutputInterface::VERBOSITY_VERBOSE) {
-      system($step, $status);
-    } else {
-      exec($step, $result, $status);
-    }
-    if ($status) {
-      $error = 'Command exited with nonzero status.';
-      if (is_array($result)) {
-        $result = implode("\n", $result);
-      }
-      $message = sprintf("> %s\n%s\n%s", $step, $error, $result);
-      throw new RuntimeException($message, $status);
-    }
-    return $status;
   }
 }

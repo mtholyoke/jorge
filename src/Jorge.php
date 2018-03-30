@@ -5,6 +5,8 @@ namespace MountHolyoke\Jorge;
 use MountHolyoke\Jorge\Command\DrushCommand;
 use MountHolyoke\Jorge\Command\HonkCommand;
 use MountHolyoke\Jorge\Command\ResetCommand;
+use MountHolyoke\Jorge\Tool\ComposerTool;
+use MountHolyoke\Jorge\Tool\GitTool;
 use MountHolyoke\Jorge\Tool\LandoTool;
 use MountHolyoke\Jorge\Tool\Tool;
 use Psr\Log\LogLevel;
@@ -29,7 +31,7 @@ use Symfony\Component\Yaml\Yaml;
  *
  * @author Jason Proctor <jproctor@mtholyoke.edu>
  * @copyright 2018 Trustees of Mount Holyoke College
- * @version 0.3.0
+ * @version 0.3.1
  */
 class Jorge extends Application {
   /** @var array $config Project configuration from .jorge/config.yml */
@@ -67,7 +69,7 @@ class Jorge extends Application {
    */
   public function configure() {
     $this->setName('Jorge');
-    $this->setVersion('0.3.0');
+    $this->setVersion('0.3.1');
 
     if ($this->rootPath = $this->findRootPath()) {
       $this->config = $this->loadConfigFile('.jorge/config.yml', LogLevel::ERROR);
@@ -90,6 +92,8 @@ class Jorge extends Application {
     $this->add(new HonkCommand());
     $this->add(new ResetCommand());
 
+    $this->addTool(new ComposerTool());
+    $this->addTool(new GitTool());
     $this->addTool(new LandoTool());
   }
 
