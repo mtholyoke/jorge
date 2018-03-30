@@ -147,22 +147,22 @@ class ResetCommand extends Command {
    */
   protected function executeDrupal8() {
     $composer = $this->jorge->getTool('composer');
+    $git = $this->jorge->getTool('git');
     $lando = $this->jorge->getTool('lando');
 
     # Do some stuff in the project root
     chdir($this->jorge->getPath());
+    if (!$git->getStatus()->clean) {
+      $this->log(LogLevel::ERROR, "Working directory not clean. Aborting.");
+      return;
+    }
+    $git->run(['checkout', $this->params['branch']]);
+    $git->run(['pull']);
+    $composer->run(['command' => 'install']);
     if (!$lando->getStatus()->running) {
       $lando->run('start');
       $lando->updateStatus();
     }
-    $steps = [
-      'git checkout ' . $this->params['branch'],
-      'git pull',
-    ];
-    foreach ($steps as $step) {
-      $this->processStep($step);
-    }
-    $composer->run(['command' => 'install']);
     $lando_pull = 'pull --code=none --database=' . $this->params['database'] . ' --files=' . $this->params['files'];
     if ($this->params['rsync']) {
       $lando_pull .= ' --rsync';
