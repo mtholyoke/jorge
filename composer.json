@@ -13,6 +13,9 @@
     "symfony/yaml": "^4.0",
     "composer/composer": "^1.6"
   },
+  "require-dev": {
+    "phpunit/phpunit": "^7"
+  },
   "autoload": {
     "psr-4": {
       "MountHolyoke\\Jorge\\": "src/"
@@ -20,5 +23,8 @@
   },
   "bin": [
     "bin/jorge"
-  ]
+  ],
+  "scripts": {
+    "phpunit": "vendor/bin/phpunit"
+  }
 }
