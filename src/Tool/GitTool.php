@@ -4,7 +4,6 @@ namespace MountHolyoke\Jorge\Tool;
 
 use MountHolyoke\Jorge\Tool\Tool;
 use Psr\Log\LogLevel;
-use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**

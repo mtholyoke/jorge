@@ -38,9 +38,9 @@ class ResetCommand extends Command {
     $this
       ->setName('reset')
       ->setDescription('Aligns code, database, and files to a specified state')
-      ->addOption('branch',   'b', InputOption::VALUE_OPTIONAL, 'Git branch to use', 'master')
-      ->addOption('database', 'd', InputOption::VALUE_OPTIONAL, 'Environment to load database from', 'dev')
-      ->addOption('files',    'f', InputOption::VALUE_OPTIONAL, 'Environment to copy files from', 'dev')
+      ->addOption('branch',   'b', InputOption::VALUE_OPTIONAL, 'Git branch to use <fg=yellow>[default: "master"]</>')
+      ->addOption('database', 'd', InputOption::VALUE_OPTIONAL, 'Environment to load database from <fg=yellow>[default: "dev"]</>')
+      ->addOption('files',    'f', InputOption::VALUE_OPTIONAL, 'Environment to copy files from <fg=yellow>[default: "dev"]</>')
       ->addOption('username', 'u', InputOption::VALUE_OPTIONAL, 'Admin account to have local password set')
       ->addOption('password', 'p', InputOption::VALUE_OPTIONAL, 'Local password for admin account')
       ->setHelp('This command updates the local git environment to the latest master, copies the latest database and files from the specified environment on Pantheon, and imports the default config suitable for a hands-on development instance.')
@@ -114,6 +114,9 @@ class ResetCommand extends Command {
    */
   protected function execute(InputInterface $input, OutputInterface $output) {
     switch ($this->appType) {
+      case 'drupal7':
+        return $this->executeDrupal7();
+        break;
       case 'drupal8':
         return $this->executeDrupal8();
         break;
@@ -133,6 +136,54 @@ class ResetCommand extends Command {
         break;
     }
     return 1;
+  }
+
+  /**
+   * Defines and runs the sequence necessary to reset a Drupal 7 site.
+   *
+   * Assumes Git and Lando for a Pantheon-hosted site.
+   * @todo Implement tools for Git
+   * @todo Construct a real return value
+   * @todo Refactor into a DDL?
+   *
+   * @return null|int
+   */
+  protected function executeDrupal7() {
+    $git = $this->jorge->getTool('git');
+    $lando = $this->jorge->getTool('lando');
+
+    # Do some stuff in the project root
+    chdir($this->jorge->getPath());
+    if (!$git->getStatus()->clean) {
+      $this->log(LogLevel::ERROR, "Working directory not clean. Aborting.");
+      return;
+    }
+    $git->run(['checkout', $this->params['branch']]);
+    $git->run(['pull']);
+    $lando->requireStarted();
+    $lando_pull = 'pull --code=none --database=' . $this->params['database'] . ' --files=' . $this->params['files'];
+    if ($this->params['rsync']) {
+      $lando_pull .= ' --rsync';
+    }
+    $lando->run($lando_pull);
+
+    $drush = $this->jorge->find('drush');
+    $drushSequence = [['drush_command' => ['cc', 'all']]];
+    if (!empty($this->params['username']) && !empty($this->params['password'])) {
+      $drushSequence[] = [
+        'drush_command' => [
+          'upwd',
+          $this->params['username'],
+          '--password="' . $this->params['password'] . '"',
+        ],
+      ];
+    }
+    $drushSequence[] = ['drush_command' => ['cc', 'all']];
+
+    foreach ($drushSequence as $step) {
+      $drushInput = new ArrayInput($step);
+      $drush->run($drushInput, $this->jorge->getOutput());
+    }
   }
 
   /**
@@ -158,10 +209,7 @@ class ResetCommand extends Command {
     $git->run(['checkout', $this->params['branch']]);
     $git->run(['pull']);
     $composer->run(['command' => 'install']);
-    if (!$lando->getStatus()->running) {
-      $lando->run('start');
-      $lando->updateStatus();
-    }
+    $lando->requireStarted();
     $lando_pull = 'pull --code=none --database=' . $this->params['database'] . ' --files=' . $this->params['files'];
     if ($this->params['rsync']) {
       $lando_pull .= ' --rsync';
