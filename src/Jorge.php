@@ -172,7 +172,7 @@ class Jorge extends Application {
    *
    * @param string|null $subdir   Subdirectory to include in the path if it exists
    * @param boolean     $required Throw an exception if subdirectory doesn't exist
-   * @return string
+   * @return string|null
    * @throws \DomainException if code requies a path but none exists
    */
   public function getPath($subdir = NULL, $required = FALSE) {
@@ -191,9 +191,10 @@ class Jorge extends Application {
         }
       }
       return $path;
-    } else {
+    } elseif ($required) {
       throw new \DomainException('Project root path is required.');
     }
+    return NULL;
   }
 
   /**
