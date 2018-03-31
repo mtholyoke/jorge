@@ -49,7 +49,7 @@ class Jorge extends Application {
   /** @var string $rootPath The fully qualified path of the project root */
   private $rootPath;
 
-  /** @var array $tools The instances of Tool\Tool available to this app. */
+  /** @var Tool\Tool[] $tools The instances of Tool\Tool available to this app. */
   private $tools;
 
   /**
@@ -72,7 +72,10 @@ class Jorge extends Application {
     $this->setVersion('0.4.0');
 
     if ($this->rootPath = $this->findRootPath()) {
+      $this->logger->notice('Project root: {%root}', ['%root' => $this->rootPath]);
       $this->config = $this->loadConfigFile('.jorge/config.yml', LogLevel::ERROR);
+    } else {
+      $this->logger->warning('Can’t find project root');
     }
 
     // If the config file specifies additional config, load that too.
@@ -116,22 +119,29 @@ class Jorge extends Application {
   }
 
   /**
+   * Gets all tools currently attached.
+   *
+   * @return Tool\Tool[] Array of Tool instances
+   */
+  public function allTools() {
+    return $this->tools;
+  }
+
+  /**
    * Traverses up the directory tree from current location until it finds the
    * project root, defined as a directory that contains a .jorge directory.
    *
    * @return string|false full path to document root, or FALSE if none found
    */
-  private function findRootPath() {
+  private static function findRootPath() {
     $wd = explode('/', getcwd());
     while (!empty($wd) && $cwd = implode('/', $wd)) {
       $path = $cwd . '/.jorge';
       if (is_dir($path) && is_readable($path)) {
-        $this->logger->notice('Project root: {%root}', ['%root' => $cwd]);
         return $cwd;
       }
       array_pop($wd);
     }
-    $this->logger->warning('Can’t find project root');
     return FALSE;
   }
 
@@ -252,7 +262,7 @@ class Jorge extends Application {
     * @param string $path The path to sanitize
     * @return string
     */
-  protected function sanitizePath($path) {
+  protected static function sanitizePath($path) {
     # Strip leading '/', './', or '../'.
     $path = preg_replace('/^(\/|\.\/|\.\.\/)*/', '', $path);
     // TODO: what else?
