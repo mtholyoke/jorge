@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
-final class JorgePreTest extends TestCase {
+final class JorgeDefaultTest extends TestCase {
   protected $jorge;
 
   protected function setUp() {
@@ -31,7 +31,7 @@ final class JorgePreTest extends TestCase {
   /**
    * Test default configuration.
    */
-  public function testDefaultConfigure(): void {
+  public function testConfigure(): void {
     $defaultCommands = $this->jorge->all();
     $defaultTools = $this->jorge->allTools();
 
@@ -39,7 +39,6 @@ final class JorgePreTest extends TestCase {
 
     $this->assertSame('Jorge', $this->jorge->getName());
     $this->assertRegExp('/\d\.\d\.\d/', $this->jorge->getVersion());
-
     $this->assertSame(__DIR__, $this->jorge->getPath('tests', TRUE));
     $this->assertSame('jorge', $this->jorge->getConfig('appType'));
 
@@ -47,15 +46,4 @@ final class JorgePreTest extends TestCase {
     $this->assertGreaterThan(count($defaultCommands), count($this->jorge->all()));
     $this->assertGreaterThan(count($defaultTools), count($this->jorge->allTools()));
   }
-
-
-  // TODO: test pathfinding and loading config given various mocks/fixtures:
-  // config['includeconfig']
-  // static findRootPath()
-  // getConfig()
-  // getPath()
-  // loadConfigFile()
-  // static sanitizePath()
-
-
 }
