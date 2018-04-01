@@ -107,7 +107,7 @@ class ComposerTool extends Tool {
     if (($rootPath = $this->jorge->getPath()) === NULL) {
       return;
     }
-    $composerJson = $rootPath . '/composer.json';
+    $composerJson = $rootPath . DIRECTORY_SEPARATOR . 'composer.json';
     if (!is_file($composerJson)) {
       return;
     }

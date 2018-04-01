@@ -134,9 +134,9 @@ class Jorge extends Application {
    * @return string|false full path to document root, or FALSE if none found
    */
   private static function findRootPath() {
-    $wd = explode('/', getcwd());
-    while (!empty($wd) && $cwd = implode('/', $wd)) {
-      $path = $cwd . '/.jorge';
+    $wd = explode(DIRECTORY_SEPARATOR, getcwd());
+    while (!empty($wd) && $cwd = implode(DIRECTORY_SEPARATOR, $wd)) {
+      $path = $cwd . DIRECTORY_SEPARATOR . '.jorge';
       if (is_dir($path) && is_readable($path)) {
         return $cwd;
       }
@@ -179,8 +179,8 @@ class Jorge extends Application {
     if ($path = $this->rootPath) {
       $subdir = $this->sanitizePath($subdir);
       if (!empty($subdir)) {
-        if (is_dir($path . '/' . $subdir)) {
-          $path .= '/' . $subdir;
+        if (is_dir($path . DIRECTORY_SEPARATOR . $subdir)) {
+          $path .= DIRECTORY_SEPARATOR . $subdir;
         } else {
           $s = ['%subdir' => $subdir];
           if ($required) {
@@ -218,7 +218,7 @@ class Jorge extends Application {
    */
   public function loadConfigFile($file, $level = LogLevel::WARNING) {
     $file = $this->sanitizePath($file);
-    $pathfile = $this->rootPath . '/' . $file;
+    $pathfile = $this->rootPath . DIRECTORY_SEPARATOR . $file;
     if (is_file($pathfile) && is_readable($pathfile)) {
       // TODO: sanitize values?
       return Yaml::parseFile($pathfile);
@@ -265,6 +265,7 @@ class Jorge extends Application {
     */
   protected static function sanitizePath($path) {
     # Strip leading '/', './', or '../'.
+    // TODO: DIRECTORY_SEPARATOR instead of /
     $path = preg_replace('/^(\/|\.\/|\.\.\/)*/', '', $path);
     // TODO: what else?
     return $path;
