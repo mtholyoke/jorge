@@ -1,6 +1,8 @@
 <?php
 declare(strict_types = 1);
 
+namespace MountHolyoke\JorgeTests;
+
 use MountHolyoke\Jorge\Jorge;
 use PHPUnit\Framework\TestCase;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
