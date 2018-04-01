@@ -5,12 +5,13 @@ use MountHolyoke\Jorge\Jorge;
 use PHPUnit\Framework\TestCase;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Yaml\Yaml;
 
 final class JorgePreTest extends TestCase {
   protected $jorge;
   protected $tempDir;
 
-  protected function setUp() {
+  protected function setUp(): void {
     $this->jorge = new Jorge();
     $output = $this->jorge->getOutput();
     $output->setVerbosity(OutputInterface::VERBOSITY_QUIET);
@@ -19,7 +20,7 @@ final class JorgePreTest extends TestCase {
     chdir($this->tempDir->path());
   }
 
-  protected function tearDown() {
+  protected function tearDown(): void {
     $this->tempDir->delete();
   }
 
@@ -79,7 +80,7 @@ final class JorgePreTest extends TestCase {
   /**
    * Generate random subdirectory.
    */
-  public function testSanitizePath() {
+  public function testSanitizePath(): void {
     $root = realpath($this->tempDir->path());
     $randir = bin2hex(random_bytes(4));
     $subdir = $root . DIRECTORY_SEPARATOR . $randir;
@@ -109,9 +110,53 @@ final class JorgePreTest extends TestCase {
     $this->assertSame('X', $this->jorge->getConfig($configKey . 'x', 'X'));
   }
 
-  // TODO: test pathfinding and loading config given various mocks/fixtures:
-  // config['includeconfig']
-  // loadConfigFile()
+  /**
+   * Make sure we can supplement with include_config.
+   */
+  public function testLoadConfigFile(): void {
+    $root = realpath($this->tempDir->path());
 
+    $mainOuterKey = bin2hex(random_bytes(4));
+    $mainInnerKey1 = bin2hex(random_bytes(4));
+    $mainInnerVal1 = bin2hex(random_bytes(4));
+    $mainInnerKey2 = bin2hex(random_bytes(4));
+    $mainInnerVal2 = bin2hex(random_bytes(4));
+    $newConfigName = bin2hex(random_bytes(4)) . '.yml';
+    $mainFileYaml = Yaml::dump([
+      $mainOuterKey => [
+        $mainInnerKey1 => $mainInnerVal1,
+        $mainInnerKey2 => $mainInnerVal2,
+      ],
+      'include_config' => $newConfigName,
+    ]);
+    $mainConfigFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', 'config.yml']);
+    file_put_contents($mainConfigFile, $mainFileYaml);
 
+    do {
+      $newInnerVal2 = bin2hex(random_bytes(4));  # append to existing
+    } while ($newInnerVal2 == $mainInnerVal2);
+    $newInnerKey3 = bin2hex(random_bytes(4));    # supplement inner
+    $newInnerVal3 = bin2hex(random_bytes(4));
+    $newOuterKey = bin2hex(random_bytes(4));     # supplement outer
+    $newOuterVal = bin2hex(random_bytes(4));
+    $newFileYaml = Yaml::dump([
+      $mainOuterKey => [
+        $mainInnerKey2 => $newInnerVal2,
+        $newInnerKey3  => $newInnerVal3,
+      ],
+      $newOuterKey => $newOuterVal,
+    ]);
+    $newConfigFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', $newConfigName]);
+    file_put_contents($newConfigFile, $newFileYaml);
+
+    $this->jorge->configure();
+
+    $combined = [
+      $mainInnerKey1 => $mainInnerVal1,
+      $mainInnerKey2 => [$mainInnerVal2, $newInnerVal2],
+      $newInnerKey3  => $newInnerVal3,
+    ];
+    $this->assertSame($combined, $this->jorge->getConfig($mainOuterKey));
+    $this->assertSame($newOuterVal, $this->jorge->getConfig($newOuterKey));
+  }
 }
