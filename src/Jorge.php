@@ -72,10 +72,10 @@ class Jorge extends Application {
     $this->setVersion('0.4.0');
 
     if ($this->rootPath = $this->findRootPath()) {
-      $this->logger->notice('Project root: {%root}', ['%root' => $this->rootPath]);
+      $this->log(LogLevel::NOTICE, 'Project root: {%root}', ['%root' => $this->rootPath]);
       $this->config = $this->loadConfigFile('.jorge' . DIRECTORY_SEPARATOR . 'config.yml', LogLevel::ERROR);
     } else {
-      $this->logger->warning('Can’t find project root');
+      $this->log(LogLevel::WARNING, 'Can’t find project root');
     }
 
     // If the config file specifies additional config, load that too.
@@ -85,7 +85,7 @@ class Jorge extends Application {
       }
       foreach ($this->config['include_config'] as $file) {
         $configFile = '.jorge' . DIRECTORY_SEPARATOR . $file;
-        $this->logger->debug('Including config file {%filename}', ['%filename' => $configFile]);
+        $this->log(LogLevel::DEBUG, 'Including config file {%filename}', ['%filename' => $configFile]);
         $addition = $this->loadConfigFile($configFile);
         $this->config = array_merge_recursive($this->config, $addition);
       }
@@ -190,7 +190,7 @@ class Jorge extends Application {
       if ($required) {
         throw new \DomainException('Subdirectory "' . $subdir . '" is required.');
       } else {
-        $this->logger->warning('No "{%subdir}" subdirectory in root path', ['%subdir' => $subdir]);
+        $this->log(LogLevel::WARNING, 'No "{%subdir}" subdirectory in root path', ['%subdir' => $subdir]);
       }
     } elseif ($required) {
       throw new \DomainException('Project root path is required.');
@@ -206,7 +206,7 @@ class Jorge extends Application {
     if (array_key_exists($name, $this->tools) && !empty($this->tools[$name])) {
       return $this->tools[$name];
     }
-    $this->logger->warning('Can’t get tool "{%tool}"', ['%tool' => $name]);
+    $this->log(LogLevel::WARNING, 'Can’t get tool "{%tool}"', ['%tool' => $name]);
     return NULL;
   }
 
