@@ -36,38 +36,6 @@ final class JorgePreTest extends TestCase {
   }
 
   /**
-   * Finds the project root from a random subdirectory.
-   */
-  public function testFindRootPath(): void {
-    $root = realpath($this->tempDir->path());
-    $depth = 2 + random_int(0, 4);
-    $path = $root;
-    for ($i = 0; $i < $depth; $i++) {
-      $path .= DIRECTORY_SEPARATOR . bin2hex(random_bytes(4));
-      mkdir($path);
-    }
-    chdir($path);
-    $this->jorge->configure();
-    $this->assertSame($root, $this->jorge->getPath());
-  }
-
-  /**
-   * Finds the project root from a random subdirectory.
-   */
-  public function testFindRootPath(): void {
-    $root = realpath($this->tempDir->path());
-    $depth = 2 + random_int(0, 4);
-    $path = $root;
-    for ($i = 0; $i < $depth; $i++) {
-      $path .= DIRECTORY_SEPARATOR . bin2hex(random_bytes(4));
-      mkdir($path);
-    }
-    chdir($path);
-    $this->jorge->configure();
-    $this->assertSame($root, $this->jorge->getPath());
-  }
-
-  /**
    * Tries configure() when .jorge is empty.
    */
   public function testEmptyDotJorge(): void {
@@ -75,6 +43,22 @@ final class JorgePreTest extends TestCase {
     $this->jorge->configure();
     $this->assertSame($root, $this->jorge->getPath());
     $this->assertSame([], $this->jorge->getConfig());
+  }
+
+  /**
+   * Finds the project root from a random subdirectory.
+   */
+  public function testFindRootPath(): void {
+    $root = realpath($this->tempDir->path());
+    $depth = 2 + random_int(0, 4);
+    $path = $root;
+    for ($i = 0; $i < $depth; $i++) {
+      $path .= DIRECTORY_SEPARATOR . bin2hex(random_bytes(4));
+      mkdir($path);
+    }
+    chdir($path);
+    $this->jorge->configure();
+    $this->assertSame($root, $this->jorge->getPath());
   }
 
   /**
@@ -87,7 +71,7 @@ final class JorgePreTest extends TestCase {
     mkdir($subdir);
     $this->jorge->configure();
     $this->assertSame($subdir, $this->jorge->getPath($randir));
-    $this->assertSame($root, $this->jorge->getPath($randir . 'x'));
+    $this->assertNull($this->jorge->getPath($randir . 'x'));
     $this->expectException(\DomainException::class);
     $this->jorge->getPath($randir . 'x', TRUE);
   }

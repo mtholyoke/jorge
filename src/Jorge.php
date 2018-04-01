@@ -181,18 +181,17 @@ class Jorge extends Application {
   public function getPath($subdir = NULL, $required = FALSE) {
     if ($path = $this->rootPath) {
       $subdir = $this->sanitizePath($subdir);
-      if (!empty($subdir)) {
-        if (is_dir($path . DIRECTORY_SEPARATOR . $subdir)) {
-          $path .= DIRECTORY_SEPARATOR . $subdir;
-        } else {
-          if ($required) {
-            throw new \DomainException('Subdirectory "' . $subdir . '" is required.');
-          } else {
-            $this->logger->warning('No "{%subdir}" subdirectory in root path', ['%subdir' => $subdir]);
-          }
-        }
+      if (empty($subdir)) {
+        return $path;
       }
-      return $path;
+      if (is_dir($path . DIRECTORY_SEPARATOR . $subdir)) {
+        return $path . DIRECTORY_SEPARATOR . $subdir;
+      }
+      if ($required) {
+        throw new \DomainException('Subdirectory "' . $subdir . '" is required.');
+      } else {
+        $this->logger->warning('No "{%subdir}" subdirectory in root path', ['%subdir' => $subdir]);
+      }
     } elseif ($required) {
       throw new \DomainException('Project root path is required.');
     }
