@@ -25,10 +25,22 @@ final class JorgePreTest extends TestCase {
    * Tries configure() when there is no .jorge subdirectory.
    */
   public function testNoDotJorge(): void {
-    $root = $this->tempDir->path();
+    $root = realpath($this->tempDir->path());
     chdir($root);
     $this->jorge->configure();
     $this->assertNull($this->jorge->getPath());
+  }
+
+  /**
+   * Tries configure() when .jorge is empty.
+   */
+  public function testEmptyDotJorge(): void {
+    $root = realpath($this->tempDir->path());
+    mkdir($root . DIRECTORY_SEPARATOR . '.jorge');
+    chdir($root);
+    $this->jorge->configure();
+    $this->assertSame($root, $this->jorge->getPath());
+    $this->assertSame([], $this->jorge->getConfig());
   }
 
 

@@ -73,7 +73,7 @@ class Jorge extends Application {
 
     if ($this->rootPath = $this->findRootPath()) {
       $this->logger->notice('Project root: {%root}', ['%root' => $this->rootPath]);
-      $this->config = $this->loadConfigFile('.jorge/config.yml', LogLevel::ERROR);
+      $this->config = $this->loadConfigFile('.jorge' . DIRECTORY_SEPARATOR . 'config.yml', LogLevel::ERROR);
     } else {
       $this->logger->warning('Can’t find project root');
     }
@@ -84,7 +84,7 @@ class Jorge extends Application {
         $this->config['include_config'] = [ $this->config['include_config'] ];
       }
       foreach ($this->config['include_config'] as $file) {
-        $configFile = '.jorge/' . $file;
+        $configFile = '.jorge' . DIRECTORY_SEPARATOR . $file;
         $this->logger->debug('Including config file {%filename}', ['%filename' => $configFile]);
         $addition = $this->loadConfigFile($configFile);
         $this->config = array_merge_recursive($this->config, $addition);
@@ -148,10 +148,13 @@ class Jorge extends Application {
   /**
    * Return a parameter from configuration.
    *
-   * @param string $key     The key to get from config
-   * @param mixed  $default The value to return if key not present
+   * @param string|null $key     The key to get from config, NULL for all
+   * @param mixed       $default The value to return if key not present
    */
-  public function getConfig($key, $default = NULL) {
+  public function getConfig($key = NULL, $default = NULL) {
+    if ($key === NULL) {
+      return $this->config;
+    }
     if (array_key_exists($key, $this->config)) {
       return $this->config[$key];
     }
