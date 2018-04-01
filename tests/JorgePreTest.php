@@ -77,6 +77,23 @@ final class JorgePreTest extends TestCase {
   }
 
   /**
+   * Generate random subdirectory.
+   */
+  public function testSanitizePath() {
+    $root = realpath($this->tempDir->path());
+    $randir = bin2hex(random_bytes(4));
+    $subdir = $root . DIRECTORY_SEPARATOR . $randir;
+    mkdir($subdir);
+    $this->jorge->configure();
+    $prefixes = ['/', '../', './..//./ /'];
+    foreach ($prefixes as $prefix) {
+      $this->assertSame($root, $this->jorge->getPath($prefix));
+      $this->assertSame($subdir, $this->jorge->getPath($prefix . $randir));
+      $this->assertNull($this->jorge->getPath($prefix . $randir . 'x'));
+    }
+  }
+
+  /**
    * Generate random config file.
    */
   public function testGetConfig(): void {
@@ -95,7 +112,6 @@ final class JorgePreTest extends TestCase {
   // TODO: test pathfinding and loading config given various mocks/fixtures:
   // config['includeconfig']
   // loadConfigFile()
-  // static sanitizePath()
 
 
 }

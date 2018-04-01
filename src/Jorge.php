@@ -242,12 +242,12 @@ class Jorge extends Application {
     }
   }
 
-   /**
-    * Encapsulates the parent::run() method so we don’t have to expose the
-    * instantiated IO interface objects.
-    *
-    * {@inheritDoc}
-    */
+  /**
+   * Encapsulates the parent::run() method so we don’t have to expose the
+   * instantiated IO interface objects.
+   *
+   * {@inheritDoc}
+   */
   public function run(InputInterface $input = NULL, OutputInterface $output = NULL) {
     if (empty($input)) {
       $input = $this->input;
@@ -258,16 +258,17 @@ class Jorge extends Application {
     parent::run($input, $output);
   }
 
-   /**
-    * Sanitizes a path or filename so it’s safe to use.
-    *
-    * @param string $path The path to sanitize
-    * @return string
-    */
+  /**
+   * Sanitizes a path or filename so it’s safe to use.
+   *
+   * @param string $path The path to sanitize
+   * @return string
+   */
   protected static function sanitizePath($path) {
+    $path = trim($path);
     # Strip leading '/', './', or '../'.
-    // TODO: DIRECTORY_SEPARATOR instead of /
-    $path = preg_replace('/^(\/|\.\/|\.\.\/)*/', '', $path);
+    $ds = (DIRECTORY_SEPARATOR == '#') ? '\#' : DIRECTORY_SEPARATOR;
+    $path = preg_replace('#^(\.{0,2}' . $ds . '\s*)*#', '', $path);
     // TODO: what else?
     return $path;
   }
