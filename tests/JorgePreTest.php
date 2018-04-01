@@ -31,6 +31,24 @@ final class JorgePreTest extends TestCase {
     rmdir($root . DIRECTORY_SEPARATOR . '.jorge');
     $this->jorge->configure();
     $this->assertNull($this->jorge->getPath());
+    $this->expectException(\DomainException::class);
+    $this->jorge->getPath('', TRUE);
+  }
+
+  /**
+   * Finds the project root from a random subdirectory.
+   */
+  public function testFindRootPath(): void {
+    $root = realpath($this->tempDir->path());
+    $depth = 2 + random_int(0, 4);
+    $path = $root;
+    for ($i = 0; $i < $depth; $i++) {
+      $path .= DIRECTORY_SEPARATOR . bin2hex(random_bytes(4));
+      mkdir($path);
+    }
+    chdir($path);
+    $this->jorge->configure();
+    $this->assertSame($root, $this->jorge->getPath());
   }
 
   /**
@@ -70,6 +88,8 @@ final class JorgePreTest extends TestCase {
     $this->jorge->configure();
     $this->assertSame($subdir, $this->jorge->getPath($randir));
     $this->assertSame($root, $this->jorge->getPath($randir . 'x'));
+    $this->expectException(\DomainException::class);
+    $this->jorge->getPath($randir . 'x', TRUE);
   }
 
   /**
@@ -90,7 +110,6 @@ final class JorgePreTest extends TestCase {
 
   // TODO: test pathfinding and loading config given various mocks/fixtures:
   // config['includeconfig']
-  // getPath() Exceptions
   // loadConfigFile()
   // static sanitizePath()
 

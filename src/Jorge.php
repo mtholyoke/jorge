@@ -185,11 +185,10 @@ class Jorge extends Application {
         if (is_dir($path . DIRECTORY_SEPARATOR . $subdir)) {
           $path .= DIRECTORY_SEPARATOR . $subdir;
         } else {
-          $s = ['%subdir' => $subdir];
           if ($required) {
-            throw new \DomainException('Subdirectory "{%subdir}" is required.', $s);
+            throw new \DomainException('Subdirectory "' . $subdir . '" is required.');
           } else {
-            $this->logger->warning('No "{%subdir}" subdirectory in root path', $s);
+            $this->logger->warning('No "{%subdir}" subdirectory in root path', ['%subdir' => $subdir]);
           }
         }
       }
