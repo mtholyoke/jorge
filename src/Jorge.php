@@ -111,8 +111,8 @@ class Jorge extends Application {
    */
   public function addTool(Tool $tool, $executable = '') {
     $name = $tool->setApplication($this, $executable)->getName();
-    if (empty($name)) {
-      throw new LogicException(sprintf('The tool defined in "%s" has an invalid or empty name.', get_class($tool)));
+    if (!empty($this->tools) && array_key_exists($name, $this->tools)) {
+      throw new LogicException(sprintf('The tool defined in "%s" duplicates an existing tool’s name.', get_class($tool)));
     }
     $this->tools[$name] = $tool;
     return $tool;
@@ -256,7 +256,7 @@ class Jorge extends Application {
     if (empty($output)) {
       $output = $this->output;
     }
-    parent::run($input, $output);
+    return parent::run($input, $output);
   }
 
   /**

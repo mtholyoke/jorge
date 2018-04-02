@@ -83,6 +83,6 @@ class MockJorge extends Jorge {
    * {@inheritDoc}
    */
   public function run(InputInterface $input = NULL, OutputInterface $output = NULL) {
-    parent::run(NULL, $this->getOutput());
+    return parent::run(NULL, $this->getOutput());
   }
 }
