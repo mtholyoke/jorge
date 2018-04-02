@@ -18,8 +18,9 @@ final class JorgePreTest extends TestCase {
     $output = $this->jorge->getOutput();
     $output->setVerbosity(OutputInterface::VERBOSITY_QUIET);
     $this->tempDir = (new TemporaryDirectory())->create();
-    mkdir($this->tempDir->path() . DIRECTORY_SEPARATOR . '.jorge');
-    chdir($this->tempDir->path());
+    $root = realpath($this->tempDir->path());
+    mkdir($root . DIRECTORY_SEPARATOR . '.jorge');
+    chdir($root);
   }
 
   protected function tearDown(): void {
@@ -73,10 +74,10 @@ final class JorgePreTest extends TestCase {
     $subdir = $root . DIRECTORY_SEPARATOR . $randir;
     mkdir($subdir);
     $this->jorge->configure();
-    $this->assertSame($subdir, $this->jorge->getPath($randir));
-    $this->assertNull($this->jorge->getPath($randir . 'x'));
+    $this->assertSame($subdir, $this->jorge->getPath("$randir"));
+    $this->assertNull($this->jorge->getPath("${randir}x"));
     $this->expectException(\DomainException::class);
-    $this->jorge->getPath($randir . 'x', TRUE);
+    $this->jorge->getPath("${randir}x", TRUE);
   }
 
   /**
@@ -115,12 +116,12 @@ final class JorgePreTest extends TestCase {
     $configFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', 'config.yml']);
     $configKey = bin2hex(random_bytes(4));
     $configValue = bin2hex(random_bytes(4));
-    file_put_contents($configFile, "{$configKey}: {$configValue}\n");
+    file_put_contents($configFile, "${configKey}: $configValue\n");
     $this->jorge->configure();
-    $this->assertSame((string)$configValue, $this->jorge->getConfig($configKey));
-    $this->assertSame((string)$configValue, $this->jorge->getConfig($configKey, 'X'));
-    $this->assertNull($this->jorge->getConfig($configKey . 'x'));
-    $this->assertSame('X', $this->jorge->getConfig($configKey . 'x', 'X'));
+    $this->assertSame("$configValue", $this->jorge->getConfig("$configKey"));
+    $this->assertSame("$configValue", $this->jorge->getConfig("$configKey", 'X'));
+    $this->assertNull($this->jorge->getConfig("${configKey}x"));
+    $this->assertSame('X', $this->jorge->getConfig("${configKey}x", 'X'));
   }
 
   /**
@@ -136,9 +137,9 @@ final class JorgePreTest extends TestCase {
     $mainInnerVal2 = bin2hex(random_bytes(4));
     $newConfigName = bin2hex(random_bytes(4)) . '.yml';
     $mainFileYaml = Yaml::dump([
-      (string)$mainOuterKey => [
-        (string)$mainInnerKey1 => (string)$mainInnerVal1,
-        (string)$mainInnerKey2 => (string)$mainInnerVal2,
+      "$mainOuterKey" => [
+        "$mainInnerKey1" => "$mainInnerVal1",
+        "$mainInnerKey2" => "$mainInnerVal2",
       ],
       'include_config' => $newConfigName,
     ]);
@@ -153,11 +154,11 @@ final class JorgePreTest extends TestCase {
     $newOuterKey = bin2hex(random_bytes(4));     # supplement outer
     $newOuterVal = bin2hex(random_bytes(4));
     $newFileYaml = Yaml::dump([
-      (string)$mainOuterKey => [
-        (string)$mainInnerKey2 => (string)$newInnerVal2,
-        (string)$newInnerKey3  => (string)$newInnerVal3,
+      "$mainOuterKey" => [
+        "$mainInnerKey2" => "$newInnerVal2",
+        "$newInnerKey3"  => "$newInnerVal3",
       ],
-      (string)$newOuterKey => (string)$newOuterVal,
+      "$newOuterKey" => "$newOuterVal",
     ]);
     $newConfigFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', $newConfigName]);
     file_put_contents($newConfigFile, $newFileYaml);
@@ -165,11 +166,11 @@ final class JorgePreTest extends TestCase {
     $this->jorge->configure();
 
     $combined = [
-      (string)$mainInnerKey1 => (string)$mainInnerVal1,
-      (string)$mainInnerKey2 => [(string)$mainInnerVal2, (string)$newInnerVal2],
-      (string)$newInnerKey3  => (string)$newInnerVal3,
+      "$mainInnerKey1" => "$mainInnerVal1",
+      "$mainInnerKey2" => ["$mainInnerVal2", "$newInnerVal2"],
+      "$newInnerKey3"  => "$newInnerVal3",
     ];
-    $this->assertSame($combined, $this->jorge->getConfig($mainOuterKey));
-    $this->assertSame($newOuterVal, $this->jorge->getConfig($newOuterKey));
+    $this->assertSame($combined, $this->jorge->getConfig("$mainOuterKey"));
+    $this->assertSame("$newOuterVal", $this->jorge->getConfig("$newOuterKey"));
   }
 }
