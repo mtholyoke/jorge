@@ -37,7 +37,7 @@ The project’s root directory should contain a subdirectory `.jorge`, which sho
 
 In `.jorge/config.yml`, you **must** have the key `appType`. Currently, only `drupal7`, `drupal8`, and `jorge` are recognized as values.
 
-Optionally, you may also have the key `include_config`, which specifies a list of additional configuration files to include from the `.jorge` directory, to be loaded in the order specified. Values in those files will override any previously loaded settings, including the main `config.yml`.
+Optionally, you may also have the key `include_config`, which specifies a list of additional configuration files to include from the `.jorge` directory, to be loaded in the order specified. Values in those files will override any previously loaded settings, including the main `config.yml`. Note that `include_config` is only allowed in the main `config.yml` file.
 
 ### Drupal 7 or 8 Configuration
 
