@@ -79,7 +79,7 @@ class Jorge extends Application {
     }
 
     // If the config file specifies additional config, load that too.
-    if (array_key_exists('include_config', $this->config)) {
+    if (!empty($this->config) && array_key_exists('include_config', $this->config)) {
       if (!is_array($this->config['include_config'])) {
         $this->config['include_config'] = [ $this->config['include_config'] ];
       }
@@ -222,7 +222,8 @@ class Jorge extends Application {
     $pathfile = $this->rootPath . DIRECTORY_SEPARATOR . $file;
     if (is_file($pathfile) && is_readable($pathfile)) {
       // TODO: sanitize values?
-      return Yaml::parseFile($pathfile);
+      $parsed = Yaml::parseFile($pathfile) ?: [];
+      return $parsed;
     }
     $this->log($level, 'Can’t read config file {%filename}', ['%filename' => $pathfile]);
     return [];
@@ -234,7 +235,7 @@ class Jorge extends Application {
    * @param string|null $level   What log level to use, or NULL to ignore
    * @param string      $message May need $context interpolation
    * @param array       $context Variable substitutions for $message
-   * @see Symfony\Component\Console\Logger\ConsoleLogger
+   * @see \Symfony\Component\Console\Logger\ConsoleLogger
    */
   public function log($level, $message, array $context = []) {
     if ($level !== NULL) {

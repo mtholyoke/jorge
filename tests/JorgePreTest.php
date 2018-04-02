@@ -97,6 +97,17 @@ final class JorgePreTest extends TestCase {
   }
 
   /**
+   * Generate empty config file.
+   */
+  public function testEmptyConfig(): void {
+    $root = realpath($this->tempDir->path());
+    $configFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', 'config.yml']);
+    touch($configFile);
+    $this->jorge->configure();
+    $this->assertSame([], $this->jorge->getConfig());
+  }
+
+  /**
    * Generate random config file.
    */
   public function testGetConfig(): void {
