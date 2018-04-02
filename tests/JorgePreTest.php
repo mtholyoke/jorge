@@ -116,12 +116,12 @@ final class JorgePreTest extends TestCase {
     $configFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', 'config.yml']);
     $configKey = bin2hex(random_bytes(4));
     $configValue = bin2hex(random_bytes(4));
-    file_put_contents($configFile, "${configKey}: $configValue\n");
+    file_put_contents($configFile, "x$configKey : x$configValue\n");
     $this->jorge->configure();
-    $this->assertSame("$configValue", $this->jorge->getConfig("$configKey"));
-    $this->assertSame("$configValue", $this->jorge->getConfig("$configKey", 'X'));
-    $this->assertNull($this->jorge->getConfig("${configKey}x"));
-    $this->assertSame('X', $this->jorge->getConfig("${configKey}x", 'X'));
+    $this->assertSame("x$configValue", $this->jorge->getConfig("x$configKey"));
+    $this->assertSame("x$configValue", $this->jorge->getConfig("x$configKey", 'X'));
+    $this->assertNull($this->jorge->getConfig("xx$configKey"));
+    $this->assertSame('X', $this->jorge->getConfig("xx$configKey", 'X'));
   }
 
   /**
@@ -137,9 +137,9 @@ final class JorgePreTest extends TestCase {
     $mainInnerVal2 = bin2hex(random_bytes(4));
     $newConfigName = bin2hex(random_bytes(4)) . '.yml';
     $mainFileYaml = Yaml::dump([
-      "$mainOuterKey" => [
-        "$mainInnerKey1" => "$mainInnerVal1",
-        "$mainInnerKey2" => "$mainInnerVal2",
+      "x$mainOuterKey" => [
+        "x$mainInnerKey1" => "x$mainInnerVal1",
+        "x$mainInnerKey2" => "x$mainInnerVal2",
       ],
       'include_config' => $newConfigName,
     ]);
@@ -154,11 +154,11 @@ final class JorgePreTest extends TestCase {
     $newOuterKey = bin2hex(random_bytes(4));     # supplement outer
     $newOuterVal = bin2hex(random_bytes(4));
     $newFileYaml = Yaml::dump([
-      "$mainOuterKey" => [
-        "$mainInnerKey2" => "$newInnerVal2",
-        "$newInnerKey3"  => "$newInnerVal3",
+      "x$mainOuterKey" => [
+        "x$mainInnerKey2" => "x$newInnerVal2",
+        "x$newInnerKey3"  => "x$newInnerVal3",
       ],
-      "$newOuterKey" => "$newOuterVal",
+      "x$newOuterKey" => "x$newOuterVal",
     ]);
     $newConfigFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', $newConfigName]);
     file_put_contents($newConfigFile, $newFileYaml);
@@ -166,11 +166,11 @@ final class JorgePreTest extends TestCase {
     $this->jorge->configure();
 
     $combined = [
-      "$mainInnerKey1" => "$mainInnerVal1",
-      "$mainInnerKey2" => ["$mainInnerVal2", "$newInnerVal2"],
-      "$newInnerKey3"  => "$newInnerVal3",
+      "x$mainInnerKey1" => "x$mainInnerVal1",
+      "x$mainInnerKey2" => ["x$mainInnerVal2", "x$newInnerVal2"],
+      "x$newInnerKey3"  => "x$newInnerVal3",
     ];
-    $this->assertSame($combined, $this->jorge->getConfig("$mainOuterKey"));
-    $this->assertSame("$newOuterVal", $this->jorge->getConfig("$newOuterKey"));
+    $this->assertSame($combined, $this->jorge->getConfig("x$mainOuterKey"));
+    $this->assertSame("x$newOuterVal", $this->jorge->getConfig("x$newOuterKey"));
   }
 }
