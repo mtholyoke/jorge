@@ -9,6 +9,7 @@ use MountHolyoke\Jorge\Tool\Tool;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
+use Symfony\Component\Console\Exception\LogicException;
 use Symfony\Component\Console\Output\OutputInterface;
 
 final class JorgeTest extends TestCase {
@@ -96,7 +97,7 @@ final class JorgeTest extends TestCase {
     $this->assertSame($wlnExpect, end($this->jorge->messages));
   }
 
-  public function testGetTool(): void {
+  public function testAddToolGetTool(): void {
     # Find a name we don’t have and verify that getTool() responds correctly.
     do {
       $toolName = bin2hex(random_bytes(4));
@@ -110,6 +111,10 @@ final class JorgeTest extends TestCase {
     $this->jorge->addTool($toolInstance, 'echo');
     $this->assertArrayHasKey($toolName, $this->jorge->allTools());
     $this->assertSame($toolInstance, $this->jorge->getTool($toolName));
+
+    # Add another tool with that name and verify that we get an exception.
+    $this->expectException(LogicException::class);
+    $this->jorge->addTool(new Tool($toolName), 'ls');
 
     # This should echo the tool name without checking enablement.
     $toolInstance->runThis($toolName);

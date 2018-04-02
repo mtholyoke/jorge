@@ -48,4 +48,15 @@ final class JorgeDefaultTest extends TestCase {
     $this->assertGreaterThan(count($defaultCommands), count($this->jorge->all()));
     $this->assertGreaterThan(count($defaultTools), count($this->jorge->allTools()));
   }
+
+  /**
+   * Make sure Jorge runs without errors.
+   */
+  public function testRun(): void {
+    $this->jorge->configure();
+    $this->jorge->setAutoExit(FALSE);
+    $output = $this->jorge->getOutput();
+    $output->setVerbosity(OutputInterface::VERBOSITY_QUIET);
+    $this->assertSame(0, $this->jorge->run());
+  }
 }
