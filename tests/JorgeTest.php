@@ -84,15 +84,15 @@ final class JorgeTest extends TestCase {
     ];
     foreach ($logLevels as $logLevel) {
       $logString = bin2hex(random_bytes(4));
-      $logExpect = [$logLevel, (string)$logString, []];
-      $this->jorge->log($logLevel, $logString);
+      $logExpect = [$logLevel, "$logString", []];
+      $this->jorge->log($logLevel, "$logString");
       $this->assertSame($logExpect, end($this->jorge->messages));
     }
 
     # Verify that writeln works as expected:
     $wlnString = bin2hex(random_bytes(4));
-    $wlnExpect = ['writeln', (string)$wlnString];
-    $this->jorge->getOutput()->writeln($wlnString);
+    $wlnExpect = ['writeln', "$wlnString"];
+    $this->jorge->getOutput()->writeln("$wlnString");
     $this->assertSame($wlnExpect, end($this->jorge->messages));
   }
 
@@ -116,6 +116,20 @@ final class JorgeTest extends TestCase {
     $this->assertSame(['writeln', $toolName], end($this->jorge->messages));
   }
 
-  // TODO test post-config functionality
-  // run()
+  /**
+   * @todo How do we actually verify this is the normal start?
+   */
+  public function testRun(): void {
+    $this->jorge->messages = [];
+    $this->jorge->run();
+
+    # Number of lines of output is predictable.
+    $numLines = 22 + (2 * count($this->jorge->all()));
+    $this->assertSame($numLines, count($this->jorge->messages));
+
+    # None of the lines should indicate an error.
+    foreach ($this->jorge->messages as $message) {
+      $this->assertNotRegExp('/<(warning|error|critical|alert|emergency)>/', $message[1]);
+    }
+  }
 }

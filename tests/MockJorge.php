@@ -5,7 +5,9 @@ namespace MountHolyoke\JorgeTests;
 
 use MountHolyoke\Jorge\Jorge;
 use MountHolyoke\JorgeTests\MockConsoleOutput;
+use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Logger\ConsoleLogger;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * This is a wrapper class so we can capture the output, since we don’t
@@ -44,6 +46,7 @@ class MockJorge extends Jorge {
     $this->rootPath = $rootPath;
     $this->output = new MockConsoleOutput($this, parent::getOutput()->getVerbosity());
     $this->logger = new ConsoleLogger($this->output);
+    $this->setAutoExit(FALSE);
   }
 
   /**
@@ -74,5 +77,12 @@ class MockJorge extends Jorge {
   public function log($level, $message, array $context = []) {
     $levelString = ($level === NULL) ? 'NULL' : $level;
     $this->messages[] = [$levelString, $message, $context];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function run(InputInterface $input = NULL, OutputInterface $output = NULL) {
+    parent::run(NULL, $this->getOutput());
   }
 }
