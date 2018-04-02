@@ -98,6 +98,7 @@ final class JorgeTest extends TestCase {
   }
 
   public function testAddToolGetTool(): void {
+    $initialTools = $this->jorge->allTools();
     # Find a name we don’t have and verify that getTool() responds correctly.
     do {
       $toolName = bin2hex(random_bytes(4));
@@ -106,11 +107,13 @@ final class JorgeTest extends TestCase {
     $expectLog = [LogLevel::WARNING, 'Can’t get tool "{%tool}"', ['%tool' => $toolName]];
     $this->assertSame($expectLog, end($this->jorge->messages));
 
-    # Add a tool with that name and verify that getTool() responds correctly.
+    # Add a tool with that name and verify that getTool() responds correctly
+    # and that we added exactly one tool.
     $toolInstance = new Tool($toolName);
     $this->jorge->addTool($toolInstance, 'echo');
     $this->assertArrayHasKey($toolName, $this->jorge->allTools());
     $this->assertSame($toolInstance, $this->jorge->getTool($toolName));
+    $this->assertSame(count(array_keys($initialTools)) + 1, count(array_keys($this->jorge->allTools())));
 
     # Add another tool with that name and verify that we get an exception.
     $this->expectException(LogicException::class);
