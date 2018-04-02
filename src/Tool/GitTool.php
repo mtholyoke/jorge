@@ -84,7 +84,10 @@ class GitTool extends Tool {
    */
   protected function initialize() {
     if (!empty($this->getExecutable())) {
-      chdir($this->jorge->getPath());
+      if (($rootPath = $this->jorge->getPath()) === NULL) {
+        return;
+      }
+      chdir($rootPath);
       $exec = $this->exec('status 2>&1');
       if ($exec['status'] == 0) {
         $this->enable();

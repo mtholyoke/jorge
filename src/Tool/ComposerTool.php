@@ -104,8 +104,10 @@ class ComposerTool extends Tool {
    */
   protected function initialize() {
     $factory = new Factory();
-    $rootPath = $this->jorge->getPath();
-    $composerJson = $rootPath . '/composer.json';
+    if (($rootPath = $this->jorge->getPath()) === NULL) {
+      return;
+    }
+    $composerJson = $rootPath . DIRECTORY_SEPARATOR . 'composer.json';
     if (!is_file($composerJson)) {
       return;
     }

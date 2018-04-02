@@ -49,7 +49,7 @@ class Jorge extends Application {
   /** @var string $rootPath The fully qualified path of the project root */
   private $rootPath;
 
-  /** @var array $tools The instances of Tool\Tool available to this app. */
+  /** @var Tool\Tool[] $tools The instances of Tool\Tool available to this app. */
   private $tools;
 
   /**
@@ -72,17 +72,20 @@ class Jorge extends Application {
     $this->setVersion('0.4.0');
 
     if ($this->rootPath = $this->findRootPath()) {
-      $this->config = $this->loadConfigFile('.jorge/config.yml', LogLevel::ERROR);
+      $this->log(LogLevel::NOTICE, 'Project root: {%root}', ['%root' => $this->rootPath]);
+      $this->config = $this->loadConfigFile('.jorge' . DIRECTORY_SEPARATOR . 'config.yml', LogLevel::ERROR);
+    } else {
+      $this->log(LogLevel::WARNING, 'Can’t find project root');
     }
 
     // If the config file specifies additional config, load that too.
-    if (array_key_exists('include_config', $this->config)) {
+    if (!empty($this->config) && array_key_exists('include_config', $this->config)) {
       if (!is_array($this->config['include_config'])) {
         $this->config['include_config'] = [ $this->config['include_config'] ];
       }
       foreach ($this->config['include_config'] as $file) {
-        $configFile = '.jorge/' . $file;
-        $this->logger->debug('Including config file {%filename}', ['%filename' => $configFile]);
+        $configFile = '.jorge' . DIRECTORY_SEPARATOR . $file;
+        $this->log(LogLevel::DEBUG, 'Including config file {%filename}', ['%filename' => $configFile]);
         $addition = $this->loadConfigFile($configFile);
         $this->config = array_merge_recursive($this->config, $addition);
       }
@@ -108,11 +111,20 @@ class Jorge extends Application {
    */
   public function addTool(Tool $tool, $executable = '') {
     $name = $tool->setApplication($this, $executable)->getName();
-    if (empty($name)) {
-      throw new LogicException(sprintf('The tool defined in "%s" has an invalid or empty name.', get_class($tool)));
+    if (!empty($this->tools) && array_key_exists($name, $this->tools)) {
+      throw new LogicException(sprintf('The tool defined in "%s" duplicates an existing tool’s name.', get_class($tool)));
     }
     $this->tools[$name] = $tool;
     return $tool;
+  }
+
+  /**
+   * Gets all tools currently attached.
+   *
+   * @return Tool\Tool[] Array of Tool instances
+   */
+  public function allTools() {
+    return $this->tools;
   }
 
   /**
@@ -121,27 +133,28 @@ class Jorge extends Application {
    *
    * @return string|false full path to document root, or FALSE if none found
    */
-  private function findRootPath() {
-    $wd = explode('/', getcwd());
-    while (!empty($wd) && $cwd = implode('/', $wd)) {
-      $path = $cwd . '/.jorge';
+  private static function findRootPath() {
+    $wd = explode(DIRECTORY_SEPARATOR, getcwd());
+    while (!empty($wd) && $cwd = implode(DIRECTORY_SEPARATOR, $wd)) {
+      $path = $cwd . DIRECTORY_SEPARATOR . '.jorge';
       if (is_dir($path) && is_readable($path)) {
-        $this->logger->notice('Project root: {%root}', ['%root' => $cwd]);
         return $cwd;
       }
       array_pop($wd);
     }
-    $this->logger->warning('Can’t find project root');
     return FALSE;
   }
 
   /**
    * Return a parameter from configuration.
    *
-   * @param string $key     The key to get from config
-   * @param mixed  $default The value to return if key not present
+   * @param string|null $key     The key to get from config, NULL for all
+   * @param mixed       $default The value to return if key not present
    */
-  public function getConfig($key, $default = NULL) {
+  public function getConfig($key = NULL, $default = NULL) {
+    if ($key === NULL) {
+      return $this->config;
+    }
     if (array_key_exists($key, $this->config)) {
       return $this->config[$key];
     }
@@ -162,28 +175,27 @@ class Jorge extends Application {
    *
    * @param string|null $subdir   Subdirectory to include in the path if it exists
    * @param boolean     $required Throw an exception if subdirectory doesn't exist
-   * @return string
+   * @return string|null
    * @throws \DomainException if code requies a path but none exists
    */
   public function getPath($subdir = NULL, $required = FALSE) {
     if ($path = $this->rootPath) {
       $subdir = $this->sanitizePath($subdir);
-      if (!empty($subdir)) {
-        if (is_dir($path . '/' . $subdir)) {
-          $path .= '/' . $subdir;
-        } else {
-          $s = ['%subdir' => $subdir];
-          if ($required) {
-            throw new \DomainException('Subdirectory "{%subdir}" is required.', $s);
-          } else {
-            $this->logger->warning('No "{%subdir}" subdirectory in root path', $s);
-          }
-        }
+      if (empty($subdir)) {
+        return $path;
       }
-      return $path;
-    } else {
+      if (is_dir($path . DIRECTORY_SEPARATOR . $subdir)) {
+        return $path . DIRECTORY_SEPARATOR . $subdir;
+      }
+      if ($required) {
+        throw new \DomainException('Subdirectory "' . $subdir . '" is required.');
+      } else {
+        $this->log(LogLevel::WARNING, 'No "{%subdir}" subdirectory in root path', ['%subdir' => $subdir]);
+      }
+    } elseif ($required) {
       throw new \DomainException('Project root path is required.');
     }
+    return NULL;
   }
 
   /**
@@ -194,7 +206,7 @@ class Jorge extends Application {
     if (array_key_exists($name, $this->tools) && !empty($this->tools[$name])) {
       return $this->tools[$name];
     }
-    $this->logger->warning('Can’t get tool "{%tool}"', ['%tool' => $name]);
+    $this->log(LogLevel::WARNING, 'Can’t get tool "{%tool}"', ['%tool' => $name]);
     return NULL;
   }
 
@@ -207,10 +219,11 @@ class Jorge extends Application {
    */
   public function loadConfigFile($file, $level = LogLevel::WARNING) {
     $file = $this->sanitizePath($file);
-    $pathfile = $this->rootPath . '/' . $file;
+    $pathfile = $this->rootPath . DIRECTORY_SEPARATOR . $file;
     if (is_file($pathfile) && is_readable($pathfile)) {
       // TODO: sanitize values?
-      return Yaml::parseFile($pathfile);
+      $parsed = Yaml::parseFile($pathfile) ?: [];
+      return $parsed;
     }
     $this->log($level, 'Can’t read config file {%filename}', ['%filename' => $pathfile]);
     return [];
@@ -222,7 +235,7 @@ class Jorge extends Application {
    * @param string|null $level   What log level to use, or NULL to ignore
    * @param string      $message May need $context interpolation
    * @param array       $context Variable substitutions for $message
-   * @see Symfony\Component\Console\Logger\ConsoleLogger
+   * @see \Symfony\Component\Console\Logger\ConsoleLogger
    */
   public function log($level, $message, array $context = []) {
     if ($level !== NULL) {
@@ -230,12 +243,12 @@ class Jorge extends Application {
     }
   }
 
-   /**
-    * Encapsulates the parent::run() method so we don’t have to expose the
-    * instantiated IO interface objects.
-    *
-    * {@inheritDoc}
-    */
+  /**
+   * Encapsulates the parent::run() method so we don’t have to expose the
+   * instantiated IO interface objects.
+   *
+   * {@inheritDoc}
+   */
   public function run(InputInterface $input = NULL, OutputInterface $output = NULL) {
     if (empty($input)) {
       $input = $this->input;
@@ -243,18 +256,20 @@ class Jorge extends Application {
     if (empty($output)) {
       $output = $this->output;
     }
-    parent::run($input, $output);
+    return parent::run($input, $output);
   }
 
-   /**
-    * Sanitizes a path or filename so it’s safe to use.
-    *
-    * @param string $path The path to sanitize
-    * @return string
-    */
-  protected function sanitizePath($path) {
+  /**
+   * Sanitizes a path or filename so it’s safe to use.
+   *
+   * @param string $path The path to sanitize
+   * @return string
+   */
+  protected static function sanitizePath($path) {
+    $path = trim($path);
     # Strip leading '/', './', or '../'.
-    $path = preg_replace('/^(\/|\.\/|\.\.\/)*/', '', $path);
+    $ds = (DIRECTORY_SEPARATOR == '#') ? '\#' : DIRECTORY_SEPARATOR;
+    $path = preg_replace('#^(\.{0,2}' . $ds . '\s*)*#', '', $path);
     // TODO: what else?
     return $path;
   }
