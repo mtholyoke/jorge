@@ -114,14 +114,14 @@ class Tool {
   /**
    * @return \Symfony\Component\Console\Application
    */
-  protected function getApplication() {
-    return $this->application;
+  public function getApplication() {
+    return $this->jorge;
   }
 
   /**
    * @return string
    */
-  protected function getExecutable() {
+  public function getExecutable() {
     return $this->executable;
   }
 
@@ -199,11 +199,11 @@ class Tool {
    * @uses \MountHolyoke\Jorge\Helper\JorgeTrait::initializeJorge()
    *
    * @param \Symfony\Component\Console\Application $application
-   * @param string $executable command the user would type to use this tool
+   * @param string $executable Command the user would type to use this tool
    * @return $this
    */
   public function setApplication(Application $application, $executable = '') {
-    $this->application = $application;
+    $this->jorge = $application;
     $this->helperSet = $application->getHelperSet();
     $this->initializeJorge();
 

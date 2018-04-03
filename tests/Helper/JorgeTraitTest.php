@@ -24,7 +24,8 @@ final class JorgeTraitTest extends TestCase {
 
     $echo = $jorge->addTool(new Tool('echo'));
     $text = bin2hex(random_bytes(4));
-    $echo->runThis("x$text");
+    $code = $echo->runThis("x$text");
+    $this->assertSame(0, $code);
 
     $addAndRun = [
       [LogLevel::DEBUG,  '{echo} Executable is "{%executable}"'],  # log() in setExecutable()
