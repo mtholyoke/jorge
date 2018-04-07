@@ -32,8 +32,11 @@ class GitTool extends Tool {
   protected function applyVerbosity($argv = '') {
     # If we get a string, we don’t know which git command it is, so
     # we can’t apply verbosity. Return it unchanged.
-    if (!is_array($argv) || empty($argv)) {
+    if (!is_array($argv)) {
       return $argv;
+    }
+    if (empty($argv)) {
+      return '';
     }
 
     $verbosityMap = [
@@ -76,7 +79,7 @@ class GitTool extends Tool {
    */
   protected function configure() {
     $this->setName('git');
-    $this->setStatus((object)['clean' => FALSE]);
+    $this->setStatus((object) ['clean' => FALSE]);
   }
 
   /**
