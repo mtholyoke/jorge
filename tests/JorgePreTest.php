@@ -4,12 +4,18 @@ declare(strict_types = 1);
 namespace MountHolyoke\JorgeTests;
 
 use MountHolyoke\Jorge\Jorge;
+use MountHolyoke\JorgeTests\RandomStringTrait;
 use PHPUnit\Framework\TestCase;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
 
+/**
+ * Tests Jorge::configure() under a wide variety of conditions.
+ */
 final class JorgePreTest extends TestCase {
+  use RandomStringTrait;
+
   protected $jorge;
   protected $tempDir;
 
@@ -57,7 +63,7 @@ final class JorgePreTest extends TestCase {
     $depth = 2 + random_int(0, 4);
     $path = $root;
     for ($i = 0; $i < $depth; $i++) {
-      $path .= DIRECTORY_SEPARATOR . bin2hex(random_bytes(4));
+      $path .= DIRECTORY_SEPARATOR . $this->makeRandomString();
       mkdir($path);
     }
     chdir($path);
@@ -65,35 +71,39 @@ final class JorgePreTest extends TestCase {
     $this->assertSame($root, $this->jorge->getPath());
   }
 
-  /**
-   * Generate random subdirectory.
-   */
   public function testGetPath(): void {
+    # Make sure it succeeds if we ask for something exists.
     $root = realpath($this->tempDir->path());
-    $randir = bin2hex(random_bytes(4));
+    $randir = $this->makeRandomString();
     $subdir = $root . DIRECTORY_SEPARATOR . $randir;
     mkdir($subdir);
     $this->jorge->configure();
-    $this->assertSame($subdir, $this->jorge->getPath("$randir"));
-    $this->assertNull($this->jorge->getPath("${randir}x"));
+    $this->assertSame($subdir, $this->jorge->getPath($randir));
+
+    # Make sure it fails if we ask for something that doesn’t exist.
+    do {
+      $baddir = $this->makeRandomString();
+    } while (is_dir($root . DIRECTORY_SEPARATOR . $baddir));
+    $this->assertNull($this->jorge->getPath($baddir));
     $this->expectException(\DomainException::class);
-    $this->jorge->getPath("${randir}x", TRUE);
+    $this->jorge->getPath($baddir, TRUE);
   }
 
-  /**
-   * Generate random subdirectory.
-   */
   public function testSanitizePath(): void {
     $root = realpath($this->tempDir->path());
-    $randir = bin2hex(random_bytes(4));
+    $randir = $this->makeRandomString();
     $subdir = $root . DIRECTORY_SEPARATOR . $randir;
     mkdir($subdir);
+    do {
+      $baddir = $this->makeRandomString();
+    } while (is_dir($root . DIRECTORY_SEPARATOR . $baddir));
+
     $this->jorge->configure();
     $prefixes = ['/', '../', './..//./ /'];
     foreach ($prefixes as $prefix) {
       $this->assertSame($root, $this->jorge->getPath($prefix));
       $this->assertSame($subdir, $this->jorge->getPath($prefix . $randir));
-      $this->assertNull($this->jorge->getPath($prefix . $randir . 'x'));
+      $this->assertNull($this->jorge->getPath($prefix . $baddir));
     }
   }
 
@@ -113,15 +123,22 @@ final class JorgePreTest extends TestCase {
    */
   public function testGetConfig(): void {
     $root = realpath($this->tempDir->path());
-    $configFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', 'config.yml']);
-    $configKey = bin2hex(random_bytes(4));
-    $configValue = bin2hex(random_bytes(4));
-    file_put_contents($configFile, "x$configKey : x$configValue\n");
+    $file = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', 'config.yml']);
+    $key  = $this->makeRandomString();
+    $val  = $this->makeRandomString();
+    file_put_contents($file, "$key: $val\n");
     $this->jorge->configure();
-    $this->assertSame("x$configValue", $this->jorge->getConfig("x$configKey"));
-    $this->assertSame("x$configValue", $this->jorge->getConfig("x$configKey", 'X'));
-    $this->assertNull($this->jorge->getConfig("xx$configKey"));
-    $this->assertSame('X', $this->jorge->getConfig("xx$configKey", 'X'));
+
+    # Make sure it retrieves the value.
+    $this->assertSame($val, $this->jorge->getConfig($key));
+    $this->assertSame($val, $this->jorge->getConfig($key, 'X'));
+
+    # Also make sure it fails correctly.
+    do {
+      $bad = $this->makeRandomString();
+    } while ($bad == $key);
+    $this->assertNull($this->jorge->getConfig($bad));
+    $this->assertSame('X', $this->jorge->getConfig($bad, 'X'));
   }
 
   /**

@@ -6,6 +6,7 @@ namespace MountHolyoke\JorgeTests\Helper;
 use MountHolyoke\Jorge\Tool\Tool;
 use MountHolyoke\JorgeTests\Mock\MockJorge;
 use MountHolyoke\JorgeTests\OutputVerifierTrait;
+use MountHolyoke\JorgeTests\RandomStringTrait;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 
@@ -16,6 +17,7 @@ use Psr\Log\LogLevel;
  */
 final class JorgeTraitTest extends TestCase {
   use OutputVerifierTrait;
+  use RandomStringTrait;
 
   /**
    * Verify a Tool’s trait-supplied log() and writeln() methods.
@@ -26,14 +28,14 @@ final class JorgeTraitTest extends TestCase {
     $jorge->messages = [];
 
     $echo = $jorge->addTool(new Tool('echo'));
-    $text = bin2hex(random_bytes(4));
-    $code = $echo->runThis("x$text");
+    $text = $this->makeRandomString();
+    $code = $echo->runThis($text);
     $this->assertSame(0, $code);
 
     $expect = [
       [LogLevel::DEBUG,  '{echo} Executable is "{%executable}"'],  # log() in setExecutable()
       [LogLevel::NOTICE, '{echo} $ {%command}'],                   # log() in exec()
-      ['writeln',        "x$text"],                                # writeln() in runThis()
+      ['writeln',        $text],                                # writeln() in runThis()
     ];
     $this->verifyMessages($expect, $jorge->messages);
   }

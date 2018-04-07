@@ -7,6 +7,7 @@ use MountHolyoke\Jorge\Tool\Tool;
 use MountHolyoke\JorgeTests\Mock\MockConsoleOutput;
 use MountHolyoke\JorgeTests\Mock\MockJorge;
 use MountHolyoke\JorgeTests\OutputVerifierTrait;
+use MountHolyoke\JorgeTests\RandomStringTrait;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
@@ -15,6 +16,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 final class JorgeTest extends TestCase {
   use OutputVerifierTrait;
+  use RandomStringTrait;
 
   protected $jorge;
   protected $tempDir;
@@ -81,17 +83,17 @@ final class JorgeTest extends TestCase {
     ];
     $expect = [];
     foreach ($logLevels as $level) {
-      $text = bin2hex(random_bytes(4));
-      $expect[] = [$level, "x$text", []];
-      $this->jorge->log($level, "x$text");
+      $text = $this->makeRandomString();
+      $expect[] = [$level, $text, []];
+      $this->jorge->log($level, $text);
     }
     $this->verifyMessages($expect, $this->jorge->messages, TRUE);
     $this->jorge->messages = [];
 
     # Verify that writeln works as expected:
-    $text = bin2hex(random_bytes(4));
-    $this->jorge->getOutput()->writeln("x$text");
-    $this->verifyMessages([['writeln', "x$text"]], $this->jorge->messages);
+    $text = $this->makeRandomString();
+    $this->jorge->getOutput()->writeln($text);
+    $this->verifyMessages([['writeln', $text]], $this->jorge->messages);
   }
 
   /**
@@ -102,43 +104,44 @@ final class JorgeTest extends TestCase {
     $initialTools = $this->jorge->allTools();
     # Find a name we don’t have and verify that getTool() responds correctly.
     do {
-      $name = bin2hex(random_bytes(4));
-    } while (array_key_exists("x$name", $initialTools));
-    $this->assertNull($this->jorge->getTool("x$name"));
+      $name = $this->makeRandomString();
+    } while (array_key_exists($name, $initialTools));
+    $this->assertNull($this->jorge->getTool($name));
     $expect = [
-      [LogLevel::WARNING, 'Can’t get tool "{%tool}"', ['%tool' => "x$name"]]
+      [LogLevel::WARNING, 'Can’t get tool "{%tool}"', ['%tool' => $name]]
     ];
     $this->verifyMessages($expect, $this->jorge->messages, TRUE);
     $this->jorge->messages = [];
 
     # Add a tool with that name
-    $tool = new Tool("x$name");
+    $tool = new Tool($name);
     $this->jorge->addTool($tool, 'echo');
     $expect = [
-      [LogLevel::DEBUG, "{x$name} Executable is \"{%executable}\""]
+      [LogLevel::DEBUG, '{' . $name . '} Executable is "{%executable}"']
     ];
     $this->verifyMessages($expect, $this->jorge->messages);
     $this->jorge->messages = [];
 
     # Verify that getTool() responds correctly and that we added exactly one tool.
     $currentTools = $this->jorge->allTools();
-    $this->assertArrayHasKey("x$name", $currentTools);
-    $this->assertSame($tool, $this->jorge->getTool("x$name"));
+    $this->assertArrayHasKey($name, $currentTools);
+    $this->assertSame($tool, $this->jorge->getTool($name));
     $this->assertSame(count(array_keys($initialTools)) + 1, count(array_keys($currentTools)));
 
     # Add another tool with that name and verify that we get an exception.
     $this->expectException(LogicException::class);
-    $this->jorge->addTool(new Tool("x$name"), 'ls');
+    $this->jorge->addTool(new Tool($name), 'ls');
     $this->verifyMessages($expect, $this->jorge->messages);
     $this->jorge->messages = [];
 
-    # This should echo the tool name without checking enablement.
-    $tool->runThis("x$name");
+    # This should echo the text without checking enablement.
+    $text = $this->makeRandomString();
+    $tool->runThis($text);
     $expect = [
-      [LogLevel::NOTICE, "{x$name} $ {%command}"],
-      ['writeln',        "x$name"               ],
+      [LogLevel::NOTICE, '{' . $name . '} $ {%command}'],
+      ['writeln',        $text                         ],
     ];
-    $this->verifyMessages($expect, $this->jorge->messages, TRUE);
+    $this->verifyMessages($expect, $this->jorge->messages);
   }
 
   /**
