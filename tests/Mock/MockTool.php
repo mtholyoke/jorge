@@ -4,15 +4,15 @@ declare(strict_types = 1);
 namespace MountHolyoke\JorgeTests\Mock;
 
 use MountHolyoke\Jorge\Tool\Tool;
+use MountHolyoke\JorgeTests\Mock\MockLogTrait;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * This mock exists to call protected functions for coverage testing.
+ * Supplants the Tool class so we can call protected functions and capture output.
  */
 class MockTool extends Tool {
-  /** @var array $messages Things that would have gone to console output */
-  public $messages = [];
+  use MockLogTrait;
 
   /** @var int $verbosity The verbosity level */
   protected $verbosity = OutputInterface::VERBOSITY_QUIET;
@@ -29,8 +29,7 @@ class MockTool extends Tool {
    * @see \Symfony\Component\Console\Logger\ConsoleLogger
    */
   protected function log($level, $message, array $context = []) {
-    $levelString = ($level === NULL) ? 'NULL' : $level;
-    $this->messages[] = [$levelString, $message, $context];
+    $this->mockLog($level, $message, $context);
   }
 
   /**
@@ -42,7 +41,7 @@ class MockTool extends Tool {
   }
 
   /**
-   * Overload to set enabled so we can test things that require it.
+   * Sets both $status and $enabled so we can test things that require it.
    *
    * @param mixed $status The status to save
    * @return $this

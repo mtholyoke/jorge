@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1523065821">
-  <project timestamp="1523065821">
+<coverage generated="1523067633">
+  <project timestamp="1523067633">
     <package name="MountHolyoke\Jorge\Command">
       <file name="/Users/jproctor/Projects/jorge/src/Command/DrushCommand.php">
         <class name="MountHolyoke\Jorge\Command\DrushCommand" namespace="MountHolyoke\Jorge\Command">
