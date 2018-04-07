@@ -9,28 +9,10 @@ use MountHolyoke\JorgeTests\Mock\MockTool;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Exception\LogicException;
 
+/**
+ * Test the functionality of Tool that isn’t covered elsewhere.
+ */
 class ToolTest extends TestCase {
-  protected $jorge;
-  protected $tempDir;
-
-  /**
-   * Creates a Jorge-like object on which we can test output.
-   */
-  // protected function setUp(): void {
-  //   $this->tempDir = (new TemporaryDirectory())->create();
-  //   $root = $this->tempDir->path();
-  //   mkdir($root . DIRECTORY_SEPARATOR . '.jorge');
-  //   chdir($root);
-  //   touch('.jorge' . DIRECTORY_SEPARATOR . 'config.yml');
-  //   $this->jorge = new MockJorge($root);
-  //   $this->jorge->configure();
-  // }
-  //
-  // protected function tearDown(): void {
-  //   $this->jorge = NULL;
-  //   $this->tempDir->delete();
-  // }
-
   public function test__Construct(): void {
     $this->expectException(LogicException::class);
     $tool = new Tool();
@@ -67,8 +49,8 @@ class ToolTest extends TestCase {
   }
 
   /**
-  * This requires a MockTool because setExecutable is protected, and we
-  * need to capture output.
+   * This requires a MockTool because setExecutable is protected, and we
+   * need to capture output.
    */
   public function testSetExecutable(): void {
     $name = bin2hex(random_bytes(4));
