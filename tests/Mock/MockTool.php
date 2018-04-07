@@ -15,7 +15,7 @@ class MockTool extends Tool {
   use MockLogTrait;
 
   /** @var int $verbosity The verbosity level */
-  protected $verbosity = OutputInterface::VERBOSITY_QUIET;
+  protected $verbosity = OutputInterface::VERBOSITY_NORMAL;
 
   /**
    * Replaces log() with a method that returns instead of printing.
@@ -36,6 +36,7 @@ class MockTool extends Tool {
    * {@inheritDoc}
    */
   public function setApplication(Application $application, $executable = '') {
+    $this->jorge = $application;
     $this->setExecutable($executable);
     return $this;
   }
@@ -47,8 +48,27 @@ class MockTool extends Tool {
    * @return $this
    */
   public function setStatus($status) {
-    $this->enabled = $status;
     $this->status = $status;
+    if (is_bool($status)) {
+      if ($status) {
+        $this->enable();
+      } else {
+        $this->disable();
+      }
+    }
+    return $this;
+  }
+
+  /**
+   * Sets verbosity so we can test different behaviors.
+   *
+   * This is not in the superclass, which gets its verbosity from the application.
+   *
+   * @param int $verbosity The verbosity level
+   * @return $this
+   */
+  public function setVerbosity($verbosity) {
+    $this->verbosity = $verbosity;
     return $this;
   }
 }

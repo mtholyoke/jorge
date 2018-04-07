@@ -102,6 +102,10 @@ class Tool {
    */
   protected function exec($argv = '') {
     $command = trim($this->getExecutable() . ' ' . $argv);
+    if (empty($command)) {
+      $this->log(LogLevel::ERROR, 'Cannot execute a blank command');
+      return ['command' => '', 'status' => 1];
+    }
     $this->log(LogLevel::NOTICE, '$ {%command}', ['%command' => $command]);
     exec($command, $output, $status);
     return [
@@ -187,7 +191,9 @@ class Tool {
     $result = $this->exec($command);
 
     if ($this->verbosity != OutputInterface::VERBOSITY_QUIET) {
-      $this->writeln($result['output']);
+      if (array_key_exists('output', $result)) {
+        $this->writeln($result['output']);
+      }
     }
 
     return $result['status'];
