@@ -59,7 +59,11 @@ class ComposerTool extends Tool {
     }
     $joinable = [];
     foreach ($argv as $k => $v) {
-      if (is_bool($v) && $v) {
+      if (is_bool($v)) {
+        if ($v) {
+          $joinable[] = $k;
+        }
+      } elseif ($v === NULL) {
         $joinable[] = $k;
       } else {
         $joinable[] = "$k=$v";
@@ -85,12 +89,20 @@ class ComposerTool extends Tool {
    * @return array The command passed to the Composer application and its exit code.
    */
   protected function exec($argv = []) {
+    if ($argv === NULL || !isset($argv) || !is_array($argv)) {
+      $argv = [];
+    }
     $input = new ArrayInput($argv);
     $output = $this->jorge->getOutput();
+
+    if (!array_key_exists('command', $argv)) {
+      $argv['command'] = '';
+    }
     $this->log(
       LogLevel::NOTICE,
       '% composer {%cmd} {%argv}',
-      ['%cmd' => $argv['command'], '%argv' => $this->argvJoin($argv)]);
+      ['%cmd' => $argv['command'], '%argv' => $this->argvJoin($argv)]
+    );
     $status = $this->composerApplication->run($input, $output);
     return [
       'command' => $input,
