@@ -9,7 +9,7 @@ use MountHolyoke\JorgeTests\OutputVerifierTrait;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Input\ArgvInput;
 
-class HonkCommandTest extends TestCase {
+final class HonkCommandTest extends TestCase {
   use OutputVerifierTrait;
 
   public function testConfigure(): void {

@@ -17,7 +17,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * Test the functionality of Tool that isn’t covered elsewhere.
  */
-class ToolTest extends TestCase {
+final class ToolTest extends TestCase {
   use OutputVerifierTrait;
   use RandomStringTrait;
 
