@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1523064545">
-  <project timestamp="1523064545">
+<coverage generated="1523065821">
+  <project timestamp="1523065821">
     <package name="MountHolyoke\Jorge\Command">
       <file name="/Users/jproctor/Projects/jorge/src/Command/DrushCommand.php">
         <class name="MountHolyoke\Jorge\Command\DrushCommand" namespace="MountHolyoke\Jorge\Command">
@@ -47,17 +47,17 @@
       </file>
       <file name="/Users/jproctor/Projects/jorge/src/Command/HonkCommand.php">
         <class name="MountHolyoke\Jorge\Command\HonkCommand" namespace="MountHolyoke\Jorge\Command">
-          <metrics complexity="2" methods="2" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="6" coveredstatements="4" elements="8" coveredelements="5"/>
+          <metrics complexity="2" methods="2" coveredmethods="2" conditionals="0" coveredconditionals="0" statements="6" coveredstatements="6" elements="8" coveredelements="8"/>
         </class>
-        <line num="21" type="method" name="configure" visibility="protected" complexity="1" crap="1" count="17"/>
-        <line num="23" type="stmt" count="17"/>
-        <line num="24" type="stmt" count="17"/>
-        <line num="25" type="stmt" count="17"/>
-        <line num="27" type="stmt" count="17"/>
-        <line num="38" type="method" name="execute" visibility="protected" complexity="1" crap="2.00" count="0"/>
-        <line num="39" type="stmt" count="0"/>
-        <line num="40" type="stmt" count="0"/>
-        <metrics loc="41" ncloc="21" classes="1" methods="2" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="6" coveredstatements="4" elements="8" coveredelements="5"/>
+        <line num="21" type="method" name="configure" visibility="protected" complexity="1" crap="1" count="19"/>
+        <line num="23" type="stmt" count="19"/>
+        <line num="24" type="stmt" count="19"/>
+        <line num="25" type="stmt" count="19"/>
+        <line num="27" type="stmt" count="19"/>
+        <line num="38" type="method" name="execute" visibility="protected" complexity="1" crap="1" count="1"/>
+        <line num="39" type="stmt" count="1"/>
+        <line num="40" type="stmt" count="1"/>
+        <metrics loc="41" ncloc="21" classes="1" methods="2" coveredmethods="2" conditionals="0" coveredconditionals="0" statements="6" coveredstatements="6" elements="8" coveredelements="8"/>
       </file>
       <file name="/Users/jproctor/Projects/jorge/src/Command/ResetCommand.php">
         <class name="MountHolyoke\Jorge\Command\ResetCommand" namespace="MountHolyoke\Jorge\Command">
@@ -202,13 +202,13 @@
         <class name="MountHolyoke\Jorge\Jorge" namespace="MountHolyoke\Jorge">
           <metrics complexity="40" methods="13" coveredmethods="13" conditionals="0" coveredconditionals="0" statements="81" coveredstatements="81" elements="94" coveredelements="94"/>
         </class>
-        <line num="59" type="method" name="__construct" visibility="public" complexity="1" crap="1" count="20"/>
-        <line num="60" type="stmt" count="20"/>
-        <line num="61" type="stmt" count="20"/>
-        <line num="62" type="stmt" count="20"/>
-        <line num="63" type="stmt" count="20"/>
-        <line num="64" type="stmt" count="20"/>
-        <line num="65" type="stmt" count="20"/>
+        <line num="59" type="method" name="__construct" visibility="public" complexity="1" crap="1" count="21"/>
+        <line num="60" type="stmt" count="21"/>
+        <line num="61" type="stmt" count="21"/>
+        <line num="62" type="stmt" count="21"/>
+        <line num="63" type="stmt" count="21"/>
+        <line num="64" type="stmt" count="21"/>
+        <line num="65" type="stmt" count="21"/>
         <line num="70" type="method" name="configure" visibility="public" complexity="6" crap="6" count="17"/>
         <line num="71" type="stmt" count="17"/>
         <line num="72" type="stmt" count="17"/>
@@ -253,8 +253,8 @@
         <line num="158" type="stmt" count="6"/>
         <line num="159" type="stmt" count="6"/>
         <line num="161" type="stmt" count="2"/>
-        <line num="167" type="method" name="getOutput" visibility="public" complexity="1" crap="1" count="18"/>
-        <line num="168" type="stmt" count="18"/>
+        <line num="167" type="method" name="getOutput" visibility="public" complexity="1" crap="1" count="19"/>
+        <line num="168" type="stmt" count="19"/>
         <line num="181" type="method" name="getPath" visibility="public" complexity="6" crap="6" count="17"/>
         <line num="182" type="stmt" count="17"/>
         <line num="183" type="stmt" count="16"/>
@@ -557,6 +557,6 @@
         <metrics loc="277" ncloc="157" classes="1" methods="19" coveredmethods="19" conditionals="0" coveredconditionals="0" statements="63" coveredstatements="63" elements="82" coveredelements="82"/>
       </file>
     </package>
-    <metrics files="10" loc="1405" ncloc="891" classes="10" methods="63" coveredmethods="44" conditionals="0" coveredconditionals="0" statements="425" coveredstatements="215" elements="488" coveredelements="259"/>
+    <metrics files="10" loc="1405" ncloc="891" classes="10" methods="63" coveredmethods="45" conditionals="0" coveredconditionals="0" statements="425" coveredstatements="217" elements="488" coveredelements="262"/>
   </project>
 </coverage>
