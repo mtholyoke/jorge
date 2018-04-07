@@ -43,7 +43,7 @@ trait OutputVerifierTrait {
     $this->assertSame(count($expect), count($actual));
     foreach ($expect as $e) {
       $a = array_shift($actual);
-      $this->verifyMessage($e, $a);
+      $this->verifyMessage($e, $a, $useContext);
     }
   }
 }
