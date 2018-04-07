@@ -107,9 +107,6 @@ final class JorgePreTest extends TestCase {
     }
   }
 
-  /**
-   * Generate empty config file.
-   */
   public function testEmptyConfig(): void {
     $root = realpath($this->tempDir->path());
     $configFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', 'config.yml']);
@@ -118,9 +115,6 @@ final class JorgePreTest extends TestCase {
     $this->assertSame([], $this->jorge->getConfig());
   }
 
-  /**
-   * Generate random config file.
-   */
   public function testGetConfig(): void {
     $root = realpath($this->tempDir->path());
     $file = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', 'config.yml']);
@@ -148,73 +142,77 @@ final class JorgePreTest extends TestCase {
     $root = realpath($this->tempDir->path());
 
     # Set up initial config file with random values. Include another file.
-    $mainOuterKey = bin2hex(random_bytes(4));
-    $mainInnerKey1 = bin2hex(random_bytes(4));
-    $mainInnerVal1 = bin2hex(random_bytes(4));
-    $mainInnerKey2 = bin2hex(random_bytes(4));
-    $mainInnerVal2 = bin2hex(random_bytes(4));
-    $newConfigName = bin2hex(random_bytes(4)) . '.yml';
-    $mainFileYaml = Yaml::dump([
-      "x$mainOuterKey" => [
-        "x$mainInnerKey1" => "x$mainInnerVal1",
-        "x$mainInnerKey2" => "x$mainInnerVal2",
+    $key0 = $this->makeRandomString();
+    $key1 = $this->makeRandomString();
+    $val1 = $this->makeRandomString();
+    $key2 = $this->makeRandomString();
+    $val2 = $this->makeRandomString();
+    $name = $this->makeRandomString() . '.yml';
+    $configYaml = Yaml::dump([
+      $key0 => [
+        $key1 => $val1,
+        $key2 => $val2,
       ],
-      'include_config' => $newConfigName,
+      'include_config' => $name,
     ]);
-    $mainConfigFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', 'config.yml']);
-    file_put_contents($mainConfigFile, $mainFileYaml);
+    $configFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', 'config.yml']);
+    file_put_contents($configFile, $configYaml);
 
     # Set up the included file with different values.
     do {
-      $newInnerVal2 = bin2hex(random_bytes(4));    # append to existing inner key 2
-    } while ($newInnerVal2 == $mainInnerVal2);
+      $new2 = $this->makeRandomString();    # append to existing inner key 2
+    } while ($new2 == $val2);
     do {
-      $newInnerKey3 = bin2hex(random_bytes(4));    # supplement inside mainOuterKey
-    } while ($newInnerKey3 == $mainInnerKey1 || $newInnerKey3 == $mainInnerKey2);
-    $newInnerVal3 = bin2hex(random_bytes(4));
+      $key3 = $this->makeRandomString();    # supplement inside mainOuterKey
+    } while ($key3 == $key1 || $key3 == $key2);
+    $val3 = $this->makeRandomString();
     do {
-      $newOuterKey = bin2hex(random_bytes(4));     # add an additional outer key
-    } while ($newOuterKey == $mainOuterKey);
-    $newOuterVal = bin2hex(random_bytes(4));
-    $newFileYaml = Yaml::dump([
-      "x$mainOuterKey" => [
-        "x$mainInnerKey2" => "x$newInnerVal2",
-        "x$newInnerKey3"  => "x$newInnerVal3",
+      $key4 = $this->makeRandomString();    # add an additional outer key
+    } while ($key4 == $key0);
+    $val4 = $this->makeRandomString();
+    $includedYaml = Yaml::dump([
+      $key0 => [
+        $key2 => $new2,
+        $key3 => $val3,
       ],
-      "x$newOuterKey" => "x$newOuterVal",
+      $key4 => $val4,
     ]);
-    $newConfigFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', $newConfigName]);
-    file_put_contents($newConfigFile, $newFileYaml);
+    $includedFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', $name]);
+    file_put_contents($includedFile, $includedYaml);
 
     $this->jorge->configure();
 
+    # Make sure key0 has values from both files.
     $combined = [
-      "x$mainInnerKey1" => "x$mainInnerVal1",
-      "x$mainInnerKey2" => ["x$mainInnerVal2", "x$newInnerVal2"],
-      "x$newInnerKey3"  => "x$newInnerVal3",
+      $key1 => $val1,
+      $key2 => [$val2, $new2],
+      $key3 => $val3,
     ];
-    $this->assertSame($combined, $this->jorge->getConfig("x$mainOuterKey"));
-    $this->assertSame("x$newOuterVal", $this->jorge->getConfig("x$newOuterKey"));
+    $this->assertSame($combined, $this->jorge->getConfig($key0));
+
+    # Make sure key4 was also included in the config.
+    $this->assertSame($val4, $this->jorge->getConfig($key4));
   }
 
   /**
-   * Verify alternate syntax of include_config for a single inclusion.
+   * Verify array syntax of include_config for a single inclusion.
    */
   public function testLoadConfigFile_IncludeConfigArraySolo(): void {
     $root = realpath($this->tempDir->path());
-    $newConfigName = bin2hex(random_bytes(4)) . '.yml';
-    $mainFileYaml = "include_config:\n  -  $newConfigName\n";
-    $mainConfigFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', 'config.yml']);
-    file_put_contents($mainConfigFile, $mainFileYaml);
-    $newOuterKey = bin2hex(random_bytes(4));
-    $newOuterVal = bin2hex(random_bytes(4));
-    $newFileYaml = "x$newOuterKey : x$newOuterVal\n";
-    $newConfigFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', $newConfigName]);
-    file_put_contents($newConfigFile, $newFileYaml);
+
+    $name = $this->makeRandomString() . '.yml';
+    $configYaml = "include_config:\n  - $name\n";
+    $configFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', 'config.yml']);
+    file_put_contents($configFile, $configYaml);
+
+    $key = $this->makeRandomString();
+    $val = $this->makeRandomString();
+    $includedYaml = "$key: $val\n";
+    $includedFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', $name]);
+    file_put_contents($includedFile, $includedYaml);
 
     $this->jorge->configure();
-
-    $this->assertSame("x$newOuterVal", $this->jorge->getConfig("x$newOuterKey"));
+    $this->assertSame($val, $this->jorge->getConfig($key));
   }
 
   /**
@@ -224,73 +222,78 @@ final class JorgePreTest extends TestCase {
     $root = realpath($this->tempDir->path());
 
     # Include 2 additional files in config.yml.
-    $new1ConfigName = bin2hex(random_bytes(4)) . '.yml';
+    $name1 = $this->makeRandomString() . '.yml';
     do {
-      $new2ConfigName = bin2hex(random_bytes(4)) . '.yml';
-    } while ($new2ConfigName == $new1ConfigName);
-    $mainFileYaml = "include_config:\n  -  $new1ConfigName\n  -  $new2ConfigName\n";
-    $mainConfigFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', 'config.yml']);
-    file_put_contents($mainConfigFile, $mainFileYaml);
+      $name2 = $this->makeRandomString() . '.yml';
+    } while ($name2 == $name1);
+    $configYaml = "include_config:\n  - $name1\n  - $name2\n";
+    $configFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', 'config.yml']);
+    file_put_contents($configFile, $configYaml);
 
     # Put content in the first file.
-    $new1OuterKey = bin2hex(random_bytes(4));
-    $new1OuterVal = bin2hex(random_bytes(4));
-    $new1FileYaml = "x$new1OuterKey : x$new1OuterVal\n";
-    $new1ConfigFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', $new1ConfigName]);
-    file_put_contents($new1ConfigFile, $new1FileYaml);
+    $key1  = $this->makeRandomString();
+    $val1  = $this->makeRandomString();
+    $yaml1 = "$key1: $val1\n";
+    $file1 = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', $name1]);
+    file_put_contents($file1, $yaml1);
 
     # Put content in the second file.
     do {
-      $new2OuterKey = bin2hex(random_bytes(4));
-    } while ($new2OuterKey == $new1OuterKey);
-    $new2OuterVal = bin2hex(random_bytes(4));
-    $new2FileYaml = "x$new2OuterKey : x$new2OuterVal\n";
-    $new2ConfigFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', $new2ConfigName]);
-    file_put_contents($new2ConfigFile, $new2FileYaml);
+      $key2 = $this->makeRandomString();
+    } while ($key2 == $key1);
+    $val2  = $this->makeRandomString();
+    $yaml2 = "$key2: $val2\n";
+    $file2 = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', $name2]);
+    file_put_contents($file2, $yaml2);
 
+    # Make sure both files’ content is loaded into the config.
     $this->jorge->configure();
-
-    $this->assertSame("x$new1OuterVal", $this->jorge->getConfig("x$new1OuterKey"));
-    $this->assertSame("x$new2OuterVal", $this->jorge->getConfig("x$new2OuterKey"));
+    $this->assertSame($val1, $this->jorge->getConfig($key1));
+    $this->assertSame($val2, $this->jorge->getConfig($key2));
   }
 
   /**
-   * Nesting include_config does not work, so we don’t have to check for loops.
+   * Verify that nesting include_config does not work.
+   *
+   * This prevents the need to check for loops.
    */
   public function testLoadConfigFile_IncludeConfigArrayNested(): void {
     $root = realpath($this->tempDir->path());
 
     # Include an additional config file.
-    $new1ConfigName = bin2hex(random_bytes(4)) . '.yml';
-    $mainFileYaml = "include_config:\n  -  $new1ConfigName\n";
-    $mainConfigFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', 'config.yml']);
-    file_put_contents($mainConfigFile, $mainFileYaml);
+    $name1 = $this->makeRandomString() . '.yml';
+    $configYaml = "include_config: $name1\n";
+    $configFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', 'config.yml']);
+    file_put_contents($configFile, $configYaml);
 
     # Include the second file in the first file.
+    $key1 = $this->makeRandomString();
+    $val1 = $this->makeRandomString();
     do {
-      $new2ConfigName = bin2hex(random_bytes(4)) . '.yml';
-    } while ($new2ConfigName == $new1ConfigName);
-    $new1OuterKey = bin2hex(random_bytes(4));
-    $new1OuterVal = bin2hex(random_bytes(4));
-    $new1FileYaml = "x$new1OuterKey : x$new1OuterVal\ninclude_config: $new2ConfigName\n";
-    $new1ConfigFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', $new1ConfigName]);
-    file_put_contents($new1ConfigFile, $new1FileYaml);
+      $name2 = $this->makeRandomString() . '.yml';
+    } while ($name2 == $name1);
+    $yaml1 = Yaml::dump([
+      $key1 => $val1,
+      'include_config' => $name2,
+    ]);
+    $file1 = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', $name1]);
+    file_put_contents($file1, $yaml1);
 
     # The second file should never be read.
     do {
-      $new2OuterKey = bin2hex(random_bytes(4));
-    } while ($new2OuterKey == $new1OuterKey);
-    $new2OuterVal = bin2hex(random_bytes(4));
-    $new2FileYaml = "x$new2OuterKey : x$new2OuterVal\n";
-    $new2ConfigFile = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', $new2ConfigName]);
-    file_put_contents($new2ConfigFile, $new2FileYaml);
+      $key2 = $this->makeRandomString();
+    } while ($key2 == $key1);
+    $val2  = $this->makeRandomString();
+    $yaml2 = "$key2: $val2\n";
+    $file2 = implode(DIRECTORY_SEPARATOR, [$root, '.jorge', $name2]);
+    file_put_contents($file2, $yaml2);
 
     $this->jorge->configure();
 
     # The first file gets included, and its include_config is preserved but not parsed.
-    $this->assertSame("x$new1OuterVal", $this->jorge->getConfig("x$new1OuterKey"));
-    $configFiles = [$new1ConfigName, $new2ConfigName];
+    $this->assertSame($val1, $this->jorge->getConfig($key1));
+    $configFiles = [$name1, $name2];
     $this->assertSame($configFiles, $this->jorge->getConfig('include_config'));
-    $this->assertNull($this->jorge->getConfig("x$new2OuterKey"));
+    $this->assertNull($this->jorge->getConfig($key2));
   }
 }
