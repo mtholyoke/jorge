@@ -164,10 +164,10 @@ class Tool {
   /**
    * Checks that the tool is enabled before running it.
    *
-   * @param mixed $argv Arguments and options for the command
+   * @param mixed|null $argv Arguments and options for the command
    * @return null|int
    */
-  public function run($argv) {
+  public function run($argv = NULL) {
     if (!$this->isEnabled()) {
       $this->log(LogLevel::ERROR, 'Tool not enabled');
       return;
@@ -178,10 +178,10 @@ class Tool {
   /**
    * Runs the tool with the given subcommands/options.
    *
-   * @param mixed $argv Arguments and options for the command
+   * @param mixed|null $argv Arguments and options for the command
    * @return null|int
    */
-  public function runThis($argv) {
+  public function runThis($argv = NULL) {
     $command = $this->applyVerbosity($argv);
 
     $result = $this->exec($command);

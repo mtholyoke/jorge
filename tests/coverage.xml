@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1522717500">
-  <project timestamp="1522717500">
+<coverage generated="1523064268">
+  <project timestamp="1523064268">
     <package name="MountHolyoke\Jorge\Command">
       <file name="/Users/jproctor/Projects/jorge/src/Command/DrushCommand.php">
         <class name="MountHolyoke\Jorge\Command\DrushCommand" namespace="MountHolyoke\Jorge\Command">
@@ -202,13 +202,13 @@
         <class name="MountHolyoke\Jorge\Jorge" namespace="MountHolyoke\Jorge">
           <metrics complexity="40" methods="13" coveredmethods="13" conditionals="0" coveredconditionals="0" statements="81" coveredstatements="81" elements="94" coveredelements="94"/>
         </class>
-        <line num="59" type="method" name="__construct" visibility="public" complexity="1" crap="1" count="18"/>
-        <line num="60" type="stmt" count="18"/>
-        <line num="61" type="stmt" count="18"/>
-        <line num="62" type="stmt" count="18"/>
-        <line num="63" type="stmt" count="18"/>
-        <line num="64" type="stmt" count="18"/>
-        <line num="65" type="stmt" count="18"/>
+        <line num="59" type="method" name="__construct" visibility="public" complexity="1" crap="1" count="20"/>
+        <line num="60" type="stmt" count="20"/>
+        <line num="61" type="stmt" count="20"/>
+        <line num="62" type="stmt" count="20"/>
+        <line num="63" type="stmt" count="20"/>
+        <line num="64" type="stmt" count="20"/>
+        <line num="65" type="stmt" count="20"/>
         <line num="70" type="method" name="configure" visibility="public" complexity="6" crap="6" count="17"/>
         <line num="71" type="stmt" count="17"/>
         <line num="72" type="stmt" count="17"/>
@@ -470,57 +470,57 @@
       </file>
       <file name="/Users/jproctor/Projects/jorge/src/Tool/Tool.php">
         <class name="MountHolyoke\Jorge\Tool\Tool" namespace="MountHolyoke\Jorge\Tool">
-          <metrics complexity="29" methods="19" coveredmethods="13" conditionals="0" coveredconditionals="0" statements="63" coveredstatements="50" elements="82" coveredelements="63"/>
+          <metrics complexity="29" methods="19" coveredmethods="19" conditionals="0" coveredconditionals="0" statements="63" coveredstatements="63" elements="82" coveredelements="82"/>
         </class>
-        <line num="55" type="method" name="__construct" visibility="public" complexity="3" crap="3.04" count="17"/>
-        <line num="56" type="stmt" count="17"/>
-        <line num="57" type="stmt" count="2"/>
-        <line num="59" type="stmt" count="17"/>
-        <line num="60" type="stmt" count="17"/>
-        <line num="61" type="stmt" count="0"/>
-        <line num="63" type="stmt" count="17"/>
-        <line num="71" type="method" name="applyVerbosity" visibility="protected" complexity="1" crap="1" count="1"/>
-        <line num="72" type="stmt" count="1"/>
-        <line num="80" type="method" name="configure" visibility="protected" complexity="1" crap="1" count="2"/>
-        <line num="81" type="stmt" count="2"/>
+        <line num="55" type="method" name="__construct" visibility="public" complexity="3" crap="3" count="21"/>
+        <line num="56" type="stmt" count="21"/>
+        <line num="57" type="stmt" count="5"/>
+        <line num="59" type="stmt" count="21"/>
+        <line num="60" type="stmt" count="21"/>
+        <line num="61" type="stmt" count="1"/>
+        <line num="63" type="stmt" count="20"/>
+        <line num="71" type="method" name="applyVerbosity" visibility="protected" complexity="1" crap="1" count="2"/>
+        <line num="72" type="stmt" count="2"/>
+        <line num="80" type="method" name="configure" visibility="protected" complexity="1" crap="1" count="6"/>
+        <line num="81" type="stmt" count="6"/>
         <line num="86" type="method" name="disable" visibility="protected" complexity="1" crap="1" count="17"/>
         <line num="87" type="stmt" count="17"/>
         <line num="88" type="stmt" count="17"/>
         <line num="93" type="method" name="enable" visibility="protected" complexity="1" crap="1" count="17"/>
         <line num="94" type="stmt" count="17"/>
         <line num="95" type="stmt" count="17"/>
-        <line num="103" type="method" name="exec" visibility="protected" complexity="1" crap="1" count="16"/>
-        <line num="104" type="stmt" count="16"/>
-        <line num="105" type="stmt" count="16"/>
-        <line num="106" type="stmt" count="16"/>
-        <line num="108" type="stmt" count="16"/>
-        <line num="109" type="stmt" count="16"/>
-        <line num="110" type="stmt" count="16"/>
-        <line num="117" type="method" name="getApplication" visibility="protected" complexity="1" crap="1" count="17"/>
+        <line num="103" type="method" name="exec" visibility="protected" complexity="1" crap="1" count="17"/>
+        <line num="104" type="stmt" count="17"/>
+        <line num="105" type="stmt" count="17"/>
+        <line num="106" type="stmt" count="17"/>
+        <line num="108" type="stmt" count="17"/>
+        <line num="109" type="stmt" count="17"/>
+        <line num="110" type="stmt" count="17"/>
+        <line num="117" type="method" name="getApplication" visibility="public" complexity="1" crap="1" count="17"/>
         <line num="118" type="stmt" count="17"/>
-        <line num="124" type="method" name="getExecutable" visibility="protected" complexity="1" crap="1" count="17"/>
-        <line num="125" type="stmt" count="17"/>
-        <line num="131" type="method" name="getName" visibility="public" complexity="1" crap="1" count="17"/>
-        <line num="132" type="stmt" count="17"/>
-        <line num="140" type="method" name="getStatus" visibility="public" complexity="3" crap="3.33" count="3"/>
-        <line num="141" type="stmt" count="3"/>
-        <line num="142" type="stmt" count="0"/>
-        <line num="144" type="stmt" count="3"/>
+        <line num="124" type="method" name="getExecutable" visibility="public" complexity="1" crap="1" count="18"/>
+        <line num="125" type="stmt" count="18"/>
+        <line num="131" type="method" name="getName" visibility="public" complexity="1" crap="1" count="21"/>
+        <line num="132" type="stmt" count="21"/>
+        <line num="140" type="method" name="getStatus" visibility="public" complexity="3" crap="3" count="4"/>
+        <line num="141" type="stmt" count="4"/>
+        <line num="142" type="stmt" count="1"/>
+        <line num="144" type="stmt" count="4"/>
         <line num="154" type="method" name="initialize" visibility="protected" complexity="1" crap="1" count="2"/>
         <line num="155" type="stmt" count="2"/>
-        <line num="160" type="method" name="isEnabled" visibility="public" complexity="1" crap="2.00" count="0"/>
-        <line num="161" type="stmt" count="0"/>
-        <line num="170" type="method" name="run" visibility="public" complexity="2" crap="6.00" count="0"/>
-        <line num="171" type="stmt" count="0"/>
-        <line num="172" type="stmt" count="0"/>
-        <line num="173" type="stmt" count="0"/>
-        <line num="175" type="stmt" count="0"/>
-        <line num="184" type="method" name="runThis" visibility="public" complexity="2" crap="2" count="1"/>
-        <line num="185" type="stmt" count="1"/>
-        <line num="187" type="stmt" count="1"/>
-        <line num="189" type="stmt" count="1"/>
+        <line num="160" type="method" name="isEnabled" visibility="public" complexity="1" crap="1" count="2"/>
+        <line num="161" type="stmt" count="2"/>
+        <line num="170" type="method" name="run" visibility="public" complexity="2" crap="2" count="1"/>
+        <line num="171" type="stmt" count="1"/>
+        <line num="172" type="stmt" count="1"/>
+        <line num="173" type="stmt" count="1"/>
+        <line num="175" type="stmt" count="1"/>
+        <line num="184" type="method" name="runThis" visibility="public" complexity="2" crap="2" count="2"/>
+        <line num="185" type="stmt" count="2"/>
+        <line num="187" type="stmt" count="2"/>
+        <line num="189" type="stmt" count="2"/>
         <line num="190" type="stmt" count="1"/>
-        <line num="193" type="stmt" count="1"/>
+        <line num="193" type="stmt" count="2"/>
         <line num="205" type="method" name="setApplication" visibility="public" complexity="3" crap="3" count="17"/>
         <line num="206" type="stmt" count="17"/>
         <line num="207" type="stmt" count="17"/>
@@ -531,32 +531,32 @@
         <line num="214" type="stmt" count="17"/>
         <line num="217" type="stmt" count="17"/>
         <line num="218" type="stmt" count="17"/>
-        <line num="227" type="method" name="setExecutable" visibility="protected" complexity="3" crap="3.26" count="17"/>
-        <line num="228" type="stmt" count="17"/>
-        <line num="229" type="stmt" count="17"/>
-        <line num="230" type="stmt" count="17"/>
-        <line num="231" type="stmt" count="17"/>
-        <line num="232" type="stmt" count="17"/>
-        <line num="233" type="stmt" count="17"/>
-        <line num="234" type="stmt" count="17"/>
-        <line num="235" type="stmt" count="17"/>
-        <line num="238" type="stmt" count="0"/>
-        <line num="239" type="stmt" count="0"/>
-        <line num="240" type="stmt" count="0"/>
-        <line num="241" type="stmt" count="0"/>
-        <line num="244" type="stmt" count="17"/>
+        <line num="227" type="method" name="setExecutable" visibility="protected" complexity="3" crap="3" count="19"/>
+        <line num="228" type="stmt" count="19"/>
+        <line num="229" type="stmt" count="19"/>
+        <line num="230" type="stmt" count="19"/>
+        <line num="231" type="stmt" count="18"/>
+        <line num="232" type="stmt" count="18"/>
+        <line num="233" type="stmt" count="18"/>
+        <line num="234" type="stmt" count="18"/>
+        <line num="235" type="stmt" count="18"/>
+        <line num="238" type="stmt" count="1"/>
+        <line num="239" type="stmt" count="1"/>
+        <line num="240" type="stmt" count="1"/>
+        <line num="241" type="stmt" count="1"/>
+        <line num="244" type="stmt" count="19"/>
         <line num="253" type="method" name="setName" visibility="protected" complexity="1" crap="1" count="17"/>
         <line num="254" type="stmt" count="17"/>
         <line num="255" type="stmt" count="17"/>
-        <line num="264" type="method" name="setStatus" visibility="public" complexity="1" crap="1" count="17"/>
-        <line num="265" type="stmt" count="17"/>
-        <line num="266" type="stmt" count="17"/>
-        <line num="274" type="method" name="updateStatus" visibility="public" complexity="1" crap="2.00" count="0"/>
-        <line num="275" type="stmt" count="0"/>
-        <line num="276" type="stmt" count="0"/>
-        <metrics loc="277" ncloc="157" classes="1" methods="19" coveredmethods="13" conditionals="0" coveredconditionals="0" statements="63" coveredstatements="50" elements="82" coveredelements="63"/>
+        <line num="264" type="method" name="setStatus" visibility="public" complexity="1" crap="1" count="18"/>
+        <line num="265" type="stmt" count="18"/>
+        <line num="266" type="stmt" count="18"/>
+        <line num="274" type="method" name="updateStatus" visibility="public" complexity="1" crap="1" count="1"/>
+        <line num="275" type="stmt" count="1"/>
+        <line num="276" type="stmt" count="1"/>
+        <metrics loc="277" ncloc="157" classes="1" methods="19" coveredmethods="19" conditionals="0" coveredconditionals="0" statements="63" coveredstatements="63" elements="82" coveredelements="82"/>
       </file>
     </package>
-    <metrics files="10" loc="1405" ncloc="891" classes="10" methods="63" coveredmethods="38" conditionals="0" coveredconditionals="0" statements="425" coveredstatements="202" elements="488" coveredelements="240"/>
+    <metrics files="10" loc="1405" ncloc="891" classes="10" methods="63" coveredmethods="44" conditionals="0" coveredconditionals="0" statements="425" coveredstatements="215" elements="488" coveredelements="259"/>
   </project>
 </coverage>
