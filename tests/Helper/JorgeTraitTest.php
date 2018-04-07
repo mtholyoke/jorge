@@ -4,7 +4,7 @@ declare(strict_types = 1);
 namespace MountHolyoke\JorgeTests\Helper;
 
 use MountHolyoke\Jorge\Tool\Tool;
-use MountHolyoke\JorgeTests\MockJorge;
+use MountHolyoke\JorgeTests\Mock\MockJorge;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 

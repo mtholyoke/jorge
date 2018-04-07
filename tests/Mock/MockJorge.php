@@ -1,10 +1,10 @@
 <?php
 declare(strict_types = 1);
 
-namespace MountHolyoke\JorgeTests;
+namespace MountHolyoke\JorgeTests\Mock;
 
 use MountHolyoke\Jorge\Jorge;
-use MountHolyoke\JorgeTests\MockConsoleOutput;
+use MountHolyoke\JorgeTests\Mock\MockConsoleOutput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;

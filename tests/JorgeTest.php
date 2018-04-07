@@ -3,9 +3,9 @@ declare(strict_types = 1);
 
 namespace MountHolyoke\JorgeTests;
 
-use MountHolyoke\JorgeTests\MockConsoleOutput;
-use MountHolyoke\JorgeTests\MockJorge;
 use MountHolyoke\Jorge\Tool\Tool;
+use MountHolyoke\JorgeTests\Mock\MockConsoleOutput;
+use MountHolyoke\JorgeTests\Mock\MockJorge;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
