@@ -5,6 +5,7 @@ namespace MountHolyoke\JorgeTests\Helper;
 
 use MountHolyoke\Jorge\Tool\Tool;
 use MountHolyoke\JorgeTests\Mock\MockJorge;
+use MountHolyoke\JorgeTests\OutputVerifierTrait;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 
@@ -14,6 +15,8 @@ use Psr\Log\LogLevel;
  * @todo Verify in a Command? Verify generically with a mock?
  */
 final class JorgeTraitTest extends TestCase {
+  use OutputVerifierTrait;
+
   /**
    * Verify a Tool’s trait-supplied log() and writeln() methods.
    */
@@ -27,20 +30,11 @@ final class JorgeTraitTest extends TestCase {
     $code = $echo->runThis("x$text");
     $this->assertSame(0, $code);
 
-    $addAndRun = [
+    $expect = [
       [LogLevel::DEBUG,  '{echo} Executable is "{%executable}"'],  # log() in setExecutable()
       [LogLevel::NOTICE, '{echo} $ {%command}'],                   # log() in exec()
       ['writeln',        "x$text"],                                # writeln() in runThis()
     ];
-    $this->assertSame(count($addAndRun), count($jorge->messages));
-    foreach ($addAndRun as $expected) {
-      $actual = array_shift($jorge->messages);
-      # Strip interpolation context: paths may be different on different computers.
-      if ($actual[0] != 'writeln') {
-        array_pop($actual);
-      }
-      $this->assertSame($expected, $actual);
-    }
-    $this->assertSame(0, count($jorge->messages));
+    $this->verifyMessages($expect, $jorge->messages);
   }
 }

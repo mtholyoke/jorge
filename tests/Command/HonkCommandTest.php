@@ -5,10 +5,13 @@ namespace MountHolyoke\JorgeTests\Command;
 
 use MountHolyoke\Jorge\Command\HonkCommand;
 use MountHolyoke\JorgeTests\Mock\MockJorge;
+use MountHolyoke\JorgeTests\OutputVerifierTrait;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Input\ArgvInput;
 
 class HonkCommandTest extends TestCase {
+  use OutputVerifierTrait;
+
   public function testConfigure(): void {
     $honk = new HonkCommand();
     $this->assertSame('honk', $honk->getName());
@@ -24,8 +27,6 @@ class HonkCommandTest extends TestCase {
     $response = $honk->run($input, $output);
 
     $this->assertSame(0, $response);
-    $this->assertSame(1, count($jorge->messages));
-    $expect = ['writeln', 'Honk!'];
-    $this->assertSame($expect, $jorge->messages[0]);
+    $this->verifyMessages([['writeln', 'Honk!']], $jorge->messages);
   }
 }
