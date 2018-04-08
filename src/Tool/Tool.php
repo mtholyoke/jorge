@@ -123,6 +123,22 @@ class Tool {
   }
 
   /**
+   * Return a parameter from configuration.
+   *
+   * @param string|null $key     The key to get from config, NULL for all
+   * @param mixed       $default The value to return if key not present
+   */
+  public function getConfig($key = NULL, $default = NULL) {
+    if ($key === NULL) {
+      return $this->config;
+    }
+    if (array_key_exists($key, $this->config)) {
+      return $this->config[$key];
+    }
+    return $default;
+  }
+
+  /**
    * @return string
    */
   public function getExecutable() {

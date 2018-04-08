@@ -183,13 +183,13 @@ final class ToolInitializationTest extends TestCase {
 
       switch ($name) {
         case 'composer':
-          // $this->assertSame("test/$project", $tool->getConfig('name'));
+          $this->assertSame("test/$project", $tool->getConfig('name'));
           break;
         case 'git':
           // TODO: How can we test that Git found and read repo info?
           break;
         case 'lando':
-          // $this->assertSame($project, $tool->getConfig('name'));
+          $this->assertSame($project, $tool->getConfig('name'));
           break;
         default:
           break;

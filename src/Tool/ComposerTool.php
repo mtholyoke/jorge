@@ -80,6 +80,24 @@ class ComposerTool extends Tool {
   }
 
   /**
+   * Gets configuration from its Composer instance.
+   *
+   * {@inheritDoc}
+   */
+  public function getConfig($key = NULL, $default = NULL) {
+    if ($key === NULL) {
+      // TODO: If there is some use case for this, figure out how to satisfy it.
+      return $default;
+    }
+    $package = $this->composerApplication->getComposer()->getPackage();
+    $getter = 'get' . ucfirst($key);
+    if (method_exists($package, $getter)) {
+      return $package->$getter();
+    }
+    return $default;
+  }
+
+  /**
    * Executes the tool command and returns the result array and status.
    *
    * Composer is a Symfony Console Application, so there’s no need to
