@@ -28,10 +28,16 @@ class MockLandoTool extends LandoTool {
     $this->setName('mockLando');
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function disable() {
     $this->enabled = FALSE;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public function enable() {
     $this->enabled = TRUE;
   }
@@ -116,5 +122,12 @@ class MockLandoTool extends LandoTool {
     # Return the mocked response.
     print "\nlando $argv [" . self::$sequence . "]";
     return $fixtures[self::$sequence++];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function parseLandoList(array $lines = []) {
+    return parent::parseLandoList($lines);
   }
 }
