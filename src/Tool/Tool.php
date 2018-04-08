@@ -130,9 +130,13 @@ class Tool {
    */
   public function getConfig($key = NULL, $default = NULL) {
     if ($key === NULL) {
-      return $this->config;
+      if (isset($this->config)) {
+        return $this->config;
+      } else {
+        return $default;
+      }
     }
-    if (array_key_exists($key, $this->config)) {
+    if (isset($this->config) && array_key_exists($key, $this->config)) {
       return $this->config[$key];
     }
     return $default;

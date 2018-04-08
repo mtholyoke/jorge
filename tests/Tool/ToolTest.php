@@ -5,7 +5,6 @@ namespace MountHolyoke\JorgeTests\Tool;
 
 use MountHolyoke\Jorge\Jorge;
 use MountHolyoke\Jorge\Tool\Tool;
-use MountHolyoke\JorgeTests\Mock\MockJorge;
 use MountHolyoke\JorgeTests\Mock\MockTool;
 use MountHolyoke\JorgeTests\OutputVerifierTrait;
 use MountHolyoke\JorgeTests\RandomStringTrait;
@@ -41,26 +40,64 @@ final class ToolTest extends TestCase {
     $this->assertSame($name, $tool->getName());
   }
 
-  public function testEnableDisable(): void {
-    # This uses a MockTool for its setStatus() override.
+  public function testDisableEnable(): void {
     $tool = $this->mock;
-    $tool->setStatus(TRUE);
+    $tool->enable();
     $this->assertTrue($tool->isEnabled());
-    $tool->setStatus(FALSE);
+    $tool->disable();
     $this->assertFalse($tool->isEnabled());
   }
 
-  /**
-   * @todo Do this without assuming a Unix-like environment for testing?
-   */
-  public function testGetters(): void {
-    $tool  = $this->mock;
-    $exec  = 'echo';
-    $jorge = new Jorge();
-    $regex = "/$exec$/";
-    $tool->setApplication($jorge, $exec);
-    $this->assertSame($jorge, $tool->getApplication());
-    $this->assertRegExp($regex, $tool->getExecutable());
+  public function testGetConfig(): void {
+    $tool = $this->mock;
+
+    # Nothing set, no key, no default.
+    $this->assertNull($tool->getConfig());
+
+    # Nothing set, no key.
+    $default = $this->makeRandomString();
+    $this->assertSame($default, $tool->getConfig(NULL, $default));
+
+    # Nothing set, no default.
+    $key = $this->makeRandomString();
+    $this->assertNull($tool->getConfig($key));
+
+    # Nothing set.
+    $key = $this->makeRandomString();
+    $default = $this->makeRandomString();
+    $this->assertSame($default, $tool->getConfig($key, $default));
+
+    # Set some configuration!
+    $key = $this->makeRandomString();
+    $val = $this->makeRandomString();
+    $config = [$key => $val];
+    $tool->setConfig($config);
+
+    # Make a key not already in use:
+    do {
+      $bad = $this->makeRandomString();
+    } while ($bad == $key);
+
+    # No key, no default.
+    $this->assertSame($config, $tool->getConfig());
+
+    # No key => should be $config, not $default.
+    $default = $this->makeRandomString();
+    $this->assertSame($config, $tool->getConfig(NULL, $default));
+
+    # Good key, no default.
+    $this->assertSame($val, $tool->getConfig($key));
+
+    # Good key => should be $val, not $default.
+    $default = $this->makeRandomString();
+    $this->assertSame($val, $tool->getConfig($key, $default));
+
+    # Bad key, no default.
+    $this->assertNull($tool->getConfig($bad));
+
+    # Bad key => should be $default.
+    $default = $this->makeRandomString();
+    $this->assertSame($default, $tool->getConfig($bad, $default));
   }
 
   public function testGetStatus(): void {
@@ -72,109 +109,114 @@ final class ToolTest extends TestCase {
   }
 
   /**
-   * @todo Do this without assuming a Unix-like environment for testing?
+   * @todo Do this without assuming the OS will provide `echo`?
+   */
+  public function testOtherGetters(): void {
+    $tool  = $this->mock;
+    $exec  = 'echo';
+    $jorge = new Jorge();
+    $regex = "/$exec$/";
+    $tool->setApplication($jorge, $exec);
+    $this->assertSame($jorge, $tool->getApplication());
+    $this->assertRegExp($regex, $tool->getExecutable());
+  }
+
+  /**
+   * @todo Do this without assuming the OS will provide `echo`?
    */
   public function testRun(): void {
     $tool = $this->mock;
+    $name = $tool->getName();
 
     # Make sure run() fails if not enabled.
     $this->assertFalse($tool->isEnabled());
     $tool->run();
-    $expect = [[LogLevel::ERROR, 'Tool not enabled', []]];
-    $this->verifyMessages($expect, $tool->messages, TRUE);
+    $expectDisabled = [
+      [LogLevel::ERROR, '{' . $name . '} Tool not enabled', []],
+    ];
+    $this->verifyMessages($expectDisabled, $tool->messages, TRUE);
     $tool->messages = [];
 
     # Give it an executable and save what it finds.
-    $jorge = new MockJorge(getcwd());
-    $tool->setApplication($jorge, 'echo');
-    $this->assertSame(1, count($tool->messages));
-    $executable = $tool->messages[0][2]['%executable'];
-    $this->assertSame([], $jorge->messages);
+    $tool->setExecutable('echo');
+    $echo = $tool->getExecutable();
+    $expect = [
+      [LogLevel::DEBUG, '{' . $name . '} Executable is "{%executable}"', ['%executable' => $echo]],
+    ];
+    $this->verifyMessages($expect, $tool->messages);
     $tool->messages = [];
 
     # Make sure it’s still disabled and doesn’t run.
     $this->assertFalse($tool->isEnabled());
     $tool->run();
-    $this->verifyMessages($expect, $tool->messages, TRUE);
-    $this->assertSame([], $jorge->messages);
+    $this->verifyMessages($expectDisabled, $tool->messages, TRUE);
     $tool->messages = [];
 
     # Add a thing to echo and make sure it still doesn't run.
     $this->assertFalse($tool->isEnabled());
     $text = $this->makeRandomString();
     $tool->run($text);
-    $this->verifyMessages($expect, $tool->messages, TRUE);
-    $this->assertSame([], $jorge->messages);
+    $this->verifyMessages($expectDisabled, $tool->messages, TRUE);
     $tool->messages = [];
 
     # Enable it and make sure it runs now.
-    $tool->setStatus(TRUE);
+    $tool->enable();
     $this->assertTrue($tool->isEnabled());
-    $result = $tool->run($text);
-    $this->assertSame(0, $result);
-    $expect = [[
-      LogLevel::NOTICE,
-      '$ {%command}',
-      ['%command' => "$executable $text"]
-    ]];
+    $this->assertSame(0, $tool->run($text));
+    $expect = [
+      [LogLevel::NOTICE, '{' . $name . '} $ {%command}', ['%command' => "$echo $text"]],
+      ['writeln',        $text],
+    ];
     $this->verifyMessages($expect, $tool->messages, TRUE);
-    $this->verifyMessages([['writeln', $text]], $jorge->messages);
   }
 
   /**
-   * @todo Do this without assuming a Unix-like environment for testing?
+   * @todo Do this without assuming the OS will provide `echo`?
    */
   public function testRunThis(): void {
     $tool = $this->mock;
+    $name = $tool->getName();
 
     # Make sure runThis() triggers exec()’s failure without an executable.
-    $result = $tool->runThis();
-    $this->assertSame(1, $result);
-    $expect = [[LogLevel::ERROR, 'Cannot execute a blank command', []]];
+    $this->assertSame(1, $tool->runThis());
+    $expect = [
+      [LogLevel::ERROR, '{' . $name . '} Cannot execute a blank command', []],
+    ];
     $this->verifyMessages($expect, $tool->messages, TRUE);
     $tool->messages = [];
 
     # Give it an executable and save what it finds.
-    $jorge = new MockJorge(getcwd());
-    $tool->setApplication($jorge, 'echo');
-    $this->assertSame(1, count($tool->messages));
-    $executable = $tool->messages[0][2]['%executable'];
-    $this->assertSame([], $jorge->messages);
+    $tool->setExecutable('echo');
+    $echo = $tool->getExecutable();
     $tool->messages = [];
 
     # Make sure it runs without being enabled.
     $this->assertFalse($tool->isEnabled());
     $text = $this->makeRandomString();
-    $result = $tool->runThis($text);
-    $this->assertSame(0, $result);
-    $expect = [[
-      LogLevel::NOTICE,
-      '$ {%command}',
-      ['%command' => "$executable $text"]
-    ]];
+    $this->assertSame(0, $tool->runThis($text));
+    $expect = [
+      [LogLevel::NOTICE, '{' . $name . '} $ {%command}', ['%command' => "$echo $text"]],
+      ['writeln',        $text],
+    ];
     $this->verifyMessages($expect, $tool->messages, TRUE);
-    $this->verifyMessages([['writeln', $text]], $jorge->messages);
     $tool->messages = [];
-    $jorge->messages = [];
 
     # Make sure it runs but doesn’t output when verbosity is quiet.
+    array_pop($expect);
     $tool->setVerbosity(OutputInterface::VERBOSITY_QUIET);
-    $result = $tool->runThis($text);
-    $this->assertSame(0, $result);
+    $this->assertSame(0, $tool->runThis($text));
     $this->verifyMessages($expect, $tool->messages, TRUE);
-    $this->assertSame([], $jorge->messages);
   }
 
   public function testSetExecutable(): void {
-    # This uses MockTool to call protected setExecutable() and capture output.
     $tool = $this->mock;
+    $name = $tool->getName();
+
     $exec = $this->makeRandomString();
-    $tool->setApplication(new Jorge(), $exec);
-    $expect = [[
-      LogLevel::ERROR,
-      'Cannot set executable "{%executable}"',
-      ['%executable' => $exec]
-    ]];
+    $tool->setExecutable($exec);
+    $expect = [
+      [LogLevel::ERROR, '{' . $name . '} Cannot set executable "{%executable}"', ['%executable' => $exec]],
+    ];
     $this->verifyMessages($expect, $tool->messages, TRUE);
   }
 }

@@ -3,12 +3,13 @@ declare(strict_types = 1);
 
 namespace MountHolyoke\JorgeTests\Mock;
 
+use MountHolyoke\JorgeTests\Mock\MockLogTrait;
+
 /**
  * Provides public methods to use for testing.
  */
 trait MockToolPublicMethodsTrait {
-  /** @var array $messages Things that would have gone to console output */
-  public $messages = [];
+  use MockLogTrait;
 
   /**
    * {@inheritDoc}
@@ -46,18 +47,13 @@ trait MockToolPublicMethodsTrait {
   }
 
   /**
-   * Saves what would have been printed so it can be checked.
+   * Tags log messages with tool name and passes them to MockLogTrait::mockLog().
    *
-   * @param string|null $level   What log level to use, or NULL to ignore
-   * @param string      $message May need $context interpolation
-   * @param array       $context Variable substitutions for $message
-   * @return array The original parameters
-   * @see \Symfony\Component\Console\Logger\ConsoleLogger
+   * {@inheritDoc}
    */
   public function log($level, $message, array $context = []) {
-    $levelString = ($level === NULL) ? 'NULL' : $level;
     $message = trim('{' . $this->getName() . '} ' . $message);
-    $this->messages[] = [$levelString, $message, $context];
+    $this->mockLog($level, $message, $context);
   }
 
   /**
