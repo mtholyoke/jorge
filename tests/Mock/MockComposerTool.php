@@ -5,12 +5,15 @@ namespace MountHolyoke\JorgeTests\Mock;
 
 use MountHolyoke\Jorge\Helper\ComposerApplication;
 use MountHolyoke\Jorge\Tool\ComposerTool;
+use MountHolyoke\JorgeTests\Mock\MockToolPublicMethodsTrait;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Supplants the ComposerTool class so we can replace its Composer.
  */
 class MockComposerTool extends ComposerTool {
+  use MockToolPublicMethodsTrait;
+
   /**
    * {@inheritDoc}
    */
@@ -32,26 +35,6 @@ class MockComposerTool extends ComposerTool {
     $mock->method('run')->willReturn(0);
 
     $this->composerApplication = $mock;
-    return $this;
-  }
-
-  /**
-   * Calls exec() for unfiltered testing.
-   *
-   * @param mixed|null $argv The arguments to pass to exec()
-   */
-  public function mockExec($argv = NULL) {
-    return $this->exec($argv);
-  }
-
-  /**
-   * Changes the tool’s verbosity after creation so we can test it.
-   *
-   * @param int $verbosity The verbosity level
-   * @return $this
-   */
-  public function setVerbosity($verbosity) {
-    $this->verbosity = $verbosity;
     return $this;
   }
 }

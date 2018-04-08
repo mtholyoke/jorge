@@ -83,7 +83,7 @@ final class ComposerToolTest extends TestCase {
     $tool->mockComposerApplication($this);
     $jorge->messages = [];
 
-    $tool->mockExec(NULL);
+    $tool->exec(NULL);
     $expect = [[
       LogLevel::NOTICE,
       '{mockComposer} % composer {%cmd} {%argv}',
@@ -93,7 +93,7 @@ final class ComposerToolTest extends TestCase {
     $jorge->messages = [];
 
     $text = $this->makeRandomString();
-    $tool->mockExec($text);
+    $tool->exec($text);
     $expect = [[
       LogLevel::NOTICE,
       '{mockComposer} % composer {%cmd} {%argv}',

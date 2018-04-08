@@ -4,13 +4,19 @@ declare(strict_types = 1);
 namespace MountHolyoke\JorgeTests\Mock;
 
 use MountHolyoke\Jorge\Tool\LandoTool;
+use MountHolyoke\JorgeTests\Mock\MockToolPublicMethodsTrait;
 use Psr\Log\LogLevel;
 
 /**
  * Supplants the LandoTool class so we can test it.
  */
 class MockLandoTool extends LandoTool {
+  use MockToolPublicMethodsTrait;
+
+  /** @var string $project The name of the mock project */
   public $project;
+
+  /** @var int $sequence The number of times exec() has been called */
   public static $sequence = 0;
 
   /**
@@ -24,29 +30,8 @@ class MockLandoTool extends LandoTool {
   /**
    * {@inheritDoc}
    */
-  public function applyVerbosity($argv = '') {
-    return parent::applyVerbosity($argv);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
   public function configure() {
     $this->setName('mockLando');
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function disable() {
-    $this->enabled = FALSE;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function enable() {
-    $this->enabled = TRUE;
   }
 
   /**
@@ -135,18 +120,5 @@ class MockLandoTool extends LandoTool {
    */
   public function parseLandoList(array $lines = []) {
     return parent::parseLandoList($lines);
-  }
-
-  /**
-   * Sets verbosity so we can test different behaviors.
-   *
-   * This is not in the superclass, which gets its verbosity from the application.
-   *
-   * @param int $verbosity The verbosity level
-   * @return $this
-   */
-  public function setVerbosity($verbosity) {
-    $this->verbosity = $verbosity;
-    return $this;
   }
 }

@@ -5,6 +5,7 @@ namespace MountHolyoke\JorgeTests\Mock;
 
 use MountHolyoke\Jorge\Tool\Tool;
 use MountHolyoke\JorgeTests\Mock\MockLogTrait;
+use MountHolyoke\JorgeTests\Mock\MockToolPublicMethodsTrait;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -13,9 +14,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class MockTool extends Tool {
   use MockLogTrait;
-
-  /** @var int $verbosity The verbosity level */
-  protected $verbosity = OutputInterface::VERBOSITY_NORMAL;
+  use MockToolPublicMethodsTrait;
 
   /**
    * Replaces log() with a method that returns instead of printing.
@@ -56,19 +55,6 @@ class MockTool extends Tool {
         $this->disable();
       }
     }
-    return $this;
-  }
-
-  /**
-   * Sets verbosity so we can test different behaviors.
-   *
-   * This is not in the superclass, which gets its verbosity from the application.
-   *
-   * @param int $verbosity The verbosity level
-   * @return $this
-   */
-  public function setVerbosity($verbosity) {
-    $this->verbosity = $verbosity;
     return $this;
   }
 }

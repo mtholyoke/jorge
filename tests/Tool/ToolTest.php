@@ -37,8 +37,8 @@ final class ToolTest extends TestCase {
     $tool = new Tool();
 
     $name = $this->makeRandomString();
-    $tool = new Tool("x$name");
-    $this->assertSame("x$name", $tool->getName());
+    $tool = new Tool($name);
+    $this->assertSame($name, $tool->getName());
   }
 
   public function testEnableDisable(): void {
