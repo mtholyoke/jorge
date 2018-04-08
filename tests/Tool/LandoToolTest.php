@@ -11,7 +11,7 @@ use MountHolyoke\JorgeTests\RandomStringTrait;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
-// use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Test the functionality of Tool that isn’t covered elsewhere.
@@ -158,5 +158,31 @@ final class LandoToolTest extends TestCase {
     ];
     $this->assertEquals($keyval, $tool->parseLandoList($lines)[0]);
     $this->assertEquals($valkey, $tool->parseLandoList($lines)[1]);
+  }
+
+  public function testApplyVerbosity(): void {
+    $verbosityMap = [
+      OutputInterface::VERBOSITY_QUIET        => '2>&1',
+      OutputInterface::VERBOSITY_NORMAL       => '',
+      OutputInterface::VERBOSITY_VERBOSE      => '-- -v',
+      OutputInterface::VERBOSITY_VERY_VERBOSE => '-- -vv',
+      OutputInterface::VERBOSITY_DEBUG        => '-- -vvvv',
+      0                                       => '',
+    ];
+
+    $tool = new MockLandoTool();
+    foreach ($verbosityMap as $verbosity => $flag) {
+      $argc = rand(0, 1);
+      $text = $this->makeRandomString();
+      $tool->setVerbosity($verbosity);
+      $response = $tool->applyVerbosity($argc ? $text : '');
+      if ($argc == 0) {
+        $this->assertSame($flag, $response);
+      } elseif (empty($flag)) {
+        $this->assertSame($text, $response);
+      } else {
+        $this->assertSame("$text $flag", $response);
+      }
+    }
   }
 }
