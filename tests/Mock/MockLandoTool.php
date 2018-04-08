@@ -80,17 +80,7 @@ class MockLandoTool extends LandoTool {
       ],
       'status' => 0,
     ];
-    # 4 testUpdateStatus calls exec('list') to test bad exit code
-    $fixtures[] = [
-      'output' => [
-        '{',
-        '"name": "' . $this->project . '",',
-        '"running": false',
-        '}',
-      ],
-      'status' => 1,
-    ];
-    # 5 testUpdateStatus calls exec('list') to test disabled tool
+    # 4 testUpdateStatus calls exec('list') to test disabled tool
     $fixtures[] = [
       'output' => [
         '{',
@@ -99,6 +89,16 @@ class MockLandoTool extends LandoTool {
         '}',
       ],
       'status' => 0,
+    ];
+    # 5 testUpdateStatus calls exec('list') to test bad exit code
+    $fixtures[] = [
+      'output' => [
+        '{',
+        '"name": "' . $this->project . '",',
+        '"running": false',
+        '}',
+      ],
+      'status' => 1,
     ];
     # 6 testUpdateStatus calls exec('list') to test name mismatch
     $fixtures[] = [

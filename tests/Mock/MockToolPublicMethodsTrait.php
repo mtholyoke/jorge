@@ -7,6 +7,9 @@ namespace MountHolyoke\JorgeTests\Mock;
  * Provides public methods to use for testing.
  */
 trait MockToolPublicMethodsTrait {
+  /** @var array $messages Things that would have gone to console output */
+  public $messages = [];
+
   /**
    * {@inheritDoc}
    */
@@ -33,6 +36,39 @@ trait MockToolPublicMethodsTrait {
    */
   public function exec($argv = '') {
     return parent::exec($argv);
+  }
+
+  /**
+   * Saves what would have been printed so it can be checked.
+   *
+   * @param string|null $level   What log level to use, or NULL to ignore
+   * @param string      $message May need $context interpolation
+   * @param array       $context Variable substitutions for $message
+   * @return array The original parameters
+   * @see \Symfony\Component\Console\Logger\ConsoleLogger
+   */
+  public function log($level, $message, array $context = []) {
+    $levelString = ($level === NULL) ? 'NULL' : $level;
+    $message = trim('{' . $this->getName() . '} ' . $message);
+    $this->messages[] = [$levelString, $message, $context];
+  }
+
+  /**
+   * Sets configuration.
+   *
+   * @param mixed $config The new configuration value/array/object
+   * @return $this
+   */
+  public function setConfig($config) {
+    $this->config = $config;
+    return $this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function setExecutable($executable) {
+    return parent::setExecutable($executable);
   }
 
   /**
