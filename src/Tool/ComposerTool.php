@@ -80,24 +80,6 @@ class ComposerTool extends Tool {
   }
 
   /**
-   * Gets configuration from its Composer instance.
-   *
-   * {@inheritDoc}
-   */
-  public function getConfig($key = NULL, $default = NULL) {
-    if ($key === NULL) {
-      // TODO: If there is some use case for this, figure out how to satisfy it.
-      return $default;
-    }
-    $package = $this->composerApplication->getComposer()->getPackage();
-    $getter = 'get' . ucfirst($key);
-    if (method_exists($package, $getter)) {
-      return $package->$getter();
-    }
-    return $default;
-  }
-
-  /**
    * Executes the tool command and returns the result array and status.
    *
    * Composer is a Symfony Console Application, so there’s no need to
@@ -133,14 +115,21 @@ class ComposerTool extends Tool {
    * Creates a Composer object to use for running commands.
    */
   protected function initialize() {
-    $factory = new Factory();
     if (($rootPath = $this->jorge->getPath()) === NULL) {
       return;
     }
-    $composerJson = $rootPath . DIRECTORY_SEPARATOR . 'composer.json';
-    if (!is_file($composerJson)) {
+    if (empty($this->getExecutable())) {
       return;
     }
+
+    # Fail silently if the current project doesn’t use Composer.
+    $this->config = $this->jorge->loadConfigFile('composer.json', NULL);
+    if (empty($this->config)) {
+      return;
+    }
+    $composerJson = $rootPath . DIRECTORY_SEPARATOR . 'composer.json';
+
+    $factory  = new Factory();
     $composer = $factory->createComposer(new NullIO, $composerJson, FALSE, $rootPath);
     $this->composerApplication = new ComposerApplication();
     $this->composerApplication->setComposer($composer);

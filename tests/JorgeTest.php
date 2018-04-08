@@ -48,6 +48,7 @@ final class JorgeTest extends TestCase {
     $startup = [
       [LogLevel::NOTICE, 'Project root: {%root}'],
       [LogLevel::DEBUG,  '{composer} Executable is "{%executable}"'],
+      ['NULL',           'Can’t read config file {%filename}'],
       [LogLevel::DEBUG,  '{git} Executable is "{%executable}"'],
       [LogLevel::NOTICE, '{git} $ {%command}'],
       [LogLevel::DEBUG,  '{lando} Executable is "{%executable}"'],

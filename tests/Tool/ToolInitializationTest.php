@@ -27,23 +27,17 @@ final class ToolInitializationTest extends TestCase {
   public $tempDir;
 
   /**
-   * @var array $tools The names of tools being tested, along with a list
-   *   of whether to apply certain tests to them
+   * @var array $tools The names of tools being tested, along with any
+   *   additional info for specific tests (not currently used).
    */
   public $tools;
 
   public function __construct($name = null, array $data = [], $dataName = '') {
     parent::__construct($name, $data, $dataName);
     $this->tools = [
-      'composer' => [
-        'empty_config' => FALSE, # Throws exception; tested in ComposerToolTest
-      ],
-      'git' => [
-        'empty_config' => TRUE,
-      ],
-      'lando' => [
-        'empty_config' => TRUE,
-      ],
+      'composer' => [],
+      'git'      => [],
+      'lando'    => [],
     ];
   }
 
@@ -115,6 +109,7 @@ final class ToolInitializationTest extends TestCase {
     $startup = [
       [LogLevel::NOTICE, 'Project root: {%root}'],
       [LogLevel::DEBUG,  '{composer} Executable is "{%executable}"'],
+      ['NULL',           'Can’t read config file {%filename}'],
       [LogLevel::DEBUG,  '{git} Executable is "{%executable}"'],
       [LogLevel::NOTICE, '{git} $ {%command}'],
       [LogLevel::DEBUG,  '{lando} Executable is "{%executable}"'],
@@ -131,6 +126,7 @@ final class ToolInitializationTest extends TestCase {
   }
 
   public function testInitializeWithEmptyConfig(): void {
+    touch('composer.json');
     mkdir('.git');
     touch('.lando.yml');
     $this->jorge->configure();
@@ -148,10 +144,8 @@ final class ToolInitializationTest extends TestCase {
 
     # Verify that the tools were not enabled.
     foreach (array_keys($this->tools) as $name) {
-      if ($this->tools[$name]['empty_config']) {
-        $tool = $this->jorge->getTool($name);
-        $this->assertFalse($tool->isEnabled());
-      }
+      $tool = $this->jorge->getTool($name);
+      $this->assertFalse($tool->isEnabled());
     }
   }
 

@@ -10,7 +10,6 @@ use MountHolyoke\JorgeTests\OutputVerifierTrait;
 use MountHolyoke\JorgeTests\RandomStringTrait;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
-use Seld\JsonLint\ParsingException;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -24,18 +23,6 @@ final class ComposerToolTest extends TestCase {
   public function testConfigure(): void {
     $tool = new ComposerTool();
     $this->assertSame('composer', $tool->getName());
-  }
-
-  public function testInitializeWithEmptyConfig(): void {
-    $tempDir = (new TemporaryDirectory())->create();
-    $root = realpath($tempDir->path());
-    mkdir($root . DIRECTORY_SEPARATOR . '.jorge');
-    chdir($root);
-    touch('composer.json');
-    $jorge = new MockJorge($root);
-    $this->expectException(ParsingException::class);
-    $jorge->configure();
-    $tempDir->delete();
   }
 
   public function testExec(): void {
