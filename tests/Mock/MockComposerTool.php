@@ -6,16 +6,11 @@ namespace MountHolyoke\JorgeTests\Mock;
 use MountHolyoke\Jorge\Helper\ComposerApplication;
 use MountHolyoke\Jorge\Tool\ComposerTool;
 use PHPUnit\Framework\TestCase;
-// use MountHolyoke\JorgeTests\Mock\MockLogTrait;
-// use Symfony\Component\Console\Application;
-// use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Supplants the ComposerTool class so we can replace its Composer.
  */
 class MockComposerTool extends ComposerTool {
-  // use MockLogTrait;
-
   /**
    * {@inheritDoc}
    */

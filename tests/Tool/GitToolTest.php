@@ -52,82 +52,13 @@ final class GitToolTest extends TestCase {
     $this->assertFalse($tool->getStatus()->clean);
   }
 
-  public function testInitializeWithoutRoot(): void {
-    $tempDir = (new TemporaryDirectory())->create();
-    $root = realpath($tempDir->path());
-    chdir($root);
-    $jorge = new MockJorge($root);
-    $jorge->configure();
-
-    # Verify that initalize() returned without checking status.
-    $startup = [
-      [LogLevel::WARNING, 'Can’t find project root'],
-      [LogLevel::DEBUG,   '{composer} Executable is "{%executable}"'],
-      [LogLevel::DEBUG,   '{git} Executable is "{%executable}"'],
-      [LogLevel::DEBUG,   '{lando} Executable is "{%executable}"'],
-      ['NULL',            'Can’t read config file {%filename}'],
-    ];
-    $this->verifyMessages($startup, $jorge->messages);
-    $tempDir->delete();
-  }
-
-  public function testInitializeWithoutRepo(): void {
-    $tempDir = (new TemporaryDirectory())->create();
-    $root = realpath($tempDir->path());
-    mkdir($root . DIRECTORY_SEPARATOR . '.jorge');
-    chdir($root);
-    $jorge = new MockJorge($root);
-    $jorge->configure();
-    $tool = $jorge->getTool('git');
-
-    # Verify that initalize() checked status but tool is disabled.
-    $startup = [
-      [LogLevel::NOTICE, 'Project root: {%root}'],
-      [LogLevel::ERROR,  'Can’t read config file {%filename}'],
-      [LogLevel::DEBUG,  '{composer} Executable is "{%executable}"'],
-      [LogLevel::DEBUG,  '{git} Executable is "{%executable}"'],
-      [LogLevel::NOTICE, '{git} $ {%command}'],
-      [LogLevel::DEBUG,  '{lando} Executable is "{%executable}"'],
-      ['NULL',           'Can’t read config file {%filename}'],
-    ];
-    $this->verifyMessages($startup, $jorge->messages);
-    $this->assertFalse($tool->isEnabled());
-    $tempDir->delete();
-  }
-
-  public function testInitializeWithCleanRepo(): void {
-    $tempDir = (new TemporaryDirectory())->create();
-    $root = realpath($tempDir->path());
-    mkdir($root . DIRECTORY_SEPARATOR . '.jorge');
-    chdir($root);
-    exec('git init .');
-    $jorge = new MockJorge($root);
-    $jorge->configure();
-    $tool = $jorge->getTool('git');
-
-    # Verify that the tool is enabled and the status is clean.
-    $startup = [
-      [LogLevel::NOTICE, 'Project root: {%root}'],
-      [LogLevel::ERROR,  'Can’t read config file {%filename}'],
-      [LogLevel::DEBUG,  '{composer} Executable is "{%executable}"'],
-      [LogLevel::DEBUG,  '{git} Executable is "{%executable}"'],
-      [LogLevel::NOTICE, '{git} $ {%command}'],
-      [LogLevel::DEBUG,  '{lando} Executable is "{%executable}"'],
-      ['NULL',           'Can’t read config file {%filename}'],
-    ];
-    $this->verifyMessages($startup, $jorge->messages);
-    $this->assertTrue($tool->isEnabled());
-    $this->assertTrue($tool->getStatus()->clean);
-    $tempDir->delete();
-  }
-
   public function testInitializeWithDirtyRepo(): void {
     $tempDir = (new TemporaryDirectory())->create();
     $root = realpath($tempDir->path());
-    mkdir($root . DIRECTORY_SEPARATOR . '.jorge');
     chdir($root);
-    touch($root . DIRECTORY_SEPARATOR . $this->makeRandomString());
+    mkdir('.jorge');
     exec('git init .');
+    touch($this->makeRandomString());
     $jorge = new MockJorge($root);
     $jorge->configure();
     $tool = $jorge->getTool('git');

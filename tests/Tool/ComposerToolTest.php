@@ -26,34 +26,7 @@ final class ComposerToolTest extends TestCase {
     $this->assertSame('composer', $tool->getName());
   }
 
-  public function testInitializeWithoutRoot(): void {
-    $tempDir = (new TemporaryDirectory())->create();
-    $root = realpath($tempDir->path());
-    chdir($root);
-    $jorge = new MockJorge($root);
-    $jorge->configure();
-
-    # Verify that initalize() returned without enabling the ComposerTool.
-    $tool = $jorge->getTool('composer');
-    $this->assertFalse($tool->isEnabled());
-    $tempDir->delete();
-  }
-
-  public function testInitializeWithoutComposerJson(): void {
-    $tempDir = (new TemporaryDirectory())->create();
-    $root = realpath($tempDir->path());
-    mkdir($root . DIRECTORY_SEPARATOR . '.jorge');
-    chdir($root);
-    $jorge = new MockJorge($root);
-    $jorge->configure();
-
-    # Verify that initalize() returned without enabling the ComposerTool.
-    $tool = $jorge->getTool('composer');
-    $this->assertFalse($tool->isEnabled());
-    $tempDir->delete();
-  }
-
-  public function testInitializeWithEmptyComposerJson(): void {
+  public function testInitializeWithEmptyConfig(): void {
     $tempDir = (new TemporaryDirectory())->create();
     $root = realpath($tempDir->path());
     mkdir($root . DIRECTORY_SEPARATOR . '.jorge');
@@ -62,20 +35,6 @@ final class ComposerToolTest extends TestCase {
     $jorge = new MockJorge($root);
     $this->expectException(ParsingException::class);
     $jorge->configure();
-    $tempDir->delete();
-  }
-
-  public function testInitializeWithValidComposerJson(): void {
-    $tempDir = (new TemporaryDirectory())->create();
-    $root = realpath($tempDir->path());
-    mkdir($root . DIRECTORY_SEPARATOR . '.jorge');
-    chdir($root);
-    $config = ['name' => 'test/' . $this->makeRandomString()];
-    file_put_contents('composer.json', json_encode($config));
-    $jorge = new MockJorge($root);
-    $jorge->configure();
-    $tool = $jorge->getTool('composer');
-    $this->assertTrue($tool->isEnabled());
     $tempDir->delete();
   }
 
