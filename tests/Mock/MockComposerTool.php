@@ -17,6 +17,13 @@ class MockComposerTool extends ComposerTool {
   /**
    * {@inheritDoc}
    */
+  public function argvJoin(array $argv = []) {
+    return parent::argvJoin($argv);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   public function configure() {
     $this->setName('mockComposer');
   }
@@ -28,6 +35,14 @@ class MockComposerTool extends ComposerTool {
    * @return $this
    */
   public function mockComposerApplication($test) {
+    # exec() needs $this->jorge->getOutput() to work, but it gets passed
+    # to the mocked run() below without analysis.
+    $this->jorge = new class {
+      public function getOutput() {
+        return NULL;
+      }
+    };
+
     $mock = $test->getMockBuilder(ComposerApplication::class)
                  ->setMethods(['run'])
                  ->getMock();

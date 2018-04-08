@@ -83,4 +83,18 @@ trait MockToolPublicMethodsTrait {
     $this->verbosity = $verbosity;
     return $this;
   }
+
+  /**
+   * Saves what would have been printed so it can be checked.
+   *
+   * @param string|array $messages The message as an array of lines of a single string
+   * @param int          $options  A bitmask of options
+   * @see Symfony\Component\Console\Output\OutputInterface
+   */
+  public function writeln($messages, $options = 0) {
+    $messages = (array) $messages;
+    foreach ($messages as $message) {
+      $this->messages[] = ['writeln', $message];
+    }
+  }
 }

@@ -5,12 +5,10 @@ namespace MountHolyoke\JorgeTests\Tool;
 
 use MountHolyoke\Jorge\Tool\ComposerTool;
 use MountHolyoke\JorgeTests\Mock\MockComposerTool;
-use MountHolyoke\JorgeTests\Mock\MockJorge;
 use MountHolyoke\JorgeTests\OutputVerifierTrait;
 use MountHolyoke\JorgeTests\RandomStringTrait;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
-use Spatie\TemporaryDirectory\TemporaryDirectory;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -20,95 +18,8 @@ final class ComposerToolTest extends TestCase {
   use OutputVerifierTrait;
   use RandomStringTrait;
 
-  public function testConfigure(): void {
-    $tool = new ComposerTool();
-    $this->assertSame('composer', $tool->getName());
-  }
-
-  public function testExec(): void {
-    $jorge = new MockJorge(getcwd());
-    $jorge->getOutput()->setVerbosity(OutputInterface::VERBOSITY_QUIET);
-    $jorge->configure();
-    $startup = [
-      [LogLevel::NOTICE, 'Project root: {%root}'],
-      [LogLevel::DEBUG,  '{composer} Executable is "{%executable}"'],
-      [LogLevel::DEBUG,  '{git} Executable is "{%executable}"'],
-      [LogLevel::NOTICE, '{git} $ {%command}'],
-      [LogLevel::DEBUG,  '{lando} Executable is "{%executable}"'],
-      ['NULL',           'Can’t read config file {%filename}'],
-    ];
-    $this->verifyMessages($startup, $jorge->messages);
-    $jorge->messages = [];
-
-    $tool = new MockComposerTool();
-    $jorge->addTool($tool);
-    $tool->mockComposerApplication($this);
-    $expect = [[
-      LogLevel::ERROR,
-      '{mockComposer} Cannot set executable "{%executable}"',
-      ['%executable' => 'mockComposer']
-    ]];
-    $this->verifyMessages($expect, $jorge->messages, TRUE);
-    $jorge->messages = [];
-
-    # Make sure an empty run succeeds.
-    $status = $tool->runThis();
-    $expect = [[
-      LogLevel::NOTICE,
-      '{mockComposer} % composer {%cmd} {%argv}',
-      ['%cmd' => '', '%argv' => '-q']
-    ]];
-    $this->assertSame(0, $status);
-    $this->verifyMessages($expect, $jorge->messages, TRUE);
-    $jorge->messages = [];
-
-    # Make sure a command run also succeeds.
-    $name = $this->makeRandomString();
-    $status = $tool->runThis(['command' => $name]);
-    $expect = [[
-      LogLevel::NOTICE,
-      '{mockComposer} % composer {%cmd} {%argv}',
-      ['%cmd' => $name, '%argv' => '-q']
-    ]];
-    $this->assertSame(0, $status);
-    $this->verifyMessages($expect, $jorge->messages, TRUE);
-  }
-
-  public function testExecWithInvalidArgv(): void {
-    $jorge = new MockJorge(getcwd());
-    $jorge->getOutput()->setVerbosity(OutputInterface::VERBOSITY_QUIET);
-    $jorge->configure();
-    $tool = new MockComposerTool();
-    $jorge->addTool($tool);
-    $tool->mockComposerApplication($this);
-    $jorge->messages = [];
-
-    $tool->exec(NULL);
-    $expect = [[
-      LogLevel::NOTICE,
-      '{mockComposer} % composer {%cmd} {%argv}',
-      ['%cmd' => '', '%argv' => '']
-    ]];
-    $this->verifyMessages($expect, $jorge->messages);
-    $jorge->messages = [];
-
-    $text = $this->makeRandomString();
-    $tool->exec($text);
-    $expect = [[
-      LogLevel::NOTICE,
-      '{mockComposer} % composer {%cmd} {%argv}',
-      ['%cmd' => '', '%argv' => '']
-    ]];
-    $this->verifyMessages($expect, $jorge->messages);
-    $jorge->messages = [];
-  }
-
   public function testApplyVerbosity(): void {
-    $jorge = new MockJorge(getcwd());
-    $jorge->configure();
     $tool = new MockComposerTool();
-    $jorge->addTool($tool);
-    $tool->mockComposerApplication($this);
 
     $verbosityMap = [
       OutputInterface::VERBOSITY_QUIET        => '-q',
@@ -116,34 +27,27 @@ final class ComposerToolTest extends TestCase {
       OutputInterface::VERBOSITY_VERBOSE      => '-v',
       OutputInterface::VERBOSITY_VERY_VERBOSE => '-vv',
       OutputInterface::VERBOSITY_DEBUG        => '-vvv',
+      -1                                      => '',
     ];
 
-    # Test all the known verbosities
-    foreach ($verbosityMap as $verbosity => $argv) {
-      $jorge->messages = [];
+    # Test all the known verbosities, plus unknown “-1”.
+    foreach ($verbosityMap as $verbosity => $flag) {
+      $tool->messages = [];
       $tool->setVerbosity($verbosity);
       $command = $this->makeRandomString();
-      $tool->runThis(['command' => $command]);
-      $expect = [[
-        LogLevel::NOTICE,
-        '{mockComposer} % composer {%cmd} {%argv}',
-        ['%cmd' => $command, '%argv' => $argv]
-      ]];
-      if ($verbosity != OutputInterface::VERBOSITY_QUIET) {
-        $expect[] = ['writeln', ''];
+      $expect  = ['command' => $command];
+      if (!empty($flag)) {
+        $expect[$flag] = TRUE;
       }
-      $this->verifyMessages($expect, $jorge->messages, TRUE);
+
+      # Verify the resulting array has a verbosity flag if needed.
+      $result = $tool->applyVerbosity(['command' => $command]);
+      $this->assertSame($expect, $result);
     }
   }
 
   public function testArgvJoin(): void {
-    $jorge = new MockJorge(getcwd());
-    $jorge->getOutput()->setVerbosity(OutputInterface::VERBOSITY_QUIET);
-    $jorge->configure();
     $tool = new MockComposerTool();
-    $jorge->addTool($tool);
-    $tool->mockComposerApplication($this);
-    $jorge->messages = [];
 
     # Make sure it works for truthy things.
     $command = $this->makeRandomString();
@@ -152,15 +56,8 @@ final class ComposerToolTest extends TestCase {
       'trueThing' => TRUE,
       'argument'  => 'value',
     ];
-    $status = $tool->runThis($argv);
-    $expect = [[
-      LogLevel::NOTICE,
-      '{mockComposer} % composer {%cmd} {%argv}',
-      ['%cmd' => $command, '%argv' => 'trueThing argument=value -q']
-    ]];
-    $this->assertSame(0, $status);
-    $this->verifyMessages($expect, $jorge->messages, TRUE);
-    $jorge->messages = [];
+    $expect = 'trueThing argument=value';
+    $this->assertSame($expect, $tool->argvJoin($argv));
 
     # Make sure it works for falsy things.
     $command = $this->makeRandomString();
@@ -171,13 +68,59 @@ final class ComposerToolTest extends TestCase {
       'zeroValue'  => 0,
       'nullValue'  => NULL,
     ];
-    $status = $tool->runThis($argv);
-    $expect = [[
-      LogLevel::NOTICE,
-      '{mockComposer} % composer {%cmd} {%argv}',
-      ['%cmd' => $command, '%argv' => 'fakeFalse=false zeroValue=0 nullValue -q']
-    ]];
-    $this->assertSame(0, $status);
-    $this->verifyMessages($expect, $jorge->messages, TRUE);
+    $expect = 'fakeFalse=false zeroValue=0 nullValue';
+    $this->assertSame($expect, $tool->argvJoin($argv));
+  }
+
+  public function testConfigure(): void {
+    $tool = new ComposerTool();
+    $this->assertSame('composer', $tool->getName());
+  }
+
+  public function testExec(): void {
+    $tool = new MockComposerTool();
+    $tool->mockComposerApplication($this);
+
+    # Make sure an empty run succeeds.
+    $expect = [
+      [LogLevel::NOTICE, '{mockComposer} % composer {%cmd} {%argv}', ['%cmd' => '', '%argv' => '']],
+      ['writeln',        ''],
+    ];
+    $this->assertSame(0, $tool->runThis());
+    $this->verifyMessages($expect, $tool->messages, TRUE);
+    $tool->messages = [];
+
+    # Make sure a command run also succeeds.
+    $command = $this->makeRandomString();
+    $expect  = [
+      [LogLevel::NOTICE, '{mockComposer} % composer {%cmd} {%argv}', ['%cmd' => $command, '%argv' => '']],
+      ['writeln',        ''],
+    ];
+    $this->assertSame(0, $tool->runThis(['command' => $command]));
+    $this->verifyMessages($expect, $tool->messages, TRUE);
+    $tool->messages = [];
+  }
+
+  public function testExecWithInvalidArgv(): void {
+    $tool = new MockComposerTool();
+    $tool->mockComposerApplication($this);
+
+    # These conditions share the same expect:
+    $expect = [
+      [LogLevel::NOTICE, '{mockComposer} % composer {%cmd} {%argv}', ['%cmd' => '', '%argv' => '']]
+    ];
+
+    # Make sure a NULL is trapped appropriately.
+    $exec = $tool->exec(NULL);
+    $this->assertSame(0, $exec['status']);
+    $this->verifyMessages($expect, $tool->messages);
+    $tool->messages = [];
+
+    # Make sure a non-array for $argv is trapped appropriately.
+    $random = $this->makeRandomString();
+    $exec = $tool->exec($random);
+    $this->assertSame(0, $exec['status']);
+    $this->verifyMessages($expect, $tool->messages);
+    $tool->messages = [];
   }
 }
