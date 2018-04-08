@@ -21,6 +21,11 @@ final class ComposerToolTest extends TestCase {
   use OutputVerifierTrait;
   use RandomStringTrait;
 
+  public function testConfigure(): void {
+    $tool = new ComposerTool();
+    $this->assertSame('composer', $tool->getName());
+  }
+
   public function testInitializeWithoutRoot(): void {
     $tempDir = (new TemporaryDirectory())->create();
     $root = realpath($tempDir->path());
@@ -229,10 +234,4 @@ final class ComposerToolTest extends TestCase {
     $this->assertSame(0, $status);
     $this->verifyMessages($expect, $jorge->messages, TRUE);
   }
-
-  public function testConfigure(): void {
-    $tool = new ComposerTool();
-    $this->assertSame('composer', $tool->getName());
-  }
-
 }

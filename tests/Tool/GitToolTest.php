@@ -3,18 +3,12 @@ declare(strict_types = 1);
 
 namespace MountHolyoke\JorgeTests\Tool;
 
-// use MountHolyoke\Jorge\Jorge;
 use MountHolyoke\Jorge\Tool\GitTool;
-// use MountHolyoke\Jorge\Tool\Tool;
 use MountHolyoke\JorgeTests\Mock\MockJorge;
 use MountHolyoke\JorgeTests\OutputVerifierTrait;
 use MountHolyoke\JorgeTests\RandomStringTrait;
-// use MountHolyoke\JorgeTests\Mock\MockTool;
-// use MountHolyoke\JorgeTests\OutputVerifierTrait;
-// use MountHolyoke\JorgeTests\RandomStringTrait;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
-// use Symfony\Component\Console\Exception\LogicException;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -24,96 +18,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class GitToolTest extends TestCase {
   use OutputVerifierTrait;
   use RandomStringTrait;
-
-  /**
-   * Make sure verbosity is being correctly applied to git commands.
-   *
-   * Git’s various commands have different verbosity flags, so they are
-   * assembled within GitTool as arrays rather than strings, and the
-   * applyVerbosity() method, called by runThis(), is what makes them
-   * into strings for exec().
-   *
-   * @todo Do this without assuming a Unix-like environment for testing?
-   */
-  public function testApplyVerbosity(): void {
-    $verbosityMap = [
-      OutputInterface::VERBOSITY_QUIET => [
-        'checkout' => '-q 2>&1',
-        'pull'     => '2>&1',
-        'status'   => '2>&1',
-        '#default' => '2>&1',
-      ],
-      OutputInterface::VERBOSITY_NORMAL => [
-        'checkout' => '',
-        'pull'     => '',
-        'status'   => '',
-        '#default' => '',
-      ],
-      OutputInterface::VERBOSITY_VERBOSE => [
-        'checkout' => '',
-        'pull'     => '-v',
-        'status'   => '-v',
-        '#default' => '-v',
-      ],
-      OutputInterface::VERBOSITY_VERY_VERBOSE => [
-        'checkout' => '',
-        'pull'     => '-v',
-        'status'   => '-vv',
-        '#default' => '-v',
-      ],
-      OutputInterface::VERBOSITY_DEBUG => [
-        'checkout' => '',
-        'pull'     => '-v',
-        'status'   => '-vv',
-        '#default' => '-v',
-      ],
-    ];
-
-    # List of commands to test, with whether it takes an argument.
-    # $bogusCmd validates defaults in verbosity map.
-    $bogusCmd = $this->makeRandomString();
-    $commands = [
-      'checkout' => TRUE,
-      'pull'     => FALSE,
-      'status'   => FALSE,
-      $bogusCmd  => (rand(0, 1) == 1),
-    ];
-
-    $jorge  = new MockJorge(getcwd());
-    $output = $jorge->getOutput();
-    $tool   = new GitTool();
-
-    foreach ($verbosityMap as $key => $map) {
-      $output->setVerbosity($key);
-      # Replace the executable so we don’t actually run Git:
-      $tool->setApplication($jorge, 'echo');
-      foreach ($commands as $command => $argument) {
-        $jorge->messages = [];
-
-        # Set up the command to run.
-        $argv = [$command];
-        if ($argument) {
-          $argv[] = $this->makeRandomString();
-        }
-
-        # Establish expected values.
-        $flag = array_key_exists($command, $map) ? $map[$command] : $map['#default'];
-        $execString = trim(implode(' ', array_merge($argv, [$flag])));
-        $expect = [[
-          LogLevel::NOTICE,
-          '{git} $ {%command}',
-          ['%command' => $tool->getExecutable() . ' ' . $execString]
-        ]];
-        if ($key != OutputInterface::VERBOSITY_QUIET) {
-          $expect[] = ['writeln', $execString];
-        }
-
-        # Make sure we got what we expected.
-        $tool->runThis($argv);
-        $this->verifyMessages($expect, $jorge->messages, TRUE);
-      }
-    }
-  }
 
   public function testApplyVerbosityEdgeCases() {
     $jorge = new MockJorge(getcwd());
@@ -264,5 +168,95 @@ final class GitToolTest extends TestCase {
     ];
     $tool->updateStatus($clean);
     $this->assertTrue($tool->getStatus()->clean);
+  }
+
+  /**
+   * Make sure verbosity is being correctly applied to git commands.
+   *
+   * Git’s various commands have different verbosity flags, so they are
+   * assembled within GitTool as arrays rather than strings, and the
+   * applyVerbosity() method, called by runThis(), is what makes them
+   * into strings for exec().
+   *
+   * @todo Do this without assuming a Unix-like environment for testing?
+   */
+  public function testApplyVerbosity(): void {
+    $verbosityMap = [
+      OutputInterface::VERBOSITY_QUIET => [
+        'checkout' => '-q 2>&1',
+        'pull'     => '2>&1',
+        'status'   => '2>&1',
+        '#default' => '2>&1',
+      ],
+      OutputInterface::VERBOSITY_NORMAL => [
+        'checkout' => '',
+        'pull'     => '',
+        'status'   => '',
+        '#default' => '',
+      ],
+      OutputInterface::VERBOSITY_VERBOSE => [
+        'checkout' => '',
+        'pull'     => '-v',
+        'status'   => '-v',
+        '#default' => '-v',
+      ],
+      OutputInterface::VERBOSITY_VERY_VERBOSE => [
+        'checkout' => '',
+        'pull'     => '-v',
+        'status'   => '-vv',
+        '#default' => '-v',
+      ],
+      OutputInterface::VERBOSITY_DEBUG => [
+        'checkout' => '',
+        'pull'     => '-v',
+        'status'   => '-vv',
+        '#default' => '-v',
+      ],
+    ];
+
+    # List of commands to test, with whether it takes an argument.
+    # $bogusCmd validates defaults in verbosity map.
+    $bogusCmd = $this->makeRandomString();
+    $commands = [
+      'checkout' => TRUE,
+      'pull'     => FALSE,
+      'status'   => FALSE,
+      $bogusCmd  => (rand(0, 1) == 1),
+    ];
+
+    $jorge  = new MockJorge(getcwd());
+    $output = $jorge->getOutput();
+    $tool   = new GitTool();
+
+    foreach ($verbosityMap as $key => $map) {
+      $output->setVerbosity($key);
+      # Replace the executable so we don’t actually run Git:
+      $tool->setApplication($jorge, 'echo');
+      foreach ($commands as $command => $argument) {
+        $jorge->messages = [];
+
+        # Set up the command to run.
+        $argv = [$command];
+        if ($argument) {
+          $argv[] = $this->makeRandomString();
+        }
+
+        # Establish expected values.
+        $flag = array_key_exists($command, $map) ? $map[$command] : $map['#default'];
+        $execString = trim(implode(' ', array_merge($argv, [$flag])));
+        $expect = [[
+          LogLevel::NOTICE,
+          '{git} $ {%command}',
+          ['%command' => $tool->getExecutable() . ' ' . $execString]
+        ]];
+        if ($key != OutputInterface::VERBOSITY_QUIET) {
+          $expect[] = ['writeln', $execString];
+        }
+
+        # Make sure we got what we expected.
+        $tool->runThis($argv);
+        $this->verifyMessages($expect, $jorge->messages, TRUE);
+      }
+    }
   }
 }
