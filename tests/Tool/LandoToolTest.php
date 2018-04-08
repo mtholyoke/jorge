@@ -50,7 +50,7 @@ final class LandoToolTest extends TestCase {
       [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => "$exec start"]],
       [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => "$exec list"]],
     ];
-    $this->verifyMessages($expect, $jorge->messages);
+    $this->verifyMessages($expect, $jorge->messages, TRUE);
     $this->assertTrue($tool->getStatus()->running);
     $jorge->messages = [];
 
@@ -59,9 +59,58 @@ final class LandoToolTest extends TestCase {
     $expect = [
       [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => "$exec list"]],
     ];
-    $this->verifyMessages($expect, $jorge->messages);
+    $this->verifyMessages($expect, $jorge->messages, TRUE);
     $this->assertTrue($tool->getStatus()->running);
 
     $tempDir->delete();
+  }
+
+  public function testUpdateStatus(): void {
+    $tempDir = (new TemporaryDirectory())->create();
+    $root = realpath($tempDir->path());
+    mkdir($root . DIRECTORY_SEPARATOR . '.jorge');
+    chdir($root);
+    $project = $this->makeRandomString();
+    $config  = "name: $project\n";
+    file_put_contents('.lando.yml', $config);
+    $jorge = new MockJorge($root);
+    $jorge->configure();
+    $tool = new MockLandoTool($project);
+    $jorge->addTool($tool, 'echo');
+    $exec = $tool->getExecutable();
+    $jorge->messages = [];
+
+    # Make sure it fails if `lando list` has nonzero exit code.
+    $tool->updateStatus();
+    $expect = [
+      [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => "$exec list"]],
+      [LogLevel::ERROR,  '{mockLando} Unable to determine status', []],
+    ];
+    $this->verifyMessages($expect, $jorge->messages, TRUE);
+    $jorge->messages = [];
+
+    # Make sure it fails if the tool is disabled.
+    $tool->disable();
+    $tool->updateStatus();
+    $expect = [
+      [LogLevel::NOTICE,  '{mockLando} $ {%command}', ['%command' => "$exec list"]],
+      [LogLevel::WARNING, '{mockLando} No Lando environment configured or specified', []],
+    ];
+    $this->verifyMessages($expect, $jorge->messages, TRUE);
+    $jorge->messages = [];
+
+    # Make sure it fails if it can’t find this project’s name.
+    $tool->enable();
+    do {
+      $unknown = $this->makeRandomString();
+    } while ($unknown == $project);
+    $tool->updateStatus($unknown);
+    $expect = [
+      [LogLevel::NOTICE,  '{mockLando} $ {%command}', ['%command' => "$exec list"]],
+      [LogLevel::WARNING, '{mockLando} Unable to determine status for Lando environment "{%name}"', ['%name' => $unknown]],
+    ];
+    $this->verifyMessages($expect, $jorge->messages, TRUE);
+    $jorge->messages = [];
+
   }
 }

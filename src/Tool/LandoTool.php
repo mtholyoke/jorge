@@ -109,9 +109,11 @@ class LandoTool extends Tool {
    */
   public function updateStatus($name = '') {
     $exec = $this->exec('list');
-    if ($exec['status'] == 0) {
-      $list = $this->parseLandoList($exec['output']);
+    if ($exec['status'] != 0) {
+      $this->log(LogLevel::ERROR, 'Unable to determine status');
+      return;
     }
+    $list = $this->parseLandoList($exec['output']);
     if (empty($name)) {
       if ($this->isEnabled()) {
         $name = $this->config['name'];

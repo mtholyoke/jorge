@@ -11,7 +11,7 @@ use Psr\Log\LogLevel;
  */
 class MockLandoTool extends LandoTool {
   public $project;
-  public $sequence = 0;
+  public static $sequence = 0;
 
   /**
    * Saves the name it’s passed to use later as a Lando environment.
@@ -50,12 +50,11 @@ class MockLandoTool extends LandoTool {
 
     # Establish mocked responses.
     $fixtures = [];
-    # 0 testRequireStarted calls exec('list')
+    # 0 testRequireStarted calls exec('list') to test when lando is not running
     $fixtures[] = [
       'output' => [
         '{',
         '"name": "' . $this->project . '",',
-        '"location": "' . $this->jorge->getPath() . '",',
         '"running": false',
         '}',
       ],
@@ -68,26 +67,54 @@ class MockLandoTool extends LandoTool {
       'output' => [
         '{',
         '"name": "' . $this->project . '",',
-        '"location": "' . $this->jorge->getPath() . '",',
         '"running": true',
         '}',
       ],
       'status' => 0,
     ];
-    # 2 testRequireStarted calls exec('list')
+    # 3 testRequireStarted calls exec('list') to test when lando is already running
     $fixtures[] = [
       'output' => [
         '{',
         '"name": "' . $this->project . '",',
-        '"location": "' . $this->jorge->getPath() . '",',
         '"running": true',
+        '}',
+      ],
+      'status' => 0,
+    ];
+    # 4 testUpdateStatus calls exec('list') to test bad exit code
+    $fixtures[] = [
+      'output' => [
+        '{',
+        '"name": "' . $this->project . '",',
+        '"running": false',
+        '}',
+      ],
+      'status' => 1,
+    ];
+    # 5 testUpdateStatus calls exec('list') to test disabled tool
+    $fixtures[] = [
+      'output' => [
+        '{',
+        '"name": "' . $this->project . '",',
+        '"running": false',
+        '}',
+      ],
+      'status' => 0,
+    ];
+    # 6 testUpdateStatus calls exec('list') to test name mismatch
+    $fixtures[] = [
+      'output' => [
+        '{',
+        '"name": "' . $this->project . '",',
+        '"running": false',
         '}',
       ],
       'status' => 0,
     ];
 
     # Return the mocked response.
-    print "\nlando $argv [$this->sequence]";
-    return $fixtures[$this->sequence++];
+    print "\nlando $argv [" . self::$sequence . "]";
+    return $fixtures[self::$sequence++];
   }
 }
