@@ -39,6 +39,13 @@ trait MockToolPublicMethodsTrait {
   }
 
   /**
+   * {@inheritDoc}
+   */
+  public function initialize() {
+    return parent::initialize();
+  }
+
+  /**
    * Saves what would have been printed so it can be checked.
    *
    * @param string|null $level   What log level to use, or NULL to ignore

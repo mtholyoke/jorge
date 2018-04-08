@@ -4,11 +4,9 @@ declare(strict_types = 1);
 namespace MountHolyoke\JorgeTests\Tool;
 
 use MountHolyoke\Jorge\Tool\GitTool;
-use MountHolyoke\JorgeTests\Mock\MockJorge;
-use MountHolyoke\JorgeTests\OutputVerifierTrait;
+use MountHolyoke\JorgeTests\Mock\MockGitTool;
 use MountHolyoke\JorgeTests\RandomStringTrait;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LogLevel;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -16,91 +14,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  * Test the functionality of Tool that isn’t covered elsewhere.
  */
 final class GitToolTest extends TestCase {
-  use OutputVerifierTrait;
   use RandomStringTrait;
-
-  public function testApplyVerbosityEdgeCases() {
-    $jorge = new MockJorge(getcwd());
-    $tool  = new GitTool();
-    # Replace the executable so we don’t actually run Git:
-    $tool->setApplication($jorge, 'echo');
-    $executable = $tool->getExecutable();
-    $jorge->messages = [];
-
-    # Make sure that an invalid $argv is returned unchanged.
-    $text = $this->makeRandomString();
-    $expect = [
-      [LogLevel::NOTICE, '{git} $ {%command}', ['%command' => "$executable $text"]],
-      ['writeln',        $text                                                    ]
-    ];
-    $tool->runThis($text);
-    $this->verifyMessages($expect, $jorge->messages, TRUE);
-    $jorge->messages = [];
-
-    # Make sure than an empty $argv array is returned as an empty string.
-    $expect = [
-      [LogLevel::NOTICE, '{git} $ {%command}', ['%command' => $executable]],
-      ['writeln',        ''                                               ],
-    ];
-    $tool->runThis([]);
-    $this->verifyMessages($expect, $jorge->messages, TRUE);
-  }
-
-  public function testConfigure(): void {
-    $tool = new GitTool();
-    $this->assertSame('git', $tool->getName());
-    $this->assertFalse($tool->getStatus()->clean);
-  }
-
-  public function testInitializeWithDirtyRepo(): void {
-    $tempDir = (new TemporaryDirectory())->create();
-    $root = realpath($tempDir->path());
-    chdir($root);
-    mkdir('.jorge');
-    exec('git init .');
-    touch($this->makeRandomString());
-    $jorge = new MockJorge($root);
-    $jorge->configure();
-    $tool = $jorge->getTool('git');
-
-    # Verify that the tool is enabled and the status is clean.
-    $startup = [
-      [LogLevel::NOTICE, 'Project root: {%root}'],
-      [LogLevel::ERROR,  'Can’t read config file {%filename}'],
-      [LogLevel::DEBUG,  '{composer} Executable is "{%executable}"'],
-      ['NULL',           'Can’t read config file {%filename}'],
-      [LogLevel::DEBUG,  '{git} Executable is "{%executable}"'],
-      [LogLevel::NOTICE, '{git} $ {%command}'],
-      [LogLevel::DEBUG,  '{lando} Executable is "{%executable}"'],
-      ['NULL',           'Can’t read config file {%filename}'],
-    ];
-    $this->verifyMessages($startup, $jorge->messages);
-    $this->assertTrue($tool->isEnabled());
-    $this->assertFalse($tool->getStatus()->clean);
-    $tempDir->delete();
-  }
-
-  public function testUpdateStatus(): void {
-    $jorge = new MockJorge(getcwd());
-    $tool  = new GitTool();
-    # Replace the executable so we don’t actually run Git:
-    $tool->setApplication($jorge, 'echo');
-
-    # We expect FALSE because the executable (`echo status`) does not
-    # produce a line containing the string 'nothing to commit'.
-    $tool->updateStatus();
-    $this->assertFalse($tool->getStatus()->clean);
-
-    # Run a test that should produce a clean status.
-    $clean = [
-      'On branch master',
-      'Your branch is up to date with "origin/master".',
-      '',
-      'nothing to commit, working tree clean',
-    ];
-    $tool->updateStatus($clean);
-    $this->assertTrue($tool->getStatus()->clean);
-  }
 
   /**
    * Make sure verbosity is being correctly applied to git commands.
@@ -156,17 +70,20 @@ final class GitToolTest extends TestCase {
       $bogusCmd  => (rand(0, 1) == 1),
     ];
 
-    $jorge  = new MockJorge(getcwd());
-    $output = $jorge->getOutput();
-    $tool   = new GitTool();
+    $tool = new MockGitTool();
 
-    foreach ($verbosityMap as $key => $map) {
-      $output->setVerbosity($key);
-      # Replace the executable so we don’t actually run Git:
-      $tool->setApplication($jorge, 'echo');
+    # Make sure that an invalid $argv is returned unchanged.
+    $text = $this->makeRandomString();
+    $this->assertSame($text, $tool->applyVerbosity($text));
+
+    # Make sure than an empty $argv array is returned as an empty string.
+    $this->assertSame('', $tool->applyVerbosity([]));
+
+    # Now test every combination of command and verbosity.
+    foreach ($verbosityMap as $verbosity => $map) {
+      $tool->setVerbosity($verbosity);
+
       foreach ($commands as $command => $argument) {
-        $jorge->messages = [];
-
         # Set up the command to run.
         $argv = [$command];
         if ($argument) {
@@ -175,20 +92,57 @@ final class GitToolTest extends TestCase {
 
         # Establish expected values.
         $flag = array_key_exists($command, $map) ? $map[$command] : $map['#default'];
-        $execString = trim(implode(' ', array_merge($argv, [$flag])));
-        $expect = [[
-          LogLevel::NOTICE,
-          '{git} $ {%command}',
-          ['%command' => $tool->getExecutable() . ' ' . $execString]
-        ]];
-        if ($key != OutputInterface::VERBOSITY_QUIET) {
-          $expect[] = ['writeln', $execString];
-        }
+        $expect = trim(implode(' ', array_merge($argv, [$flag])));
 
         # Make sure we got what we expected.
-        $tool->runThis($argv);
-        $this->verifyMessages($expect, $jorge->messages, TRUE);
+        $this->assertSame($expect, $tool->applyVerbosity($argv));
       }
     }
+  }
+
+  public function testConfigure(): void {
+    $tool = new GitTool();
+    $this->assertSame('git', $tool->getName());
+    $this->assertFalse($tool->getStatus()->clean);
+  }
+
+  public function testInitializeWithDirtyRepo(): void {
+    # Set up a dirty repo.
+    $tempDir = (new TemporaryDirectory())->create();
+    $root = realpath($tempDir->path());
+    chdir($root);
+    exec('git init .');
+    touch($this->makeRandomString());
+
+    $tool = new MockGitTool($root);
+    $tool->setExecutable('git');
+    $tool->initialize();
+    $this->assertTrue($tool->isEnabled());
+    $this->assertFalse($tool->getStatus()->clean);
+
+    $tempDir->delete();
+  }
+
+  /**
+   * @todo Do this without assuming the OS will provide `echo`?
+   */
+  public function testUpdateStatus(): void {
+    $tool = new MockGitTool();
+    $tool->setExecutable('echo');
+
+    # We expect FALSE because the executable (`echo status`) does not
+    # produce a line containing the string 'nothing to commit'.
+    $tool->updateStatus();
+    $this->assertFalse($tool->getStatus()->clean);
+
+    # Run a test that should produce a clean status.
+    $clean = [
+      'On branch master',
+      'Your branch is up to date with "origin/master".',
+      '',
+      'nothing to commit, working tree clean',
+    ];
+    $tool->updateStatus($clean);
+    $this->assertTrue($tool->getStatus()->clean);
   }
 }
