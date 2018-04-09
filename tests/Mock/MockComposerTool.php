@@ -52,4 +52,16 @@ class MockComposerTool extends ComposerTool {
     $this->composerApplication = $mock;
     return $this;
   }
+
+  /**
+   * Sets config for loadConfigFile and in a composer.json file.
+   *
+   * @param string $project The project name
+   */
+  public function stubConfig($project) {
+    $config = ['name' => $project];
+    $this->stubJorge['loadConfigFile'] = $config;
+    $this->stubJorge['loadConfigFileWarning'] = FALSE;
+    file_put_contents('composer.json', json_encode($config));
+  }
 }

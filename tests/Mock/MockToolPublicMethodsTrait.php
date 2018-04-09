@@ -96,6 +96,18 @@ trait MockToolPublicMethodsTrait {
   }
 
   /**
+   * Sets appropriate response for loadConfigFile.
+   *
+   * Override in the tool-specific mock class if necessary.
+   *
+   * @param string $project The project name
+   */
+  public function stubConfig($project) {
+    $this->stubJorge['loadConfigFile'] = ['name' => $project];
+    $this->stubJorge['loadConfigFileWarning'] = FALSE;
+  }
+
+  /**
    * Creates an object that response to some Jorge methods.
    */
   public function stubJorge() {

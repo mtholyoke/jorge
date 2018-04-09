@@ -24,4 +24,12 @@ class MockGitTool extends GitTool {
     $this->setName('mockGit');
     $this->setStatus((object) ['clean' => FALSE]);
   }
+
+  /**
+   * Creates an empty git repo.
+   */
+  public function stubConfig($project) {
+    exec('git init .');
+    $this->setConfig(['name' => $project]);
+  }
 }
