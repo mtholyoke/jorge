@@ -4,12 +4,25 @@ declare(strict_types = 1);
 namespace MountHolyoke\JorgeTests\Mock;
 
 use MountHolyoke\JorgeTests\Mock\MockLogTrait;
+use Psr\Log\LogLevel;
 
 /**
  * Provides public methods to use for testing.
  */
 trait MockToolPublicMethodsTrait {
   use MockLogTrait;
+
+  /**
+   * @var string $stubJorgeGetPath
+   *   Path to be returned by $this->jorge->getPath()
+   */
+  public $stubJorgeGetPath = NULL;
+
+  /**
+   * @var array $stubJorgeLoadConfigFile
+   *   Config to be returned by $this->jorge->loadConfigFile()
+   */
+  public $stubJorgeLoadConfigFile = [];
 
   /**
    * {@inheritDoc}
@@ -67,6 +80,10 @@ trait MockToolPublicMethodsTrait {
     return $this;
   }
 
+  public function setJorge($jorge) {
+    $this->jorge = $jorge;
+  }
+
   /**
    * {@inheritDoc}
    */
@@ -85,6 +102,31 @@ trait MockToolPublicMethodsTrait {
   public function setVerbosity($verbosity) {
     $this->verbosity = $verbosity;
     return $this;
+  }
+
+  /**
+   * Creates an object that response to some Jorge methods.
+   */
+  public function stubJorge() {
+    if (!empty($this->jorge)) {
+      return;
+    }
+
+    $this->jorge = new class($this) {
+      public $tool;
+
+      public function __construct($tool) {
+        $this->tool = $tool;
+      }
+
+      public function getPath($subdir = NULL, $required = FALSE) {
+        return $this->tool->stubJorgeGetPath;
+      }
+
+      public function loadConfigFile($file, $level = LogLevel::WARNING) {
+        return $this->tool->stubJorgeLoadConfigFile;
+      }
+    };
   }
 
   /**
