@@ -86,16 +86,17 @@ class GitTool extends Tool {
    * Enables the `git` tool if we have an executable and the project is a git repo
    */
   protected function initialize() {
-    if (!empty($this->getExecutable())) {
-      if (($rootPath = $this->jorge->getPath()) === NULL) {
-        return;
-      }
-      chdir($rootPath);
-      $exec = $this->exec('status 2>&1');
-      if ($exec['status'] == 0) {
-        $this->enable();
-        $this->updateStatus($exec['output']);
-      }
+    if (empty($this->getExecutable())) {
+      return;
+    }
+    if (($rootPath = $this->jorge->getPath()) === NULL) {
+      return;
+    }
+    chdir($rootPath);
+    $exec = $this->exec('status 2>&1');
+    if ($exec['status'] == 0) {
+      $this->enable();
+      $this->updateStatus($exec['output']);
     }
   }
 

@@ -115,10 +115,10 @@ class ComposerTool extends Tool {
    * Creates a Composer object to use for running commands.
    */
   protected function initialize() {
-    if (($rootPath = $this->jorge->getPath()) === NULL) {
+    if (empty($this->getExecutable())) {
       return;
     }
-    if (empty($this->getExecutable())) {
+    if (($rootPath = $this->jorge->getPath()) === NULL) {
       return;
     }
 

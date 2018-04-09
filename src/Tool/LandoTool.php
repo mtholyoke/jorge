@@ -55,6 +55,11 @@ class LandoTool extends Tool {
       return;
     }
 
+    if (($rootPath = $this->jorge->getPath()) === NULL) {
+      $this->disable();
+      return;
+    }
+
     # Fail silently if the current project doesn’t use Lando.
     $this->config = $this->jorge->loadConfigFile('.lando.yml', NULL);
     if (empty($this->config)) {
