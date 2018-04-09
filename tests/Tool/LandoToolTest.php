@@ -53,14 +53,16 @@ final class LandoToolTest extends TestCase {
 
   public function testInitialize(): void {
     $messages = $this->runAllToolInitTests('lando');
+    $mockName = '{mockLando} ';
     $expect = [
       # checkInitWithBadExecutable
-      [LogLevel::ERROR, 'Cannot set executable "{%executable}"'],
+      [LogLevel::ERROR, $mockName . 'Cannot set executable "{%executable}"'],
       # tool->setExecutable
-      [LogLevel::DEBUG, 'Executable is "{%executable}"'],
+      [LogLevel::DEBUG, $mockName . 'Executable is "{%executable}"'],
       # checkInitWithoutConfig (2nd time)
-      ['NULL',          'Can’t read config file {%filename}'],
+      ['NULL',          $mockName . 'Can’t read config file {%filename}'],
     ];
+    $this->verifyMessages($expect, $messages);
   }
 
   public function testParseLandoList() {

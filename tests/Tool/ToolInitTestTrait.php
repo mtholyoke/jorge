@@ -74,5 +74,6 @@ trait ToolInitTestTrait {
     // $this->checkInitWithValidConfig();
 
     $tempDirectory->delete();
+    return $this->tool->messages;
   }
 }
