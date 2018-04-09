@@ -79,9 +79,7 @@ final class ToolInitializationTest extends TestCase {
 
   public function testInitializeWithoutExecutable(): void {
     $this->jorge->configure();
-    $this->jorge->messages = [];
 
-    $expect = [];
     foreach (array_keys($this->tools) as $name) {
       # Create a mock tool with a bogus executable.
       $class = '\MountHolyoke\JorgeTests\Mock\Mock' . ucfirst($name) . 'Tool';
@@ -89,17 +87,13 @@ final class ToolInitializationTest extends TestCase {
       $exec  = $this->makeRandomString();
       $this->jorge->addTool($tool, $exec);
 
-      # Verify that the tool was not enabled.
+      # Verify that the tool was not enabled, and that they logged errors.
       $this->assertFalse($tool->isEnabled());
-      $expect[] = [
-        LogLevel::ERROR,
-        '{' . $tool->getName() . '} Cannot set executable "{%executable}"',
+      $expect = [
+        [LogLevel::ERROR, '{' . $tool->getName() . '} Cannot set executable "{%executable}"'],
       ];
+      $this->verifyMessages($expect, $tool->messages);
     }
-
-    # Verify the error messages worked, too.
-    $expect[] = ['NULL', 'Can’t read config file {%filename}'];
-    $this->verifyMessages($expect, $this->jorge->messages);
   }
 
   public function testInitializeWithoutConfig(): void {

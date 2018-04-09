@@ -7,6 +7,7 @@ use MountHolyoke\Jorge\Tool\LandoTool;
 use MountHolyoke\JorgeTests\Mock\MockLandoTool;
 use MountHolyoke\JorgeTests\OutputVerifierTrait;
 use MountHolyoke\JorgeTests\RandomStringTrait;
+use MountHolyoke\JorgeTests\Tool\ToolInitTestTrait;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -17,6 +18,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class LandoToolTest extends TestCase {
   use OutputVerifierTrait;
   use RandomStringTrait;
+  use ToolInitTestTrait;
 
   public function testApplyVerbosity(): void {
     $verbosityMap = [
@@ -47,6 +49,18 @@ final class LandoToolTest extends TestCase {
   public function testConfigure(): void {
     $tool = new LandoTool();
     $this->assertSame('lando', $tool->getName());
+  }
+
+  public function testInitialize(): void {
+    $messages = $this->runAllToolInitTests('lando');
+    $expect = [
+      # checkInitWithBadExecutable
+      [LogLevel::ERROR, 'Cannot set executable "{%executable}"'],
+      # tool->setExecutable
+      [LogLevel::DEBUG, 'Executable is "{%executable}"'],
+      # checkInitWithoutConfig (2nd time)
+      ['NULL',          'Can’t read config file {%filename}'],
+    ];
   }
 
   public function testParseLandoList() {
@@ -130,6 +144,9 @@ final class LandoToolTest extends TestCase {
     $this->assertTrue($tool->getStatus()->running);
   }
 
+  /**
+   * @todo Do this without assuming the OS will provide `echo`?
+   */
   public function testUpdateStatus(): void {
     $project = $this->makeRandomString();
     $tool = new MockLandoTool($project);

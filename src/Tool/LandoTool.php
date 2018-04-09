@@ -52,6 +52,7 @@ class LandoTool extends Tool {
 
     if (empty($this->getExecutable())) {
       $this->disable();
+      return;
     }
 
     # Fail silently if the current project doesn’t use Lando.

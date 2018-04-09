@@ -115,7 +115,7 @@ final class GitToolTest extends TestCase {
     touch($this->makeRandomString());
 
     $tool = new MockGitTool();
-    $tool->stubJorgeGetPath = $root;
+    $tool->stubJorge['getPath'] = $root;
     $tool->setExecutable('git');
     $tool->initialize();
     $this->assertTrue($tool->isEnabled());

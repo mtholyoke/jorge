@@ -12,17 +12,12 @@ use Psr\Log\LogLevel;
 trait MockToolPublicMethodsTrait {
   use MockLogTrait;
 
-  /**
-   * @var string $stubJorgeGetPath
-   *   Path to be returned by $this->jorge->getPath()
-   */
-  public $stubJorgeGetPath = NULL;
-
-  /**
-   * @var array $stubJorgeLoadConfigFile
-   *   Config to be returned by $this->jorge->loadConfigFile()
-   */
-  public $stubJorgeLoadConfigFile = [];
+  /** @var array $stubJorge Data and parameters for test mocks */
+  public $stubJorge = [
+    'getPath' => NULL,
+    'loadConfigFile' => [],
+    'loadConfigFileWarning' => FALSE,
+  ];
 
   /**
    * {@inheritDoc}
@@ -80,10 +75,6 @@ trait MockToolPublicMethodsTrait {
     return $this;
   }
 
-  public function setJorge($jorge) {
-    $this->jorge = $jorge;
-  }
-
   /**
    * {@inheritDoc}
    */
@@ -120,11 +111,14 @@ trait MockToolPublicMethodsTrait {
       }
 
       public function getPath($subdir = NULL, $required = FALSE) {
-        return $this->tool->stubJorgeGetPath;
+        return $this->tool->stubJorge['getPath'];
       }
 
       public function loadConfigFile($file, $level = LogLevel::WARNING) {
-        return $this->tool->stubJorgeLoadConfigFile;
+        if ($this->tool->stubJorge['loadConfigFileWarning']) {
+          $this->tool->log($level, 'Can’t read config file {%filename}', ['%filename' => $file]);
+        }
+        return $this->tool->stubJorge['loadConfigFile'];
       }
     };
   }
