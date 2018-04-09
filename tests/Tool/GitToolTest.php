@@ -5,8 +5,11 @@ namespace MountHolyoke\JorgeTests\Tool;
 
 use MountHolyoke\Jorge\Tool\GitTool;
 use MountHolyoke\JorgeTests\Mock\MockGitTool;
+use MountHolyoke\JorgeTests\OutputVerifierTrait;
 use MountHolyoke\JorgeTests\RandomStringTrait;
+use MountHolyoke\JorgeTests\Tool\ToolInitTestTrait;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LogLevel;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -14,7 +17,9 @@ use Symfony\Component\Console\Output\OutputInterface;
  * Test the functionality of Tool that isn’t covered elsewhere.
  */
 final class GitToolTest extends TestCase {
+  use OutputVerifierTrait;
   use RandomStringTrait;
+  use ToolInitTestTrait;
 
   /**
    * Make sure verbosity is being correctly applied to git commands.
@@ -105,6 +110,24 @@ final class GitToolTest extends TestCase {
     $this->assertSame('git', $tool->getName());
     $this->assertFalse($tool->getStatus()->clean);
   }
+
+  public function testInitialize(): void {
+    $messages = $this->runAllToolInitTests('git');
+    $mockName = '{mockGit} ';
+    $expect = [
+      # checkInitWithBadExecutable
+      [LogLevel::ERROR,  $mockName . 'Cannot set executable "{%executable}"'],
+      # tool->setExecutable
+      [LogLevel::DEBUG,  $mockName . 'Executable is "{%executable}"'],
+      # checkInitWithoutConfig (2nd time)
+      [LogLevel::NOTICE, $mockName . '$ {%command}'],
+      # checkInitWithValidConfig
+      [LogLevel::NOTICE, $mockName . '$ {%command}'],
+    ];
+    $this->verifyMessages($expect, $messages);
+  }
+
+  // TODO: Test with empty .git folder?
 
   public function testInitializeWithDirtyRepo(): void {
     # Set up a dirty repo.

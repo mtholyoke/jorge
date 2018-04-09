@@ -7,6 +7,7 @@ use MountHolyoke\Jorge\Tool\ComposerTool;
 use MountHolyoke\JorgeTests\Mock\MockComposerTool;
 use MountHolyoke\JorgeTests\OutputVerifierTrait;
 use MountHolyoke\JorgeTests\RandomStringTrait;
+use MountHolyoke\JorgeTests\Tool\ToolInitTestTrait;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -17,6 +18,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class ComposerToolTest extends TestCase {
   use OutputVerifierTrait;
   use RandomStringTrait;
+  use ToolInitTestTrait;
 
   public function testApplyVerbosity(): void {
     $tool = new MockComposerTool();
@@ -122,5 +124,19 @@ final class ComposerToolTest extends TestCase {
     $this->assertSame(0, $exec['status']);
     $this->verifyMessages($expect, $tool->messages);
     $tool->messages = [];
+  }
+
+  public function testInitialize(): void {
+    $messages = $this->runAllToolInitTests('composer');
+    $mockName = '{mockComposer} ';
+    $expect = [
+      # checkInitWithBadExecutable
+      [LogLevel::ERROR, $mockName . 'Cannot set executable "{%executable}"'],
+      # tool->setExecutable
+      [LogLevel::DEBUG, $mockName . 'Executable is "{%executable}"'],
+      # checkInitWithoutConfig (2nd time)
+      ['NULL',          $mockName . 'Can’t read config file {%filename}'],
+    ];
+    $this->verifyMessages($expect, $messages);
   }
 }

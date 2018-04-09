@@ -29,12 +29,10 @@ trait ToolInitTestTrait {
     $this->assertFalse($this->tool->isEnabled());
   }
 
-  public function checkInitWithEmptyConfig() {
-
-  }
-
-  public function checkInitWithValidConfig() {
-
+  public function checkInitWithValidConfig($project) {
+    $this->tool->initialize();
+    $this->assertTrue($this->tool->isEnabled());
+    $this->assertSame($project, $this->tool->getConfig('name'));
   }
 
   /**
@@ -44,16 +42,17 @@ trait ToolInitTestTrait {
     $class = '\MountHolyoke\JorgeTests\Mock\Mock' . ucfirst($name) . 'Tool';
     $this->tool = new $class();
 
-    $this->checkInitWithoutExecutable();
-    $this->checkInitWithBadExecutable();
-
-    // TODO: should this be 'echo'?
-    $this->tool->setExecutable($name);
-
     # Prepare a stub Jorge for the mock tool.
     $this->tool->stubJorge();
 
-    # Without a root directory.
+    # Make sure the tool is disabled without a valid executable.
+    $this->checkInitWithoutExecutable();
+    $this->checkInitWithBadExecutable();
+
+    # Provide a valid executable.
+    $this->tool->setExecutable($name);
+
+    # Make sure the tool is disabled without a root directory.
     $this->checkInitWithoutConfig();
 
     # Set up a root directory.
@@ -63,15 +62,14 @@ trait ToolInitTestTrait {
     chdir($root);
     $this->tool->stubJorge['loadConfigFileWarning'] = TRUE;
 
-    # Make sure the tool is not enabled and we have logged a warning.
+    # Make sure the tool is disabled without configuration.
     $this->checkInitWithoutConfig();
 
-    # Create an empty config file.
-    // $this->tool->stubConfig();
+    # Provide configuration.
+    $project = $this->makeRandomString();
+    $this->tool->stubConfig($project);
 
-    // $this->checkInitWithEmptyConfig();
-
-    // $this->checkInitWithValidConfig();
+    $this->checkInitWithValidConfig($project);
 
     $tempDirectory->delete();
     return $this->tool->messages;
