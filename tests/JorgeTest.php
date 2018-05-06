@@ -145,6 +145,14 @@ final class JorgeTest extends TestCase {
     $this->verifyMessages($expect, $this->jorge->messages);
   }
 
+  public function testLoadConfigFile(): void {
+    $root = $this->tempDir->path();
+    $file = $this->makeRandomString();
+    $text = $this->makeRandomString();
+    file_put_contents($root . DIRECTORY_SEPARATOR . $file, $text);
+    $this->assertSame($text, $this->jorge->loadConfigFile($file));
+  }
+
   /**
    * @todo How do we actually verify this is the normal start?
    */
