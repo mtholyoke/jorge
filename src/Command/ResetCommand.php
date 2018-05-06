@@ -156,7 +156,7 @@ class ResetCommand extends Command {
     chdir($this->jorge->getPath());
     if (!$git->getStatus()->clean) {
       $this->log(LogLevel::ERROR, "Working directory not clean. Aborting.");
-      return;
+      return 1;
     }
     $git->run(['checkout', $this->params['branch']]);
     $git->run(['pull']);
@@ -167,7 +167,6 @@ class ResetCommand extends Command {
     }
     $lando->run($lando_pull);
 
-    $drush = $this->jorge->find('drush');
     $drushSequence = [['drush_command' => ['cc', 'all']]];
     if (!empty($this->params['username']) && !empty($this->params['password'])) {
       $drushSequence[] = [
@@ -177,9 +176,10 @@ class ResetCommand extends Command {
           '--password="' . $this->params['password'] . '"',
         ],
       ];
+      $drushSequence[] = ['drush_command' => ['cc', 'all']];
     }
-    $drushSequence[] = ['drush_command' => ['cc', 'all']];
 
+    $drush = $this->jorge->find('drush');
     foreach ($drushSequence as $step) {
       $drushInput = new ArrayInput($step);
       $drush->run($drushInput, $this->jorge->getOutput());
@@ -204,7 +204,7 @@ class ResetCommand extends Command {
     chdir($this->jorge->getPath());
     if (!$git->getStatus()->clean) {
       $this->log(LogLevel::ERROR, "Working directory not clean. Aborting.");
-      return;
+      return 1;
     }
     $git->run(['checkout', $this->params['branch']]);
     $git->run(['pull']);
@@ -216,7 +216,6 @@ class ResetCommand extends Command {
     }
     $lando->run($lando_pull);
 
-    $drush = $this->jorge->find('drush');
     $drushSequence = [
       ['drush_command' => ['cr']                                 ],
       ['drush_command' => ['csim', 'config_dev'], '--yes' => TRUE],
@@ -233,6 +232,7 @@ class ResetCommand extends Command {
     }
     $drushSequence[] = ['drush_command' => ['cr']];
 
+    $drush = $this->jorge->find('drush');
     foreach ($drushSequence as $step) {
       $drushInput = new ArrayInput($step);
       $drush->run($drushInput, $this->jorge->getOutput());

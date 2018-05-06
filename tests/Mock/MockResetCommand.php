@@ -14,6 +14,13 @@ use Symfony\Component\Console\Output\OutputInterface;
 class MockResetCommand extends ResetCommand {
   use MockLogTrait;
 
+  /**
+   * {@inheritDoc}
+   */
+  public function execute(InputInterface $input, OutputInterface $output) {
+    return parent::execute($input, $output);
+  }
+
   public function getAppType() {
     return $this->appType;
   }
@@ -48,5 +55,38 @@ class MockResetCommand extends ResetCommand {
   public function log($level, $message, array $context = []) {
     $message = trim('{' . $this->getName() . '} ' . $message);
     $this->mockLog($level, $message, $context);
+  }
+
+  /**
+   * Sets an application type for testing.
+   *
+   * @param string $appType The application type
+   * @return $this
+   */
+  public function setAppType($appType) {
+    $this->appType = $appType;
+    return $this;
+  }
+
+  /**
+   * Assigns a Jorge-like object to $this->jorge.
+   *
+   * @param mixed $jorge An object that will respond to methods we need
+   * @return $this
+   */
+  public function setJorge($jorge) {
+    $this->jorge = $jorge;
+    return $this;
+  }
+
+  /**
+   * Sets parameters for testing.
+   *
+   * @param array $params New values for params
+   * @return $this
+   */
+  public function setParams($params) {
+    $this->params = $params;
+    return $this;
   }
 }
