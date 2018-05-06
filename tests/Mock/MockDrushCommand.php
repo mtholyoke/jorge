@@ -9,7 +9,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Supplants the GitTool class so we can test things.
+ * Supplants the DrushCommand class so we can test things.
  */
 class MockDrushCommand extends DrushCommand {
   use MockLogTrait;

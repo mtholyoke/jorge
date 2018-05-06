@@ -35,7 +35,7 @@ use Symfony\Component\Yaml\Yaml;
  */
 class Jorge extends Application {
   /** @var array $config Project configuration from .jorge/config.yml */
-  private $config = [];
+  protected $config = [];
 
   /** @var \Symfony\Component\Console\Input\InputInterface $input */
   private $input;

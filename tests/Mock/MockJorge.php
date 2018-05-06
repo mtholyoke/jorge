@@ -17,9 +17,6 @@ class MockJorge extends Jorge {
   use MockLogTrait;
 
   /** {@inheritDoc} */
-  private $config = [];
-
-  /** {@inheritDoc} */
   private $input;
 
   /** {@inheritDoc} */
@@ -83,5 +80,16 @@ class MockJorge extends Jorge {
    */
   public function run(InputInterface $input = NULL, OutputInterface $output = NULL) {
     return parent::run($input, $this->getOutput());
+  }
+
+  /**
+   * Sets config so we can refer to it in other tests.
+   *
+   * @param array $config The new value of $this-config
+   * @return $this
+   */
+  public function setConfig(array $config = []) {
+    $this->config = $config;
+    return $this;
   }
 }
