@@ -34,6 +34,13 @@ class MockResetCommand extends ResetCommand {
   }
 
   /**
+   * {@inheritDoc}
+   */
+  public function interact(InputInterface $input, OutputInterface $output) {
+    return parent::interact($input, $output);
+  }
+
+  /**
    * Tags log messages with command name and passes them to MockLogTrait::mockLog().
    *
    * {@inheritDoc}

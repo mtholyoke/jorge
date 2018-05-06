@@ -14,7 +14,7 @@ use MountHolyoke\JorgeTests\RandomStringTrait;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 use Symfony\Component\Console\Input\ArrayInput;
-// use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
 final class ResetCommandTest extends TestCase {
   use OutputVerifierTrait;
@@ -95,5 +95,37 @@ final class ResetCommandTest extends TestCase {
       $expect[] = [LogLevel::DEBUG, sprintf("{mockReset}   %-8s => '%s'", $param, $value)];
     }
     $this->verifyMessages($expect, $command->messages);
+  }
+
+  public function testInteract(): void {
+    $jorge = new MockJorge(getcwd());
+    $output = $jorge->getOutput();
+    $output->setVerbosity(OutputInterface::VERBOSITY_QUIET);
+    $command = new MockResetCommand();
+    $command->setName('mockReset');
+    $this->assertSame($command, $jorge->add($command));
+
+    $username = $this->makeRandomString();
+    $jorge->setConfig(['reset' => ['username' => $username]]);
+    $input = new ArrayInput([]);
+    $command->initialize($input, $output);
+
+    # Verify we're starting with no password set.
+    $this->assertSame('', $command->getParams()['password']);
+
+    # Set up two responses in the input stream.
+    $password = $this->makeRandomString();
+    $stream = fopen('php://memory', 'r+');
+    fwrite($stream, "\n" . $password);
+    rewind($stream);
+    $input->setStream($stream);
+
+    # Make sure it's possible not to provide a password:
+    $command->interact($input, $output);
+    $this->assertNull($command->getParams()['password']);
+
+    # Make sure it's possible to set a password:
+    $command->interact($input, $output);
+    $this->assertSame($password, $command->getParams()['password']);
   }
 }
