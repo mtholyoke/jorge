@@ -52,6 +52,12 @@ class LandoTool extends Tool {
 
     if (empty($this->getExecutable())) {
       $this->disable();
+      return;
+    }
+
+    if (($rootPath = $this->jorge->getPath()) === NULL) {
+      $this->disable();
+      return;
     }
 
     # Fail silently if the current project doesn’t use Lando.
@@ -109,9 +115,11 @@ class LandoTool extends Tool {
    */
   public function updateStatus($name = '') {
     $exec = $this->exec('list');
-    if ($exec['status'] == 0) {
-      $list = $this->parseLandoList($exec['output']);
+    if ($exec['status'] != 0) {
+      $this->log(LogLevel::ERROR, 'Unable to determine status');
+      return;
     }
+    $list = $this->parseLandoList($exec['output']);
     if (empty($name)) {
       if ($this->isEnabled()) {
         $name = $this->config['name'];

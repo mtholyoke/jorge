@@ -59,7 +59,11 @@ class ComposerTool extends Tool {
     }
     $joinable = [];
     foreach ($argv as $k => $v) {
-      if (is_bool($v) && $v) {
+      if (is_bool($v)) {
+        if ($v) {
+          $joinable[] = $k;
+        }
+      } elseif ($v === NULL) {
         $joinable[] = $k;
       } else {
         $joinable[] = "$k=$v";
@@ -85,12 +89,20 @@ class ComposerTool extends Tool {
    * @return array The command passed to the Composer application and its exit code.
    */
   protected function exec($argv = []) {
+    if ($argv === NULL || !isset($argv) || !is_array($argv)) {
+      $argv = [];
+    }
     $input = new ArrayInput($argv);
     $output = $this->jorge->getOutput();
+
+    if (!array_key_exists('command', $argv)) {
+      $argv['command'] = '';
+    }
     $this->log(
       LogLevel::NOTICE,
       '% composer {%cmd} {%argv}',
-      ['%cmd' => $argv['command'], '%argv' => $this->argvJoin($argv)]);
+      ['%cmd' => $argv['command'], '%argv' => $this->argvJoin($argv)]
+    );
     $status = $this->composerApplication->run($input, $output);
     return [
       'command' => $input,
@@ -103,14 +115,21 @@ class ComposerTool extends Tool {
    * Creates a Composer object to use for running commands.
    */
   protected function initialize() {
-    $factory = new Factory();
+    if (empty($this->getExecutable())) {
+      return;
+    }
     if (($rootPath = $this->jorge->getPath()) === NULL) {
       return;
     }
-    $composerJson = $rootPath . DIRECTORY_SEPARATOR . 'composer.json';
-    if (!is_file($composerJson)) {
+
+    # Fail silently if the current project doesn’t use Composer.
+    $this->config = $this->jorge->loadConfigFile('composer.json', NULL);
+    if (empty($this->config)) {
       return;
     }
+    $composerJson = $rootPath . DIRECTORY_SEPARATOR . 'composer.json';
+
+    $factory  = new Factory();
     $composer = $factory->createComposer(new NullIO, $composerJson, FALSE, $rootPath);
     $this->composerApplication = new ComposerApplication();
     $this->composerApplication->setComposer($composer);

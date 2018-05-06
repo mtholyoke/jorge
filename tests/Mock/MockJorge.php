@@ -1,21 +1,20 @@
 <?php
 declare(strict_types = 1);
 
-namespace MountHolyoke\JorgeTests;
+namespace MountHolyoke\JorgeTests\Mock;
 
 use MountHolyoke\Jorge\Jorge;
-use MountHolyoke\JorgeTests\MockConsoleOutput;
+use MountHolyoke\JorgeTests\Mock\MockConsoleOutput;
+use MountHolyoke\JorgeTests\Mock\MockLogTrait;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * This is a wrapper class so we can capture the output, since we don’t
- * otherwise have a mechanism to substitute a more traditional mock.
+ * Supplants the Jorge class so we can capture its output for testing.
  */
 class MockJorge extends Jorge {
-  /** {@inheritDoc} */
-  private $config = [];
+  use MockLogTrait;
 
   /** {@inheritDoc} */
   private $input;
@@ -32,14 +31,9 @@ class MockJorge extends Jorge {
   /** {@inheritDoc} */
   private $tools;
 
-  /** @var array $messages Things that would have gone to console output */
-  public $messages = [];
-
   /**
-   * Instantiates the object and replaces its output interfaces.
-   *
-   * @param string $rootPath The temporary directory serving as root, because
-   *                         we have to stub findRootPath() also.
+   * @param string $rootPath
+   *   The directory serving as project root for this test
    */
   public function __construct($rootPath) {
     parent::__construct();
@@ -50,7 +44,10 @@ class MockJorge extends Jorge {
   }
 
   /**
-   * Stub because we can’t inherit a private function.
+   * Returns the $rootPath set by __construct().
+   *
+   * This is necessary because findRootPath is called by configure(), which we
+   * can’t mock because it needs to be tested.
    */
   private static function findRootPath() {
     return $this->rootPath;
@@ -75,14 +72,24 @@ class MockJorge extends Jorge {
    * @see \Symfony\Component\Console\Logger\ConsoleLogger
    */
   public function log($level, $message, array $context = []) {
-    $levelString = ($level === NULL) ? 'NULL' : $level;
-    $this->messages[] = [$levelString, $message, $context];
+    $this->mockLog($level, $message, $context);
   }
 
   /**
    * {@inheritDoc}
    */
   public function run(InputInterface $input = NULL, OutputInterface $output = NULL) {
-    return parent::run(NULL, $this->getOutput());
+    return parent::run($input, $this->getOutput());
+  }
+
+  /**
+   * Sets config so we can refer to it in other tests.
+   *
+   * @param array $config The new value of $this-config
+   * @return $this
+   */
+  public function setConfig(array $config = []) {
+    $this->config = $config;
+    return $this;
   }
 }

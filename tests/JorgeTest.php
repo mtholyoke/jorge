@@ -3,9 +3,11 @@ declare(strict_types = 1);
 
 namespace MountHolyoke\JorgeTests;
 
-use MountHolyoke\JorgeTests\MockConsoleOutput;
-use MountHolyoke\JorgeTests\MockJorge;
 use MountHolyoke\Jorge\Tool\Tool;
+use MountHolyoke\JorgeTests\Mock\MockConsoleOutput;
+use MountHolyoke\JorgeTests\Mock\MockJorge;
+use MountHolyoke\JorgeTests\OutputVerifierTrait;
+use MountHolyoke\JorgeTests\RandomStringTrait;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
@@ -13,6 +15,9 @@ use Symfony\Component\Console\Exception\LogicException;
 use Symfony\Component\Console\Output\OutputInterface;
 
 final class JorgeTest extends TestCase {
+  use OutputVerifierTrait;
+  use RandomStringTrait;
+
   protected $jorge;
   protected $tempDir;
 
@@ -43,19 +48,14 @@ final class JorgeTest extends TestCase {
     $startup = [
       [LogLevel::NOTICE, 'Project root: {%root}'],
       [LogLevel::DEBUG,  '{composer} Executable is "{%executable}"'],
+      ['NULL',           'Can’t read config file {%filename}'],
       [LogLevel::DEBUG,  '{git} Executable is "{%executable}"'],
       [LogLevel::NOTICE, '{git} $ {%command}'],
       [LogLevel::DEBUG,  '{lando} Executable is "{%executable}"'],
       ['NULL',           'Can’t read config file {%filename}'],
     ];
-    $this->assertSame(count($startup), count($this->jorge->messages));
-    foreach ($startup as $expected) {
-      $actual = array_shift($this->jorge->messages);
-      # Paths may be different on different computers
-      array_pop($actual);
-      $this->assertSame($expected, $actual);
-    }
-    $this->assertSame(0, count($this->jorge->messages));
+    $this->verifyMessages($startup, $this->jorge->messages);
+    $this->jorge->messages = [];
 
     # From __construct():
     $this->assertInstanceOf(MockJorge::class, $this->jorge);
@@ -70,7 +70,6 @@ final class JorgeTest extends TestCase {
     $this->assertRegExp('/\d\.\d\.\d/', $this->jorge->getVersion());
     $this->assertSame(realpath($this->tempDir->path()), $this->jorge->getPath());
     $this->assertSame([], $this->jorge->getConfig());
-    // $this->assertSame('jorge', $this->jorge->getConfig('appType'));
 
     # Verify that MockJorge’s log() works as expected:
     $logLevels = [
@@ -83,42 +82,75 @@ final class JorgeTest extends TestCase {
       LogLevel::INFO,
       LogLevel::DEBUG,
     ];
-    foreach ($logLevels as $logLevel) {
-      $logString = bin2hex(random_bytes(4));
-      $logExpect = [$logLevel, "$logString", []];
-      $this->jorge->log($logLevel, "$logString");
-      $this->assertSame($logExpect, end($this->jorge->messages));
+    $expect = [];
+    foreach ($logLevels as $level) {
+      $text = $this->makeRandomString();
+      $expect[] = [$level, $text, []];
+      $this->jorge->log($level, $text);
     }
+    $this->verifyMessages($expect, $this->jorge->messages, TRUE);
+    $this->jorge->messages = [];
 
     # Verify that writeln works as expected:
-    $wlnString = bin2hex(random_bytes(4));
-    $wlnExpect = ['writeln', "$wlnString"];
-    $this->jorge->getOutput()->writeln("$wlnString");
-    $this->assertSame($wlnExpect, end($this->jorge->messages));
+    $text = $this->makeRandomString();
+    $this->jorge->getOutput()->writeln($text);
+    $this->verifyMessages([['writeln', $text]], $this->jorge->messages);
   }
 
+  /**
+   * @todo Do this without assuming a Unix-like environment for testing?
+   */
   public function testAddToolGetTool(): void {
+    $this->jorge->messages = [];
+    $initialTools = $this->jorge->allTools();
     # Find a name we don’t have and verify that getTool() responds correctly.
     do {
-      $toolName = bin2hex(random_bytes(4));
-    } while (array_key_exists($toolName, $this->jorge->allTools()));
-    $this->assertNull($this->jorge->getTool($toolName));
-    $expectLog = [LogLevel::WARNING, 'Can’t get tool "{%tool}"', ['%tool' => $toolName]];
-    $this->assertSame($expectLog, end($this->jorge->messages));
+      $name = $this->makeRandomString();
+    } while (array_key_exists($name, $initialTools));
+    $this->assertNull($this->jorge->getTool($name));
+    $expect = [
+      [LogLevel::WARNING, 'Can’t get tool "{%tool}"', ['%tool' => $name]]
+    ];
+    $this->verifyMessages($expect, $this->jorge->messages, TRUE);
+    $this->jorge->messages = [];
 
-    # Add a tool with that name and verify that getTool() responds correctly.
-    $toolInstance = new Tool($toolName);
-    $this->jorge->addTool($toolInstance, 'echo');
-    $this->assertArrayHasKey($toolName, $this->jorge->allTools());
-    $this->assertSame($toolInstance, $this->jorge->getTool($toolName));
+    # Add a tool with that name
+    $tool = new Tool($name);
+    $this->jorge->addTool($tool, 'echo');
+    $expect = [
+      [LogLevel::DEBUG, '{' . $name . '} Executable is "{%executable}"']
+    ];
+    $this->verifyMessages($expect, $this->jorge->messages);
+    $this->jorge->messages = [];
+
+    # Verify that getTool() responds correctly and that we added exactly one tool.
+    $currentTools = $this->jorge->allTools();
+    $this->assertArrayHasKey($name, $currentTools);
+    $this->assertSame($tool, $this->jorge->getTool($name));
+    $this->assertSame(count(array_keys($initialTools)) + 1, count(array_keys($currentTools)));
 
     # Add another tool with that name and verify that we get an exception.
     $this->expectException(LogicException::class);
-    $this->jorge->addTool(new Tool($toolName), 'ls');
+    $this->jorge->addTool(new Tool($name), 'ls');
+    $this->verifyMessages($expect, $this->jorge->messages);
+    $this->jorge->messages = [];
 
-    # This should echo the tool name without checking enablement.
-    $toolInstance->runThis($toolName);
-    $this->assertSame(['writeln', $toolName], end($this->jorge->messages));
+    # This should echo the text without checking enablement.
+    $text = $this->makeRandomString();
+    $tool->runThis($text);
+    $expect = [
+      [LogLevel::NOTICE, '{' . $name . '} $ {%command}'],
+      ['writeln',        $text                         ],
+    ];
+    $this->verifyMessages($expect, $this->jorge->messages);
+  }
+
+  public function testLoadConfigFile(): void {
+    $root = $this->tempDir->path();
+    $file = $this->makeRandomString();
+    $text = $this->makeRandomString();
+    file_put_contents($root . DIRECTORY_SEPARATOR . $file, $text);
+    $this->assertSame($text, $this->jorge->loadConfigFile($file));
   }
 
   /**

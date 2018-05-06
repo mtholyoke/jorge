@@ -32,8 +32,11 @@ class GitTool extends Tool {
   protected function applyVerbosity($argv = '') {
     # If we get a string, we don’t know which git command it is, so
     # we can’t apply verbosity. Return it unchanged.
-    if (!is_array($argv) || empty($argv)) {
+    if (!is_array($argv)) {
       return $argv;
+    }
+    if (empty($argv)) {
+      return '';
     }
 
     $verbosityMap = [
@@ -76,23 +79,24 @@ class GitTool extends Tool {
    */
   protected function configure() {
     $this->setName('git');
-    $this->setStatus((object)['clean' => FALSE]);
+    $this->setStatus((object) ['clean' => FALSE]);
   }
 
   /**
    * Enables the `git` tool if we have an executable and the project is a git repo
    */
   protected function initialize() {
-    if (!empty($this->getExecutable())) {
-      if (($rootPath = $this->jorge->getPath()) === NULL) {
-        return;
-      }
-      chdir($rootPath);
-      $exec = $this->exec('status 2>&1');
-      if ($exec['status'] == 0) {
-        $this->enable();
-        $this->updateStatus($exec['output']);
-      }
+    if (empty($this->getExecutable())) {
+      return;
+    }
+    if (($rootPath = $this->jorge->getPath()) === NULL) {
+      return;
+    }
+    chdir($rootPath);
+    $exec = $this->exec('status 2>&1');
+    if ($exec['status'] == 0) {
+      $this->enable();
+      $this->updateStatus($exec['output']);
     }
   }
 

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types = 1);
 
-namespace MountHolyoke\JorgeTests;
+namespace MountHolyoke\JorgeTests\Mock;
 
 use Symfony\Component\Console\Output\ConsoleOutput;
 
@@ -57,24 +57,16 @@ class MockConsoleOutput extends ConsoleOutput {
   /**
    * When possible, save stuff directly to a place we can get it.
    *
+   * \Symfony\Component\Console\Output\Output calls this from writeln().
+   *
    * {@inheritDoc}
    */
   public function write($messages, $newline = FALSE, $options = ConsoleOutput::OUTPUT_NORMAL) {
+    # Note whether we are 'write' or 'writeln':
+    $method = debug_backtrace()[1]['function'];
     $messages = (array) $messages;
     foreach ($messages as $message) {
-      $this->jorge->messages[] = ['write', $message];
-    }
-  }
-
-  /**
-  * When possible, save stuff directly to a place we can get it.
-  *
-   * {@inheritDoc}
-   */
-  public function writeln($messages, $options = ConsoleOutput::OUTPUT_NORMAL) {
-    $messages = (array) $messages;
-    foreach ($messages as $message) {
-      $this->jorge->messages[] = ['writeln', $message];
+      $this->jorge->messages[] = [$method, $message];
     }
   }
 }

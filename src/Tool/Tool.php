@@ -102,6 +102,10 @@ class Tool {
    */
   protected function exec($argv = '') {
     $command = trim($this->getExecutable() . ' ' . $argv);
+    if (empty($command)) {
+      $this->log(LogLevel::ERROR, 'Cannot execute a blank command');
+      return ['command' => '', 'status' => 1];
+    }
     $this->log(LogLevel::NOTICE, '$ {%command}', ['%command' => $command]);
     exec($command, $output, $status);
     return [
@@ -114,14 +118,34 @@ class Tool {
   /**
    * @return \Symfony\Component\Console\Application
    */
-  protected function getApplication() {
-    return $this->application;
+  public function getApplication() {
+    return $this->jorge;
+  }
+
+  /**
+   * Return a parameter from configuration.
+   *
+   * @param string|null $key     The key to get from config, NULL for all
+   * @param mixed       $default The value to return if key not present
+   */
+  public function getConfig($key = NULL, $default = NULL) {
+    if ($key === NULL) {
+      if (isset($this->config)) {
+        return $this->config;
+      } else {
+        return $default;
+      }
+    }
+    if (isset($this->config) && array_key_exists($key, $this->config)) {
+      return $this->config[$key];
+    }
+    return $default;
   }
 
   /**
    * @return string
    */
-  protected function getExecutable() {
+  public function getExecutable() {
     return $this->executable;
   }
 
@@ -164,10 +188,10 @@ class Tool {
   /**
    * Checks that the tool is enabled before running it.
    *
-   * @param mixed $argv Arguments and options for the command
+   * @param mixed|null $argv Arguments and options for the command
    * @return null|int
    */
-  public function run($argv) {
+  public function run($argv = NULL) {
     if (!$this->isEnabled()) {
       $this->log(LogLevel::ERROR, 'Tool not enabled');
       return;
@@ -178,16 +202,18 @@ class Tool {
   /**
    * Runs the tool with the given subcommands/options.
    *
-   * @param mixed $argv Arguments and options for the command
+   * @param mixed|null $argv Arguments and options for the command
    * @return null|int
    */
-  public function runThis($argv) {
+  public function runThis($argv = NULL) {
     $command = $this->applyVerbosity($argv);
 
     $result = $this->exec($command);
 
     if ($this->verbosity != OutputInterface::VERBOSITY_QUIET) {
-      $this->writeln($result['output']);
+      if (array_key_exists('output', $result)) {
+        $this->writeln($result['output']);
+      }
     }
 
     return $result['status'];
@@ -199,11 +225,11 @@ class Tool {
    * @uses \MountHolyoke\Jorge\Helper\JorgeTrait::initializeJorge()
    *
    * @param \Symfony\Component\Console\Application $application
-   * @param string $executable command the user would type to use this tool
+   * @param string $executable Command the user would type to use this tool
    * @return $this
    */
   public function setApplication(Application $application, $executable = '') {
-    $this->application = $application;
+    $this->jorge = $application;
     $this->helperSet = $application->getHelperSet();
     $this->initializeJorge();
 

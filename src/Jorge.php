@@ -35,7 +35,7 @@ use Symfony\Component\Yaml\Yaml;
  */
 class Jorge extends Application {
   /** @var array $config Project configuration from .jorge/config.yml */
-  private $config = [];
+  protected $config = [];
 
   /** @var \Symfony\Component\Console\Input\InputInterface $input */
   private $input;
@@ -222,7 +222,17 @@ class Jorge extends Application {
     $pathfile = $this->rootPath . DIRECTORY_SEPARATOR . $file;
     if (is_file($pathfile) && is_readable($pathfile)) {
       // TODO: sanitize values?
-      $parsed = Yaml::parseFile($pathfile) ?: [];
+      switch (pathinfo($pathfile, PATHINFO_EXTENSION)) {
+        case 'yaml':
+        case 'yml':
+          $parsed = Yaml::parseFile($pathfile) ?: [];
+          break;
+        case 'json':
+          $parsed = json_decode(file_get_contents($pathfile));
+          break;
+        default:
+          $parsed = file_get_contents($pathfile);
+      }
       return $parsed;
     }
     $this->log($level, 'Can’t read config file {%filename}', ['%filename' => $pathfile]);

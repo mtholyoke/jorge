@@ -34,13 +34,13 @@ protected function initialize() {
 }
 ```
 
-`getStatus()` (see below) runs `updateStatus()` (if it has not previously been run) and returns the result of the most recent status update. `updateStatus()` defaults to `isEnabled()`, but can be overridden to provide something more useful to the specific tool, including optional arguments.
+`getStatus()` (see below) runs `updateStatus()` (if it has not previously been run) and returns the result of the most recent status update. `updateStatus()` defaults to `isEnabled()`, but can be overridden to provide something more useful to the specific tool, including optional arguments. Note also in this sample that the Jorge application is available as `$this->jorge` (in addition to the more conventional `$this->getApplication()`).
 
 ```php
 public function updateStatus($args = NULL) {
   # Status is TRUE if we’re currently working in the project root.
   $cwd = getcwd();
-  $root = $this->getApplication()->rootPath;
+  $root = $this->jorge->getPath();
   $this->setStatus($cwd == $root);
 }
 ```
@@ -95,8 +95,7 @@ public function configure() {
 ... and its usage in `ResetCommand`:
 ```php
 protected function executeDrupal8() {
-  $jorge = $this->getApplication();
-  $lando = $jorge->getTool('lando');
+  $lando = $this->jorge->getTool('lando');
   // ...
   if (!$lando->getStatus()->running) {
     $lando->run('start');
