@@ -70,7 +70,7 @@ class ResetCommand extends Command {
     $this->appType = $this->jorge->getConfig('appType', '');
     $config = $this->jorge->getConfig('reset', []);
     foreach (array_keys($this->params) as $var) {
-      if (array_key_exists($var, $config) && !empty($config[$var])) {
+      if (array_key_exists($var, $config)) {
         $this->params[$var] = $config[$var];
       }
       if ($input->hasOption($var) && $input->getOption($var)) {
