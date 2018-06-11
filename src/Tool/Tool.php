@@ -7,6 +7,7 @@ use Psr\Log\LogLevel;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Exception\LogicException;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Process\Process;
 
 /**
  * Base class for tools.
@@ -106,12 +107,41 @@ class Tool {
       $this->log(LogLevel::ERROR, 'Cannot execute a blank command');
       return ['command' => '', 'status' => 1];
     }
+
     $this->log(LogLevel::NOTICE, '$ {%command}', ['%command' => $command]);
-    exec($command, $output, $status);
+    // exec($command, $output, $status);
+print "============= $command\n";
+    $process = new Process($command);
+    $process->setInput(STDIN);
+    $process->start();
+
+    $out = '';
+    while ($process->isRunning()) {
+      $out .= $process->getIncrementalOutput();
+      $out .= $process->getIncrementalErrorOutput();
+      // print $process->getStatus() . "\n";
+      print $out;
+      // $stdin = fopen('php://stdin', 'r');
+      $r = [STDIN];
+      $w = $x = [];
+      if (stream_select($r, $w, $x, 5)) {
+        echo "you typed: " . fgets(STDIN) . PHP_EOL;
+      } else {
+        echo "you typed nothing\n";
+      }
+      // $i = [STDIN];
+      // $w = [];
+      // $x = [];
+      // $s = stream_select($i, $w, $x, 0);
+      // print "s: $s\n";
+      sleep(5);
+    }
+print "=============\n";
+
     return [
       'command' => $command,
-      'output'  => $output,
-      'status'  => $status,
+      'output'  => explode("\n", $process->getOutput()),
+      'status'  => $process->getExitCode(),
     ];
   }
 
