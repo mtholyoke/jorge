@@ -43,7 +43,7 @@ trait MockToolPublicMethodsTrait {
   /**
    * {@inheritDoc}
    */
-  public function exec($argv = '') {
+  public function exec($argv = '', $prompt = FALSE) {
     return parent::exec($argv);
   }
 

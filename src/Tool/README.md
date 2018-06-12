@@ -81,6 +81,10 @@ protected function applyVerbosity($argv = '') {
 
 `log($level, $message, $context)` (provided by `JorgeTrait`) passes a loggable message to the application’s logger. The message will have the name of the tool automatically prefixed. `use Psr\Log\LogLevel;` for named levels as constants.
 
+### User Interaction
+
+`run()`, `runThis()`, and `exec()` have an optional second argument, necessary for some Drush commands: a boolean indicating whether the tool should allow for interaction in the middle of operation (regardless of the verbosity setting).
+
 ## Using a Tool
 
 The Jorge application has an `addTool()` method which takes a new instance of the tool and optionally its command-line executable. Once it has been added, it is available to commands and other tools. A sample from `Jorge.php`:

@@ -86,9 +86,10 @@ class ComposerTool extends Tool {
    * trap its output to send back up the call stack for verbosity control.
    *
    * @param array $argv Arguments and options for the command
+   * @param bool|null $prompt Require interaction mid-command
    * @return array The command passed to the Composer application and its exit code.
    */
-  protected function exec($argv = []) {
+  protected function exec($argv = [], $prompt = FALSE) {
     if ($argv === NULL || !isset($argv) || !is_array($argv)) {
       $argv = [];
     }

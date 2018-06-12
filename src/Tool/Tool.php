@@ -99,9 +99,10 @@ class Tool {
    * Executes the tool command and returns the result array and status.
    *
    * @param mixed $argv Arguments and options for the command
+   * @param bool|null $prompt Require interaction mid-command
    * @return array The command with its output and exit status
    */
-  protected function exec($argv = '') {
+  protected function exec($argv = '', $prompt = FALSE) {
     $command = trim($this->getExecutable() . ' ' . $argv);
     if (empty($command)) {
       $this->log(LogLevel::ERROR, 'Cannot execute a blank command');
@@ -109,38 +110,21 @@ class Tool {
     }
 
     $this->log(LogLevel::NOTICE, '$ {%command}', ['%command' => $command]);
-    // exec($command, $output, $status);
-print "============= $command\n";
     $process = new Process($command);
-    $process->setInput(STDIN);
-    $process->start();
-
-    $out = '';
-    while ($process->isRunning()) {
-      $out .= $process->getIncrementalOutput();
-      $out .= $process->getIncrementalErrorOutput();
-      // print $process->getStatus() . "\n";
-      print $out;
-      // $stdin = fopen('php://stdin', 'r');
-      $r = [STDIN];
-      $w = $x = [];
-      if (stream_select($r, $w, $x, 5)) {
-        echo "you typed: " . fgets(STDIN) . PHP_EOL;
-      } else {
-        echo "you typed nothing\n";
+    if ($prompt) {
+      $process->setInput(STDIN);
+      $process->start();
+      while ($process->isRunning()) {
+        print $process->getIncrementalOutput();
+        print $process->getIncrementalErrorOutput();
       }
-      // $i = [STDIN];
-      // $w = [];
-      // $x = [];
-      // $s = stream_select($i, $w, $x, 0);
-      // print "s: $s\n";
-      sleep(5);
+    } else {
+      $process->run();
     }
-print "=============\n";
 
     return [
       'command' => $command,
-      'output'  => explode("\n", $process->getOutput()),
+      'output'  => $prompt ? [] : explode("\n", $process->getOutput()),
       'status'  => $process->getExitCode(),
     ];
   }
@@ -219,26 +203,28 @@ print "=============\n";
    * Checks that the tool is enabled before running it.
    *
    * @param mixed|null $argv Arguments and options for the command
+   * @param bool|null $prompt Require interaction mid-command
    * @return null|int
    */
-  public function run($argv = NULL) {
+  public function run($argv = NULL, $prompt = NULL) {
     if (!$this->isEnabled()) {
       $this->log(LogLevel::ERROR, 'Tool not enabled');
       return;
     }
-    return $this->runThis($argv);
+    return $this->runThis($argv, $prompt);
   }
 
   /**
    * Runs the tool with the given subcommands/options.
    *
    * @param mixed|null $argv Arguments and options for the command
+   * @param bool|null $prompt Require interaction mid-command
    * @return null|int
    */
-  public function runThis($argv = NULL) {
+  public function runThis($argv = NULL, $prompt = NULL) {
     $command = $this->applyVerbosity($argv);
 
-    $result = $this->exec($command);
+    $result = $this->exec($command, $prompt);
 
     if ($this->verbosity != OutputInterface::VERBOSITY_QUIET) {
       if (array_key_exists('output', $result)) {

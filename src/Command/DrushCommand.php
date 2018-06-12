@@ -24,6 +24,33 @@ class DrushCommand extends Command {
   /** @var string $drush_command The actual drush command with its arguments and options */
   protected $drush_command = '';
 
+  /** @var array $interaction The list of drush commands that require interaction. */
+  protected $interaction;
+
+  /** @var bool $prompt Whether we need to prompt the user regardless of verbosity. */
+  protected $prompt;
+
+  /**
+   * Sets up the list of drush commands that require interaction.
+   *
+   * {@inheritDoc}
+   */
+  public function __construct(string $name = NULL) {
+    parent::__construct($name);
+    $this->interaction = [
+      'cc'   => FALSE,
+      'cim'  => TRUE,
+      'cex'  => TRUE,
+      'cr'   => FALSE,
+      'csim' => TRUE,
+      'en'   => TRUE,
+      'pmu'  => TRUE,
+      'updb' => TRUE,
+      'ups'  => FALSE,
+      'upwd' => FALSE,
+    ];
+  }
+
   /**
    * Establishes the `drush` command.
    */
@@ -42,6 +69,10 @@ double hyphen to escape others (including -h and other Jorge options):
   jorge drush 'foo --bar'
   jorge drush \"foo --bar\"
   jorge drush foo -- --bar
+
+Jorge’s -n/--no-interaction option can be used to simulate Drush -n/--no.
+Without it, for certain Drush commands, you may be prompted regardless of
+the verbosity level.
 
 Jorge’s verbosity is is passed to both Lando and Drush; if you want it to
 only apply to Drush, you can escape -v/--verbose as above.
@@ -69,7 +100,7 @@ only apply to Drush, you can escape -v/--verbose as above.
     }
     chdir($webdir);
     $lando->requireStarted();
-    return $lando->run($drush);
+    return $lando->run($drush, $this->prompt);
   }
 
   /**
@@ -111,8 +142,15 @@ only apply to Drush, you can escape -v/--verbose as above.
 
     $arguments = $input->getArgument('drush_command');
     if (!empty($arguments)) {
+      $cmd = $arguments[0];
+      $this->prompt = array_key_exists($cmd, $this->interaction) ?: TRUE;
+      if ($input->hasOption('no-interaction') && $input->getOption('no-interaction')) {
+        $arguments[] = '--no';
+        $this->prompt = FALSE;
+      }
       if ($input->hasOption('yes') && $input->getOption('yes')) {
         $arguments[] = '--yes';
+        $this->prompt = FALSE;
       }
       $this->drush_command = implode(' ', $arguments);
     }

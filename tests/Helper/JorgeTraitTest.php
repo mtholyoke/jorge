@@ -35,7 +35,8 @@ final class JorgeTraitTest extends TestCase {
     $expect = [
       [LogLevel::DEBUG,  '{echo} Executable is "{%executable}"'],  # log() in setExecutable()
       [LogLevel::NOTICE, '{echo} $ {%command}'],                   # log() in exec()
-      ['writeln',        $text],                                # writeln() in runThis()
+      ['writeln',        $text],                                   # writeln() in runThis()
+      ['writeln',        ''],                                      # TODO: where?
     ];
     $this->verifyMessages($expect, $jorge->messages);
   }
