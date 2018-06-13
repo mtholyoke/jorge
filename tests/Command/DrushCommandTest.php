@@ -126,9 +126,24 @@ final class DrushCommandTest extends TestCase {
     $this->assertSame($dc, $command->getDrushCommand());
 
     $dc = $this->makeRandomString();
+    $input = new ArrayInput(['drush_command' => [$dc, '-y']]);
+    $command->initialize($input, $output);
+    $this->assertSame("$dc -y", $command->getDrushCommand());
+
+    $dc = $this->makeRandomString();
     $input = new ArrayInput(['drush_command' => [$dc], '--yes' => TRUE]);
     $command->initialize($input, $output);
     $this->assertSame("$dc --yes", $command->getDrushCommand());
+
+    $dc = $this->makeRandomString();
+    $input = new ArrayInput(['drush_command' => [$dc, '-n']]);
+    $command->initialize($input, $output);
+    $this->assertSame("$dc -n", $command->getDrushCommand());
+
+    $dc = $this->makeRandomString();
+    $input = new ArrayInput(['drush_command' => [$dc], '--no-interaction' => TRUE]);
+    $command->initialize($input, $output);
+    $this->assertSame("$dc --no", $command->getDrushCommand());
 
     $dc = $this->makeRandomString();
     $input = new ArrayInput(['drush_command' => [$dc]]);

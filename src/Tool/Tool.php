@@ -7,6 +7,7 @@ use Psr\Log\LogLevel;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Exception\LogicException;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Process\Process;
 
 /**
  * Base class for tools.
@@ -98,21 +99,35 @@ class Tool {
    * Executes the tool command and returns the result array and status.
    *
    * @param mixed $argv Arguments and options for the command
+   * @param bool|null $prompt Require interaction mid-command
    * @return array The command with its output and exit status
    */
-  protected function exec($argv = '') {
+  protected function exec($argv = '', $prompt = FALSE) {
     $command = trim($this->getExecutable() . ' ' . $argv);
     if (empty($command)) {
       $this->log(LogLevel::ERROR, 'Cannot execute a blank command');
       return ['command' => '', 'status' => 1];
     }
+
+    $return = ['command' => $command];
     $this->log(LogLevel::NOTICE, '$ {%command}', ['%command' => $command]);
-    exec($command, $output, $status);
-    return [
-      'command' => $command,
-      'output'  => $output,
-      'status'  => $status,
-    ];
+    if ($prompt) {
+      $process = new Process($command);
+      $process->setInput(STDIN);
+      $process->start();
+      while ($process->isRunning()) {
+        print $process->getIncrementalOutput();
+        print $process->getIncrementalErrorOutput();
+      }
+      $return['output'] = [];
+      $return['status'] = $process->getExitCode();
+    } else {
+      exec($command, $output, $status);
+      $return['output'] = $output;
+      $return['status'] = $status;
+    }
+
+    return $return;
   }
 
   /**
@@ -189,26 +204,28 @@ class Tool {
    * Checks that the tool is enabled before running it.
    *
    * @param mixed|null $argv Arguments and options for the command
+   * @param bool|null $prompt Require interaction mid-command
    * @return null|int
    */
-  public function run($argv = NULL) {
+  public function run($argv = NULL, $prompt = NULL) {
     if (!$this->isEnabled()) {
       $this->log(LogLevel::ERROR, 'Tool not enabled');
       return;
     }
-    return $this->runThis($argv);
+    return $this->runThis($argv, $prompt);
   }
 
   /**
    * Runs the tool with the given subcommands/options.
    *
    * @param mixed|null $argv Arguments and options for the command
+   * @param bool|null $prompt Require interaction mid-command
    * @return null|int
    */
-  public function runThis($argv = NULL) {
+  public function runThis($argv = NULL, $prompt = NULL) {
     $command = $this->applyVerbosity($argv);
 
-    $result = $this->exec($command);
+    $result = $this->exec($command, $prompt);
 
     if ($this->verbosity != OutputInterface::VERBOSITY_QUIET) {
       if (array_key_exists('output', $result)) {

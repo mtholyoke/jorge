@@ -37,7 +37,7 @@ class MockLandoTool extends LandoTool {
   /**
    * Returns predictable values instead of running Lando.
    */
-  protected function exec($argv = '') {
+  protected function exec($argv = '', $prompt = FALSE) {
     # Make the appropriate noises about any call to exec().
     $command = trim($this->getExecutable() . ' ' . $argv);
     if (empty($command)) {
