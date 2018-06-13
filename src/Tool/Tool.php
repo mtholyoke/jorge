@@ -109,24 +109,25 @@ class Tool {
       return ['command' => '', 'status' => 1];
     }
 
+    $return = ['command' => $command];
     $this->log(LogLevel::NOTICE, '$ {%command}', ['%command' => $command]);
-    $process = new Process($command);
     if ($prompt) {
+      $process = new Process($command);
       $process->setInput(STDIN);
       $process->start();
       while ($process->isRunning()) {
         print $process->getIncrementalOutput();
         print $process->getIncrementalErrorOutput();
       }
+      $return['output'] = [];
+      $return['status'] = $process->getExitCode();
     } else {
-      $process->run();
+      exec($command, $output, $status);
+      $return['output'] = $output;
+      $return['status'] = $status;
     }
 
-    return [
-      'command' => $command,
-      'output'  => $prompt ? [] : explode("\n", $process->getOutput()),
-      'status'  => $process->getExitCode(),
-    ];
+    return $return;
   }
 
   /**

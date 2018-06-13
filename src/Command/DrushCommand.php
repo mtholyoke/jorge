@@ -143,9 +143,12 @@ only apply to Drush, you can escape -v/--verbose as above.
     $arguments = $input->getArgument('drush_command');
     if (!empty($arguments)) {
       $cmd = $arguments[0];
-      $this->prompt = array_key_exists($cmd, $this->interaction) ?: TRUE;
+      $this->prompt = array_key_exists($cmd, $this->interaction) ? $this->interaction[$cmd] : TRUE;
       if ($input->hasOption('no-interaction') && $input->getOption('no-interaction')) {
         $arguments[] = '--no';
+      }
+      // Separate test because it might be there from the command line:
+      if (in_array('-n', $arguments) || in_array('--no', $arguments)) {
         $this->prompt = FALSE;
       }
       if ($input->hasOption('yes') && $input->getOption('yes')) {
