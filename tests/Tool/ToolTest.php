@@ -166,7 +166,6 @@ final class ToolTest extends TestCase {
     $expect = [
       [LogLevel::NOTICE, '{' . $name . '} $ {%command}', ['%command' => "$echo $text"]],
       ['writeln',        $text],
-      ['writeln',        ''],     # TODO: where?
     ];
     $this->verifyMessages($expect, $tool->messages, TRUE);
   }
@@ -198,13 +197,11 @@ final class ToolTest extends TestCase {
     $expect = [
       [LogLevel::NOTICE, '{' . $name . '} $ {%command}', ['%command' => "$echo $text"]],
       ['writeln',        $text],
-      ['writeln',        ''],     # TODO: where?
     ];
     $this->verifyMessages($expect, $tool->messages, TRUE);
     $tool->messages = [];
 
     # Make sure it runs but doesn’t output when verbosity is quiet.
-    array_pop($expect);
     array_pop($expect);
     $tool->setVerbosity(OutputInterface::VERBOSITY_QUIET);
     $this->assertSame(0, $tool->runThis($text));
