@@ -38,16 +38,17 @@ class DrushCommand extends Command {
   public function __construct(string $name = NULL) {
     parent::__construct($name);
     $this->interaction = [
-      'cc'   => FALSE,
-      'cim'  => TRUE,
-      'cex'  => TRUE,
-      'cr'   => FALSE,
-      'csim' => TRUE,
-      'en'   => TRUE,
-      'pmu'  => TRUE,
-      'updb' => TRUE,
-      'ups'  => FALSE,
-      'upwd' => FALSE,
+      'cc'     => FALSE,
+      'cim'    => TRUE,
+      'cex'    => TRUE,
+      'cr'     => FALSE,
+      'csim'   => TRUE,
+      'en'     => TRUE,
+      'pmu'    => TRUE,
+      'status' => FALSE,
+      'updb'   => TRUE,
+      'ups'    => FALSE,
+      'upwd'   => FALSE,
     ];
   }
 
