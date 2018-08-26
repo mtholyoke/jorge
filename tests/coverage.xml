@@ -1,60 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1528850439">
-  <project timestamp="1528850439">
+<coverage generated="1535288197">
+  <project timestamp="1535288197">
     <package name="MountHolyoke\Jorge\Command">
       <file name="/Users/jproctor/Projects/jorge/src/Command/DrushCommand.php">
         <class name="MountHolyoke\Jorge\Command\DrushCommand" namespace="MountHolyoke\Jorge\Command">
-          <metrics complexity="17" methods="5" coveredmethods="5" conditionals="0" coveredconditionals="0" statements="43" coveredstatements="43" elements="48" coveredelements="48"/>
+          <metrics complexity="19" methods="5" coveredmethods="5" conditionals="0" coveredconditionals="0" statements="45" coveredstatements="45" elements="50" coveredelements="50"/>
         </class>
         <line num="38" type="method" name="__construct" visibility="public" complexity="1" crap="1" count="22"/>
         <line num="39" type="stmt" count="22"/>
         <line num="40" type="stmt" count="22"/>
-        <line num="52" type="stmt" count="22"/>
-        <line num="57" type="method" name="configure" visibility="protected" complexity="1" crap="1" count="22"/>
-        <line num="59" type="stmt" count="22"/>
-        <line num="60" type="stmt" count="22"/>
+        <line num="54" type="stmt" count="22"/>
+        <line num="59" type="method" name="configure" visibility="protected" complexity="1" crap="1" count="22"/>
         <line num="61" type="stmt" count="22"/>
         <line num="62" type="stmt" count="22"/>
         <line num="63" type="stmt" count="22"/>
-        <line num="80" type="stmt" count="22"/>
-        <line num="92" type="method" name="execute" visibility="protected" complexity="2" crap="2" count="1"/>
-        <line num="93" type="stmt" count="1"/>
-        <line num="94" type="stmt" count="1"/>
-        <line num="95" type="stmt" count="1"/>
+        <line num="64" type="stmt" count="22"/>
+        <line num="65" type="stmt" count="22"/>
+        <line num="66" type="stmt" count="22"/>
+        <line num="83" type="stmt" count="22"/>
+        <line num="95" type="method" name="execute" visibility="protected" complexity="2" crap="2" count="1"/>
+        <line num="96" type="stmt" count="1"/>
         <line num="97" type="stmt" count="1"/>
         <line num="98" type="stmt" count="1"/>
-        <line num="99" type="stmt" count="1"/>
+        <line num="100" type="stmt" count="1"/>
         <line num="101" type="stmt" count="1"/>
         <line num="102" type="stmt" count="1"/>
-        <line num="103" type="stmt" count="1"/>
-        <line num="113" type="method" name="findDrupal" visibility="protected" complexity="3" crap="3" count="2"/>
-        <line num="114" type="stmt" count="2"/>
-        <line num="115" type="stmt" count="2"/>
-        <line num="116" type="stmt" count="2"/>
-        <line num="118" type="stmt" count="1"/>
+        <line num="104" type="stmt" count="1"/>
+        <line num="105" type="stmt" count="1"/>
+        <line num="106" type="stmt" count="1"/>
+        <line num="116" type="method" name="findDrupal" visibility="protected" complexity="3" crap="3" count="2"/>
+        <line num="117" type="stmt" count="2"/>
+        <line num="118" type="stmt" count="2"/>
         <line num="119" type="stmt" count="2"/>
         <line num="121" type="stmt" count="1"/>
-        <line num="122" type="stmt" count="1"/>
-        <line num="125" type="stmt" count="2"/>
-        <line num="127" type="stmt" count="2"/>
-        <line num="140" type="method" name="initialize" visibility="protected" complexity="10" crap="10" count="1"/>
-        <line num="141" type="stmt" count="1"/>
-        <line num="143" type="stmt" count="1"/>
+        <line num="122" type="stmt" count="2"/>
+        <line num="124" type="stmt" count="1"/>
+        <line num="125" type="stmt" count="1"/>
+        <line num="128" type="stmt" count="2"/>
+        <line num="130" type="stmt" count="2"/>
+        <line num="143" type="method" name="initialize" visibility="protected" complexity="12" crap="12" count="1"/>
         <line num="144" type="stmt" count="1"/>
-        <line num="145" type="stmt" count="1"/>
         <line num="146" type="stmt" count="1"/>
         <line num="147" type="stmt" count="1"/>
         <line num="148" type="stmt" count="1"/>
+        <line num="149" type="stmt" count="1"/>
+        <line num="150" type="stmt" count="1"/>
         <line num="151" type="stmt" count="1"/>
         <line num="152" type="stmt" count="1"/>
-        <line num="154" type="stmt" count="1"/>
         <line num="155" type="stmt" count="1"/>
         <line num="156" type="stmt" count="1"/>
         <line num="158" type="stmt" count="1"/>
+        <line num="159" type="stmt" count="1"/>
         <line num="160" type="stmt" count="1"/>
-        <line num="161" type="stmt" count="1"/>
-        <line num="163" type="stmt" count="1"/>
-        <metrics loc="164" ncloc="110" classes="1" methods="5" coveredmethods="5" conditionals="0" coveredconditionals="0" statements="43" coveredstatements="43" elements="48" coveredelements="48"/>
+        <line num="162" type="stmt" count="1"/>
+        <line num="164" type="stmt" count="1"/>
+        <line num="165" type="stmt" count="1"/>
+        <line num="167" type="stmt" count="1"/>
+        <metrics loc="168" ncloc="114" classes="1" methods="5" coveredmethods="5" conditionals="0" coveredconditionals="0" statements="45" coveredstatements="45" elements="50" coveredelements="50"/>
       </file>
       <file name="/Users/jproctor/Projects/jorge/src/Command/HonkCommand.php">
         <class name="MountHolyoke\Jorge\Command\HonkCommand" namespace="MountHolyoke\Jorge\Command">
@@ -617,6 +619,6 @@
         <metrics loc="320" ncloc="191" classes="1" methods="20" coveredmethods="19" conditionals="0" coveredconditionals="0" statements="84" coveredstatements="76" elements="104" coveredelements="95"/>
       </file>
     </package>
-    <metrics files="10" loc="1531" ncloc="996" classes="10" methods="65" coveredmethods="64" conditionals="0" coveredconditionals="0" statements="483" coveredstatements="475" elements="548" coveredelements="539"/>
+    <metrics files="10" loc="1535" ncloc="1000" classes="10" methods="65" coveredmethods="64" conditionals="0" coveredconditionals="0" statements="485" coveredstatements="477" elements="550" coveredelements="541"/>
   </project>
 </coverage>

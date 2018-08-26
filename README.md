@@ -10,7 +10,7 @@ Jorge is an experimental command-line tool for managing the complex interaction 
 
 This is not a thing to `require` within a project; it’s a tool for your workstation. Composer facilitates that with `composer global require`, but that command is somewhat flawed in the way it manages things, so we prefer [`cgr`](https://pantheon.io/blog/fixing-composer-global-command).
 
-To install it, run `composer global require consolidation/cgr` and it will be added in the `.composer` directory off your home directory. You will also need to tell the system that you’re adding executables to a new place. In your home directory, there can be a file named `.bash_profile` or `.profile` which is run every time you log in. Edit that file (create one if neither exists) and add a line at the end:
+To install `cgr`, run `composer global require consolidation/cgr` and it will be added in the `.composer` directory off your home directory. You will also need to tell the system that you’re adding executables to a new place. In your home directory, there can be a file named `.bash_profile` or `.profile` which is run every time you log in. Edit that file (create one if neither exists) and add a line at the end:
 ```bash
 export PATH="$PATH:~/.composer/vendor/bin"
 ```
@@ -75,7 +75,7 @@ reset:
 
 In a Composer-powered Drupal 8 project, `lando drush `_`{drush-command}`_ needs to be run inside the `web` directory (so it has access to Drupal), regardless of whether you’re currently in that directory. This command runs it from outside that directory, (after starting Lando if it’s not already running).
 
-Accepts the `-y`/`--yes` option natively, but other Drush options need to be escaped. See `jorge help drush` for details.
+Accepts the `-y`/`--yes` and `-n`/`--no` option natively, but other Drush options need to be escaped. See `jorge help drush` for details. Note that `-n` is actually Symfony `--no-interaction`, which has approximately the same effect.
 
 
 ### `jorge reset`

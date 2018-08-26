@@ -29,7 +29,7 @@ final class DrushCommandTest extends TestCase {
     $this->assertSame(1, count($arguments));
     $this->assertSame(0, $definition->getArgumentRequiredCount());
     $options = $definition->getOptions();
-    $this->assertSame(1, count($options));
+    $this->assertSame(2, count($options));
     $this->assertNotEmpty($command->getHelp());
   }
 
@@ -134,6 +134,16 @@ final class DrushCommandTest extends TestCase {
     $input = new ArrayInput(['drush_command' => [$dc], '--yes' => TRUE]);
     $command->initialize($input, $output);
     $this->assertSame("$dc --yes", $command->getDrushCommand());
+
+    $dc = $this->makeRandomString();
+    $input = new ArrayInput(['drush_command' => [$dc, '-N']]);
+    $command->initialize($input, $output);
+    $this->assertSame("$dc -N", $command->getDrushCommand());
+
+    $dc = $this->makeRandomString();
+    $input = new ArrayInput(['drush_command' => [$dc], '--no' => TRUE]);
+    $command->initialize($input, $output);
+    $this->assertSame("$dc --no", $command->getDrushCommand());
 
     $dc = $this->makeRandomString();
     $input = new ArrayInput(['drush_command' => [$dc, '-n']]);
