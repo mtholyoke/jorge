@@ -39,11 +39,12 @@ class DrushCommand extends Command {
     parent::__construct($name);
     $this->interaction = [
       'cc'     => FALSE,
-      'cim'    => TRUE,
       'cex'    => TRUE,
+      'cim'    => TRUE,
       'cr'     => FALSE,
       'csim'   => TRUE,
       'en'     => TRUE,
+      'ms'     => FALSE,
       'pmu'    => TRUE,
       'status' => FALSE,
       'updb'   => TRUE,
@@ -60,18 +61,19 @@ class DrushCommand extends Command {
       ->setName('drush')
       ->setDescription('Executes `lando drush` in the correct directory')
       ->addArgument('drush_command', InputArgument::IS_ARRAY, 'Drush command to execute')
+      ->addOption('no', 'N', InputOption::VALUE_NONE, 'Drush option: Answer "no" to all Drush prompts')
       ->addOption('yes', 'y', InputOption::VALUE_NONE, 'Drush option: Answer "yes" to all Drush prompts')
       ->setHelp("
 This command is a simple wrapper for `lando drush` to make it executable
 in the project but outside the main Drupal directory.
 
-Currently, the only Drush option it supports is -y/--yes. Use quotes or
+Currently, the only Drush options are -y/--yes and --no. Use quotes or
 double hyphen to escape others (including -h and other Jorge options):
   jorge drush 'foo --bar'
   jorge drush \"foo --bar\"
   jorge drush foo -- --bar
 
-Jorge’s -n/--no-interaction option can be used to simulate Drush -n/--no.
+Jorge’s -n/--no-interaction option has approximately the same effect as --no.
 Without it, for certain Drush commands, you may be prompted regardless of
 the verbosity level.
 
@@ -145,7 +147,8 @@ only apply to Drush, you can escape -v/--verbose as above.
     if (!empty($arguments)) {
       $cmd = $arguments[0];
       $this->prompt = array_key_exists($cmd, $this->interaction) ? $this->interaction[$cmd] : TRUE;
-      if ($input->hasOption('no-interaction') && $input->getOption('no-interaction')) {
+      if (($input->hasOption('no-interaction') && $input->getOption('no-interaction')) ||
+          ($input->hasOption('no') && $input->getOption('no'))) {
         $arguments[] = '--no';
       }
       // Separate test because it might be there from the command line:
