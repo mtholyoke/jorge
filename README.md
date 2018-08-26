@@ -100,7 +100,7 @@ If a username is provided but no password is supplied, Jorge will prompt you for
 
 - Tests (see [Testing Commands](https://symfony.com/doc/current/console.html#testing-commands) for example)
 
-- Implement [Tools](src/Tool/) for Git, Lando, &c., using APIs if possible, for better awareness of initial/current state
+- Implement [Tools](src/Tool/) for Git, Lando, &c., using APIs or as service(s) within the container(s), for better awareness of initial/current state
 
 - Refactor the execution to take advantage of the implemented tools
 
@@ -109,3 +109,5 @@ If a username is provided but no password is supplied, Jorge will prompt you for
 - Replace `system()` and `exec()` calls with Symfony Process component (currently it gets tangled when Lando needs to `attach` to the Docker container)
 
 - Implement `jorge save` and refactor `jorge reset` to be able to use saved state
+
+- Is it possible to check for Sass watcher (or similar idea) and suspend during Git operations?
