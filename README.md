@@ -98,15 +98,15 @@ If a username is provided but no password is supplied, Jorge will prompt you for
 
 ## Future Work
 
-- Tests (see [Testing Commands](https://symfony.com/doc/current/console.html#testing-commands) for example)
+- More tests (see also Symfony doc [Testing Commands](https://symfony.com/doc/current/console.html#testing-commands))
+  - `Tool::exec()` uses the Symfony Process component when user interaction is required, and a first pass at testing by executing `read` with `-p "\nPress enter" x` did not provide the expected coverage. Possibly we need to do a full mock as in `ResetCommandTest::testInteract()`. and adjust `Tool::exec()` to use an `InputInterface` instead of `STDIN`.
 
-- Implement [Tools](src/Tool/) for Git, Lando, &c., using APIs or as service(s) within the container(s), for better awareness of initial/current state
 
-- Refactor the execution to take advantage of the implemented tools
+- Implement [Tools](src/Tool/) for Git, &c., using APIs or as service(s) within the container(s), for better awareness of initial/current state
+
+- Lando may not be a _Tool_; it may be a new kind of thing. Possibly we need a plugin interface for “environment manager”.
 
 - Option to stash or discard changes before a `git checkout`?
-
-- Replace `system()` and `exec()` calls with Symfony Process component (currently it gets tangled when Lando needs to `attach` to the Docker container)
 
 - Implement `jorge save` and refactor `jorge reset` to be able to use saved state
 
