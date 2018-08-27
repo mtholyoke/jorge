@@ -31,7 +31,7 @@ final class ResetCommandTest extends TestCase {
     $this->assertSame(0, count($arguments));
     $this->assertSame(0, $definition->getArgumentRequiredCount());
     $options = $definition->getOptions();
-    $this->assertSame(5, count($options));
+    $this->assertSame(6, count($options));
     $this->assertNotEmpty($command->getHelp());
     # testInitialize() checks $->params in a mock instance.
   }
@@ -42,14 +42,13 @@ final class ResetCommandTest extends TestCase {
 
     $command = new MockResetCommand();
     $command->setName('mockReset');
-    $this->assertSame(6, count($command->getParams()));
+    $this->assertSame(5, count($command->getParams()));
     $this->assertSame($command, $jorge->add($command));
 
     $appType = $this->makeRandomString();
     $reset = [
       'branch'   => $this->makeRandomString(),
-      'database' => $this->makeRandomString(),
-      'files'    => $this->makeRandomString(),
+      'content'  => $this->makeRandomString(),
       'rsync'    => $this->makeRandomBoolean(),
       'username' => $this->makeRandomString(),
       'password' => $this->makeRandomString(),
@@ -64,6 +63,8 @@ final class ResetCommandTest extends TestCase {
 
     # Make sure Jorge config is correctly applied:
     $this->assertSame($appType, $command->getAppType());
+    $reset['database'] = $reset['content'];
+    $reset['files']    = $reset['content'];
     $this->assertSame($reset, $command->getParams());
     $expect = [[LogLevel::DEBUG, '{mockReset} Parameters:']];
     foreach ($reset as $param => $value) {
@@ -74,6 +75,7 @@ final class ResetCommandTest extends TestCase {
 
     $options = [
       '--branch'   => $this->makeRandomString(),
+      '--content'  => $this->makeRandomString(),
       '--database' => $this->makeRandomString(),
       '--files'    => $this->makeRandomString(),
       '--username' => $this->makeRandomString(),
@@ -164,8 +166,7 @@ final class ResetCommandTest extends TestCase {
     # Set up params for a couple of runs:
     $simpleParams = [
       'branch'   => $this->makeRandomString(),
-      'database' => $this->makeRandomString(),
-      'files'    => $this->makeRandomString(),
+      'content'  => $this->makeRandomString(),
       'rsync'    => FALSE,
       'username' => '',
       'password' => '',
@@ -208,7 +209,7 @@ final class ResetCommandTest extends TestCase {
     $lando->expects($this->exactly(2))
           ->method('run')
           ->withConsecutive(
-              ['pull --code=none --database=' . $simpleParams['database'] . ' --files=' . $simpleParams['files']],
+              ['pull --code=none --database=' . $simpleParams['content'] . ' --files=' . $simpleParams['content']],
               ['pull --code=none --database=' . $complexParams['database'] . ' --files=' . $complexParams['files'] . ' --rsync']
             )
           ->willReturn(0);
@@ -281,8 +282,7 @@ final class ResetCommandTest extends TestCase {
     # Set up params for a couple of runs:
     $simpleParams = [
       'branch'   => $this->makeRandomString(),
-      'database' => $this->makeRandomString(),
-      'files'    => $this->makeRandomString(),
+      'content'  => $this->makeRandomString(),
       'rsync'    => FALSE,
       'username' => '',
       'password' => '',
@@ -334,7 +334,7 @@ final class ResetCommandTest extends TestCase {
     $lando->expects($this->exactly(2))
           ->method('run')
           ->withConsecutive(
-              ['pull --code=none --database=' . $simpleParams['database'] . ' --files=' . $simpleParams['files']],
+              ['pull --code=none --database=' . $simpleParams['content'] . ' --files=' . $simpleParams['content']],
               ['pull --code=none --database=' . $complexParams['database'] . ' --files=' . $complexParams['files'] . ' --rsync']
             )
           ->willReturn(0);

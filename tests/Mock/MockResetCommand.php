@@ -87,6 +87,12 @@ class MockResetCommand extends ResetCommand {
    */
   public function setParams($params) {
     $this->params = $params;
+    if (isset($this->params['content']) && !isset($this->params['database'])) {
+      $this->params['database'] = $this->params['content'];
+    }
+    if (isset($this->params['database']) && !isset($this->params['files'])) {
+      $this->params['files'] = $this->params['database'];
+    }
     return $this;
   }
 }

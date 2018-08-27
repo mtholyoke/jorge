@@ -17,7 +17,7 @@ export PATH="$PATH:~/.composer/vendor/bin"
 
 In order for the new `PATH` to take effect, you can either log out and back in, or run `source .bash_profile` (or `source .profile`). You can test that it worked by running `cgr --help`; it should give you help instead of an error message.
 
-After all that, you should be able to run `cgr mtholyoke/jorge`. If it is successfully installed, `jorge --version` will report “Can’t find project root” and a version.
+After all that, you should be able to run `cgr mtholyoke/jorge:*`. If it is successfully installed, `jorge --version` will report “Can’t find project root” and a version. You can omit the `:*` if you only want the current version with no major upgrades, or replace the `*` with a specific version.
 
 
 ### For Development: Install with Git
@@ -41,11 +41,12 @@ Optionally, you may also have the key `include_config`, which specifies a list o
 
 ### Drupal 7 or 8 Configuration
 
-A config file may include the key `reset`, which contains a block that provides any of five optional parameters to the `reset` command (described below):
-- `branch  ` - Which Git branch to reset your current codebase to (default `master`)
-- `database` - Which Pantheon environment to copy the database from (default `dev`)
-- `files   ` - Which Pantheon environment to copy the files from (default `dev`)
-- `rsync   ` - Whether Lando should use `rsync` to copy files (default `TRUE`)
+A config file may include the key `reset`, which contains a block that provides any of seven optional parameters to the `reset` command (described below):
+- `branch  ` - Which Git branch to reset your current codebase to (default is `master`)
+- `content`  - Which Pantheon environment to copy database and files from (default is `dev`)
+- `database` - Which Pantheon environment to copy the database from (default matches `content`)
+- `files   ` - Which Pantheon environment to copy the files from (default matches `database`)
+- `rsync   ` - Whether Lando should use `rsync` to copy files (default is `TRUE`)
 - `username` - A username (usually an admin) that needs a local password (no default)
 - `password` - A local password for the username specified above (no default)
 
@@ -54,8 +55,7 @@ Commonly, the configuration committed to the project’s Git repo looks like thi
 appType: drupal8
 reset:
   branch: master
-  database: dev
-  files: dev
+  content: dev
   rsync: TRUE
 include_config:
   - local.yml
@@ -73,9 +73,9 @@ reset:
 
 ### `jorge drush `_`{drush-command}`_
 
-In a Composer-powered Drupal 8 project, `lando drush `_`{drush-command}`_ needs to be run inside the `web` directory (so it has access to Drupal), regardless of whether you’re currently in that directory. This command runs it from outside that directory, (after starting Lando if it’s not already running).
+In a Composer-powered Drupal 8 project, `lando drush `_`{drush-command}`_ may need to be run inside the `web` directory (so it has access to Drupal), regardless of whether you’re currently in that directory. This command lets you run it from outside that directory, (after starting Lando if it’s not already running).
 
-Accepts the `-y`/`--yes` and `-n`/`--no` option natively, but other Drush options need to be escaped. See `jorge help drush` for details. Note that `-n` is actually Symfony `--no-interaction`, which has approximately the same effect.
+It accepts the `-y`/`--yes` and `-n`/`--no` option natively, but other Drush options need to be escaped. See `jorge help drush` for details. Note that `-n` is actually Symfony `--no-interaction`, which has approximately the same effect.
 
 
 ### `jorge reset`
@@ -86,7 +86,7 @@ Starts Lando if it is not already running.
 
 Your project must be in a clean state: if Git can’t change branches, the whole thing will fail.
 
-Optionally takes command-line switches which will override those settings (except `rsync`); see `jorge help reset` for details.
+Optionally takes command-line switches which will override the settings described above (except `rsync`); see `jorge help reset` for details.
 
 If a username is provided but no password is supplied, Jorge will prompt you for one. If you leave that blank also, the password will not be reset.
 

@@ -39,6 +39,7 @@ class ResetCommand extends Command {
       ->setName('reset')
       ->setDescription('Aligns code, database, and files to a specified state')
       ->addOption('branch',   'b', InputOption::VALUE_OPTIONAL, 'Git branch to use <fg=yellow>[default: "master"]</>')
+      ->addOption('content',  'c', InputOption::VALUE_OPTIONAL, 'Environment to load database and files from <fg=yellow>[default: "dev"]</>')
       ->addOption('database', 'd', InputOption::VALUE_OPTIONAL, 'Environment to load database from <fg=yellow>[default: "dev"]</>')
       ->addOption('files',    'f', InputOption::VALUE_OPTIONAL, 'Environment to copy files from <fg=yellow>[default: "dev"]</>')
       ->addOption('username', 'u', InputOption::VALUE_OPTIONAL, 'Admin account to have local password set')
@@ -49,8 +50,7 @@ class ResetCommand extends Command {
     # These can be set by config.yml, and set or overridden by command line options
     $this->params = [
       'branch'   => 'master',
-      'database' => 'dev',
-      'files'    => 'dev',
+      'content'  => 'dev',
       'rsync'    => TRUE,
       'username' => '',
       'password' => '',
@@ -76,6 +76,18 @@ class ResetCommand extends Command {
       if ($input->hasOption($var) && $input->getOption($var)) {
         $this->params[$var] = $input->getOption($var);
       }
+    }
+
+    // Specifying a database overrides specified or default content source.
+    // Specifying a file source overrides whichever of those is in effect.
+    $this->params['database'] = $this->params['content'];
+    $this->params['files']    = $this->params['content'];
+    if ($input->hasOption('database') && $input->getOption('database')) {
+      $this->params['database'] = $input->getOption('database');
+      $this->params['files'] =    $input->getOption('database');
+    }
+    if ($input->hasOption('files') && $input->getOption('files')) {
+      $this->params['files'] = $input->getOption('files');
     }
 
     $this->log(LogLevel::DEBUG, 'Parameters:');
