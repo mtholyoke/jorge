@@ -16,6 +16,9 @@ use Symfony\Component\Yaml\Yaml;
  * @copyright 2018 Trustees of Mount Holyoke College
  */
 class LandoTool extends Tool {
+  /** @var string $version Lando version */
+  protected $version;
+
   /**
    * Adds the appropriate verbosity option.
    *
@@ -64,6 +67,23 @@ class LandoTool extends Tool {
     $this->config = $this->jorge->loadConfigFile('.lando.yml', NULL);
     if (empty($this->config)) {
       $this->disable();
+      return;
+    }
+
+    # Test for version, since it matters.
+    $exec = $this->exec('version');
+    if ($exec['status'] != 0 || count($exec['output']) != 1) {
+      $this->log(LogLevel::ERROR, 'Unable to determine version');
+      $this->disable();
+      return;
+    }
+    $this->version = $exec['output'][0];
+    if (substr($this->version, 0, 3) != 'v3.') {
+      $this->log(
+        LogLevel::WARNING,
+        'Unrecognized Lando version %v; some functions may not work.',
+        ['%v' => $this->version]
+      );
     }
   }
 
@@ -79,20 +99,49 @@ class LandoTool extends Tool {
       array_shift($lines);
     }
 
-    if ($lines[0] == '[') {
-      # Newer versions of lando actually return a list we can parse.
-      $string = implode('', $lines);
-    } else {
-      # Older versions contain a series of {}s with no delimiters. Make a list.
-      # Don’t check the last line
-      for ($i = 0; $i < (count($lines) - 1); $i++) {
-        if ($lines[$i] == '}') {
-          $lines[$i] .= ', ';
+    $version_regex = '/^3\.0\.0-(alpha|beta|rc)\.(\d+)$/';
+    if (preg_match($version_regex, $this->version, $matches)) {
+      $type = $matches[1];
+      $iter = $matches[2];
+      if ($type == 'alpha' || ($type == 'beta' && $iter < 37)) {
+        # Versions before v3.0.0-beta.37 return a series of {}s. Make a list.
+        for ($i = 0; $i < (count($lines) - 1); $i++) {
+          # Append a comma to every line except the last.
+          if ($lines[$i] == '}') {
+            $lines[$i] .= ', ';
+          }
         }
+        return json_decode('[' . implode('', $lines) . ']');
+      } elseif (($type == 'beta' && $iter >= 37) || ($type == 'rc' && $iter == 1)) {
+        # v3.0.0-beta.37 to v3.0.0-rc.1 return a valid list of {}s.
+        return json_decode(implode('', $lines));
       }
-      $string = '[' . implode('', $lines) . ']';
     }
-    return json_decode($string);
+
+    # v3.0.0-rc.2 changed the syntax again. The new structure is a {} with
+    # keys for each Lando project and values a list of {}s similar to the
+    # output of `lando info`. As far as I know, 2019-02-15, the presence
+    # of a key is sufficient to assume it is running, so we make it look
+    # enough like the others to pass the tests.
+    foreach ($lines as &$line) {
+      # Until Lando PR #1457 is merged we don’t get good json.
+      if (preg_match('/^\s*(\w+):(.*)$/', $line, $matches)) {
+        $line = ' "' . $matches[1] . '":' . str_replace("'", '"', $matches[2]);
+      } elseif (preg_match("/^(.*?)'(.*)'(.*)$/", $line, $matches)) {
+        $line = $matches[1] . '"' . $matches[2] . '"' . $matches[3];
+      }
+      $line = preg_replace('#\\x1b[[][^A-Za-z]*[A-Za-z]#', '', $line);
+    }
+    $json = json_decode(implode(' ', $lines));
+    $list = [];
+    foreach ($json as $name => $info) {
+      $list[] = (object) [
+        'name'    => $name,
+        'running' => TRUE,
+        'info'    => $info,
+      ];
+    }
+    return $list;
   }
 
   /**
