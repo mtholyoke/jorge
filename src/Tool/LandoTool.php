@@ -67,23 +67,6 @@ class LandoTool extends Tool {
     $this->config = $this->jorge->loadConfigFile('.lando.yml', NULL);
     if (empty($this->config)) {
       $this->disable();
-      return;
-    }
-
-    # Test for version, since it matters.
-    $exec = $this->exec('version');
-    if ($exec['status'] != 0 || count($exec['output']) != 1) {
-      $this->log(LogLevel::ERROR, 'Unable to determine version');
-      $this->disable();
-      return;
-    }
-    $this->version = $exec['output'][0];
-    if (substr($this->version, 0, 3) != 'v3.') {
-      $this->log(
-        LogLevel::WARNING,
-        'Unrecognized Lando version %v; some functions may not work.',
-        ['%v' => $this->version]
-      );
     }
   }
 
@@ -95,11 +78,18 @@ class LandoTool extends Tool {
    */
   protected function parseLandoList(array $lines = []) {
     # Skip over Lando complaining about updates.
-    while ($lines[0] != '[' && $lines[0] != '{') {
+    while (!empty($lines) && $lines[0] != '[' && $lines[0] != '{') {
       array_shift($lines);
     }
 
-    $version_regex = '/^3\.0\.0-(alpha|beta|rc)\.(\d+)$/';
+    if (empty($lines)) {
+      return [(object) [
+        'name' => '*',
+        'running' => FALSE,
+      ]];
+    }
+
+    $version_regex = '/^v3\.0\.0-(alpha|beta|rc)\.(\d+)$/';
     if (preg_match($version_regex, $this->version, $matches)) {
       $type = $matches[1];
       $iter = $matches[2];
@@ -148,7 +138,25 @@ class LandoTool extends Tool {
    * Ensures that Lando is started in the current project.
    */
   public function requireStarted() {
-    if (!$this->getStatus(TRUE)->running) {
+    # Test for version, since it matters.
+    if (!isset($this->version)) {
+      $exec = $this->exec('version');
+      if ($exec['status'] != 0 || count($exec['output']) != 1) {
+        $this->log(LogLevel::ERROR, 'Unable to determine version');
+        $this->disable();
+        return;
+      }
+      $this->version = $exec['output'][0];
+      if (substr($this->version, 0, 3) != 'v3.') {
+        $this->log(
+          LogLevel::WARNING,
+          'Unrecognized Lando version %v; some functions may not work.',
+          ['%v' => $this->version]
+        );
+      }
+    }
+    $status = $this->getStatus(TRUE);
+    if (is_null($status) || !$status->running) {
       $this->run('start');
       $this->updateStatus();
     }
@@ -163,12 +171,6 @@ class LandoTool extends Tool {
    * @param string $name The name of the Lando environment
    */
   public function updateStatus($name = '') {
-    $exec = $this->exec('list');
-    if ($exec['status'] != 0) {
-      $this->log(LogLevel::ERROR, 'Unable to determine status');
-      return;
-    }
-    $list = $this->parseLandoList($exec['output']);
     if (empty($name)) {
       if ($this->isEnabled()) {
         $name = $this->config['name'];
@@ -180,6 +182,13 @@ class LandoTool extends Tool {
         return;
       }
     }
+    $exec = $this->exec('list');
+    if ($exec['status'] != 0) {
+      $this->log(LogLevel::ERROR, 'Unable to determine status');
+      return;
+    }
+
+    $list = $this->parseLandoList($exec['output']);
     $set = FALSE;
     foreach ($list as $status) {
       if ($status->name == $name) {
