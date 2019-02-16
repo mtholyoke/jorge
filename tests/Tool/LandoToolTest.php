@@ -65,6 +65,16 @@ final class LandoToolTest extends TestCase {
     $this->verifyMessages($expect, $messages);
   }
 
+  public function testNeedsAuth() {
+    $tool = new MockLandoTool();
+    $tool->setVersion('v3.0.0-beta.36');
+    $this->assertFalse($tool->needsAuth());
+    $tool->setVersion('v3.0.0-rc.1');
+    $this->assertFalse($tool->needsAuth());
+    $tool->setVersion('v3.0.0-rc.2');
+    $this->assertTrue($tool->needsAuth());
+  }
+
   public function testParseLandoList() {
     $tool = new MockLandoTool();
     $text = $this->makeRandomString();

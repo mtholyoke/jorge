@@ -71,7 +71,27 @@ class LandoTool extends Tool {
   }
 
   /**
+   * Checks the version to see if an auth token is required to pull.
+   *
+   * TODO: check for TERMINUS_TOKEN in environment.
+   * TODO: consolidate regex with parseLandoList.
+   *
+   * @return boolean
+   */
+  protected function needsAuth() {
+    $version_regex = '/^v3\.0\.0-rc\.(\d+)$/';
+    if (preg_match($version_regex, $this->version, $matches)) {
+      if ($matches[1] >= 2) {
+        return TRUE;
+      }
+    }
+    return FALSE;
+  }
+
+  /**
    * Parse the output from `lando list`, which is not quite JSON.
+   *
+   * TODO: consolidate regex with needsAuth.
    *
    * @param array $lines Raw output from `lando list`
    * @return array

@@ -171,6 +171,13 @@ class MockLandoTool extends LandoTool {
   /**
    * {@inheritDoc}
    */
+  public function needsAuth() {
+    return parent::needsAuth();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   public function parseLandoList(array $lines = []) {
     return parent::parseLandoList($lines);
   }
