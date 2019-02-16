@@ -78,7 +78,7 @@ class LandoTool extends Tool {
    *
    * @return boolean
    */
-  protected function needsAuth() {
+  public function needsAuth() {
     $version_regex = '/^v3\.0\.0-rc\.(\d+)$/';
     if (preg_match($version_regex, $this->version, $matches)) {
       if ($matches[1] >= 2) {
