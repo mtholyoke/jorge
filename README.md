@@ -27,6 +27,7 @@ You can also clone this repo for development and run Jorge directly from that co
 ```bash
 ln -s ~/Projects/jorge/bin/jorge /usr/local/bin/jorge
 ```
+Run `composer install` in the Jorge directory to get its dependencies.
 
 If you're going to do any development, also run `bin/setup.sh` once to install the standard Git hooks.
 
