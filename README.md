@@ -104,6 +104,8 @@ If an admin account username is provided but no password is supplied, Jorge will
 
 ## Future Work
 
+- Make sure Drush is installed and working before relying on it.
+
 - More tests (see also Symfony doc [Testing Commands](https://symfony.com/doc/current/console.html#testing-commands))
   - `Tool::exec()` uses the Symfony Process component when user interaction is required, and a first pass at testing by executing `read` with `-p "\nPress enter" x` did not provide the expected coverage. Possibly we need to do a full mock as in `ResetCommandTest::testInteract()` and adjust `Tool::exec()` to use an `InputInterface` instead of `STDIN`.
 
