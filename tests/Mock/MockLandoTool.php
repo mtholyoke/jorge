@@ -48,7 +48,47 @@ class MockLandoTool extends LandoTool {
 
     # Establish mocked responses.
     $fixtures = [];
-    # 0 testRequireStarted calls exec('list') to test when lando is not running
+
+    # 0 testRequireStarted calls exec('version'); first time should fail.
+    $fixtures[] = [
+      'status' => 1,
+    ];
+
+    # 1a testRequireStarted calls exec('version'); second time should be weird.
+    $fixtures[] = [
+      'output' => ['v2.71828'],
+      'status' => 0,
+    ];
+    # 1b testRequireStarted calls exec('list')
+    $fixtures[] = [
+      'output' => ['{}'],
+      'status' => 0,
+    ];
+    # 1c testRequireStarted calls run('start')
+    $fixtures[] = ['status' => 0];
+    # 1d testRequireStarted calls exec('list')
+    $fixtures[] = [
+      'output' => [
+        '{',
+        $this->project . ': [',
+        '{',
+        "key: 'value',",
+        'array: [',
+        "'element'",
+        ']',
+        '}',
+        ']',
+        '}',
+      ],
+      'status' => 0,
+    ];
+
+    # 2a testRequireStarted calls exec('version'); this should be valid.
+    $fixtures[] = [
+      'output' => ['v3.0.0-beta.36'],
+      'status' => 0,
+    ];
+    # 2b testRequireStarted calls exec('list')
     $fixtures[] = [
       'output' => [
         '{',
@@ -58,9 +98,9 @@ class MockLandoTool extends LandoTool {
       ],
       'status' => 0,
     ];
-    # 1 testRequireStarted calls run('start')
+    # 2c testRequireStarted calls run('start')
     $fixtures[] = ['status' => 0];
-    # 2 testRequireStarted calls exec('list')
+    # 2d testRequireStarted calls exec('list')
     $fixtures[] = [
       'output' => [
         '{',
@@ -70,6 +110,7 @@ class MockLandoTool extends LandoTool {
       ],
       'status' => 0,
     ];
+
     # 3 testRequireStarted calls exec('list') to test when lando is already running
     $fixtures[] = [
       'output' => [
@@ -80,6 +121,7 @@ class MockLandoTool extends LandoTool {
       ],
       'status' => 0,
     ];
+
     # 4 testUpdateStatus calls exec('list') to test disabled tool
     $fixtures[] = [
       'output' => [
@@ -90,6 +132,7 @@ class MockLandoTool extends LandoTool {
       ],
       'status' => 0,
     ];
+
     # 5 testUpdateStatus calls exec('list') to test bad exit code
     $fixtures[] = [
       'output' => [
@@ -100,6 +143,7 @@ class MockLandoTool extends LandoTool {
       ],
       'status' => 1,
     ];
+
     # 6 testUpdateStatus calls exec('list') to test name mismatch
     $fixtures[] = [
       'output' => [
@@ -116,9 +160,27 @@ class MockLandoTool extends LandoTool {
   }
 
   /**
+   * Gets the version so we can test requireStarted().
+   *
+   * @return string
+   */
+  public function getVersion() {
+    return $this->version;
+  }
+
+  /**
    * {@inheritDoc}
    */
   public function parseLandoList(array $lines = []) {
     return parent::parseLandoList($lines);
+  }
+
+  /**
+   * Sets the version so we can test parseLandoList().
+   *
+   * @param string $version The version this tool reports.
+   */
+  public function setVersion($version) {
+    $this->version = $version;
   }
 }

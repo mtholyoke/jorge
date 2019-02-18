@@ -38,6 +38,7 @@ class ResetCommand extends Command {
     $this
       ->setName('reset')
       ->setDescription('Aligns code, database, and files to a specified state')
+      ->addOption('auth',     'a', InputOption::VALUE_OPTIONAL, 'Terminus machine token to use')
       ->addOption('branch',   'b', InputOption::VALUE_OPTIONAL, 'Git branch to use <fg=yellow>[default: "master"]</>')
       ->addOption('content',  'c', InputOption::VALUE_OPTIONAL, 'Environment to load database and files from <fg=yellow>[default: "dev"]</>')
       ->addOption('database', 'd', InputOption::VALUE_OPTIONAL, 'Environment to load database from <fg=yellow>[default: "dev"]</>')
@@ -49,6 +50,7 @@ class ResetCommand extends Command {
 
     # These can be set by config.yml, and set or overridden by command line options
     $this->params = [
+      'auth'     => '',
       'branch'   => 'master',
       'content'  => 'dev',
       'rsync'    => TRUE,
@@ -177,6 +179,13 @@ class ResetCommand extends Command {
     if ($this->params['rsync']) {
       $lando_pull .= ' --rsync';
     }
+    if ($lando->needsAuth()) {
+      if (empty($this->params['auth'])) {
+        $this->log(LogLevel::ERROR, "This version of Lando requires an auth token to pull. Aborting.");
+        return 1;
+      }
+      $lando_pull .= ' --auth=' . $this->params['auth'];
+    }
     $lando->run($lando_pull);
 
     $drushSequence = [['drush_command' => ['cc', 'all']]];
@@ -225,6 +234,13 @@ class ResetCommand extends Command {
     $lando_pull = 'pull --code=none --database=' . $this->params['database'] . ' --files=' . $this->params['files'];
     if ($this->params['rsync']) {
       $lando_pull .= ' --rsync';
+    }
+    if ($lando->needsAuth()) {
+      if (empty($this->params['auth'])) {
+        $this->log(LogLevel::ERROR, "This version of Lando requires an auth token to pull. Aborting.");
+        return 1;
+      }
+      $lando_pull .= ' --auth=' . $this->params['auth'];
     }
     $lando->run($lando_pull);
 

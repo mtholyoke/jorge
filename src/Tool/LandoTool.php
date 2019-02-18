@@ -16,6 +16,9 @@ use Symfony\Component\Yaml\Yaml;
  * @copyright 2018 Trustees of Mount Holyoke College
  */
 class LandoTool extends Tool {
+  /** @var string $version Lando version */
+  protected $version;
+
   /**
    * Adds the appropriate verbosity option.
    *
@@ -68,38 +71,112 @@ class LandoTool extends Tool {
   }
 
   /**
+   * Checks the version to see if an auth token is required to pull.
+   *
+   * TODO: check for TERMINUS_TOKEN in environment.
+   * TODO: consolidate regex with parseLandoList.
+   *
+   * @return boolean
+   */
+  public function needsAuth() {
+    $version_regex = '/^v3\.0\.0-rc\.(\d+)$/';
+    if (preg_match($version_regex, $this->version, $matches)) {
+      if ($matches[1] >= 2) {
+        return TRUE;
+      }
+    }
+    return FALSE;
+  }
+
+  /**
    * Parse the output from `lando list`, which is not quite JSON.
+   *
+   * TODO: consolidate regex with needsAuth.
    *
    * @param array $lines Raw output from `lando list`
    * @return array
    */
   protected function parseLandoList(array $lines = []) {
     # Skip over Lando complaining about updates.
-    while ($lines[0] != '[' && $lines[0] != '{') {
+    while (!empty($lines) && $lines[0] != '[' && $lines[0] != '{') {
       array_shift($lines);
     }
 
-    if ($lines[0] == '[') {
-      # Newer versions of lando actually return a list we can parse.
-      $string = implode('', $lines);
-    } else {
-      # Older versions contain a series of {}s with no delimiters. Make a list.
-      # Don’t check the last line
-      for ($i = 0; $i < (count($lines) - 1); $i++) {
-        if ($lines[$i] == '}') {
-          $lines[$i] .= ', ';
-        }
-      }
-      $string = '[' . implode('', $lines) . ']';
+    if (empty($lines)) {
+      return [(object) [
+        'name' => '*',
+        'running' => FALSE,
+      ]];
     }
-    return json_decode($string);
+
+    $version_regex = '/^v3\.0\.0-(alpha|beta|rc)\.(\d+)$/';
+    if (preg_match($version_regex, $this->version, $matches)) {
+      $type = $matches[1];
+      $iter = $matches[2];
+      if ($type == 'alpha' || ($type == 'beta' && $iter < 37)) {
+        # Versions before v3.0.0-beta.37 return a series of {}s. Make a list.
+        for ($i = 0; $i < (count($lines) - 1); $i++) {
+          # Append a comma to every line except the last.
+          if ($lines[$i] == '}') {
+            $lines[$i] .= ', ';
+          }
+        }
+        return json_decode('[' . implode('', $lines) . ']');
+      } elseif (($type == 'beta' && $iter >= 37) || ($type == 'rc' && $iter == 1)) {
+        # v3.0.0-beta.37 to v3.0.0-rc.1 return a valid list of {}s.
+        return json_decode(implode('', $lines));
+      }
+    }
+
+    # v3.0.0-rc.2 changed the syntax again. The new structure is a {} with
+    # keys for each Lando project and values a list of {}s similar to the
+    # output of `lando info`. As far as I know, 2019-02-15, the presence
+    # of a key is sufficient to assume it is running, so we make it look
+    # enough like the others to pass the tests.
+    foreach ($lines as &$line) {
+      # Until Lando PR #1457 is merged we don’t get good json.
+      if (preg_match('/^\s*(\w+):(.*)$/', $line, $matches)) {
+        $line = ' "' . $matches[1] . '":' . str_replace("'", '"', $matches[2]);
+      } elseif (preg_match("/^(.*?)'(.*)'(.*)$/", $line, $matches)) {
+        $line = $matches[1] . '"' . $matches[2] . '"' . $matches[3];
+      }
+      $line = preg_replace('#\\x1b[[][^A-Za-z]*[A-Za-z]#', '', $line);
+    }
+    $json = json_decode(implode(' ', $lines));
+    $list = [];
+    foreach ($json as $name => $info) {
+      $list[] = (object) [
+        'name'    => $name,
+        'running' => TRUE,
+        'info'    => $info,
+      ];
+    }
+    return $list;
   }
 
   /**
    * Ensures that Lando is started in the current project.
    */
   public function requireStarted() {
-    if (!$this->getStatus(TRUE)->running) {
+    # Test for version, since it matters.
+    if (!isset($this->version)) {
+      $exec = $this->exec('version');
+      if ($exec['status'] != 0 || count($exec['output']) != 1) {
+        $this->log(LogLevel::ERROR, 'Unable to determine version');
+        $this->disable();
+        return;
+      }
+      $this->version = $exec['output'][0];
+      if (substr($this->version, 0, 3) != 'v3.') {
+        $this->log(
+          LogLevel::WARNING,
+          'Unrecognized Lando version %v; some functions may not work.',
+          ['%v' => $this->version]
+        );
+      }
+    }
+    $status = $this->getStatus(TRUE);
+    if (is_null($status) || !$status->running) {
       $this->run('start');
       $this->updateStatus();
     }
@@ -114,12 +191,6 @@ class LandoTool extends Tool {
    * @param string $name The name of the Lando environment
    */
   public function updateStatus($name = '') {
-    $exec = $this->exec('list');
-    if ($exec['status'] != 0) {
-      $this->log(LogLevel::ERROR, 'Unable to determine status');
-      return;
-    }
-    $list = $this->parseLandoList($exec['output']);
     if (empty($name)) {
       if ($this->isEnabled()) {
         $name = $this->config['name'];
@@ -131,6 +202,13 @@ class LandoTool extends Tool {
         return;
       }
     }
+    $exec = $this->exec('list');
+    if ($exec['status'] != 0) {
+      $this->log(LogLevel::ERROR, 'Unable to determine status');
+      return;
+    }
+
+    $list = $this->parseLandoList($exec['output']);
     $set = FALSE;
     foreach ($list as $status) {
       if ($status->name == $name) {

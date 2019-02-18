@@ -31,7 +31,7 @@ final class ResetCommandTest extends TestCase {
     $this->assertSame(0, count($arguments));
     $this->assertSame(0, $definition->getArgumentRequiredCount());
     $options = $definition->getOptions();
-    $this->assertSame(6, count($options));
+    $this->assertSame(7, count($options));
     $this->assertNotEmpty($command->getHelp());
     # testInitialize() checks $->params in a mock instance.
   }
@@ -42,11 +42,12 @@ final class ResetCommandTest extends TestCase {
 
     $command = new MockResetCommand();
     $command->setName('mockReset');
-    $this->assertSame(5, count($command->getParams()));
+    $this->assertSame(6, count($command->getParams()));
     $this->assertSame($command, $jorge->add($command));
 
     $appType = $this->makeRandomString();
     $reset = [
+      'auth'     => $this->makeRandomString(),
       'branch'   => $this->makeRandomString(),
       'content'  => $this->makeRandomString(),
       'rsync'    => $this->makeRandomBoolean(),
@@ -74,6 +75,7 @@ final class ResetCommandTest extends TestCase {
     $command->messages = [];
 
     $options = [
+      '--auth'     => $this->makeRandomString(),
       '--branch'   => $this->makeRandomString(),
       '--content'  => $this->makeRandomString(),
       '--database' => $this->makeRandomString(),
@@ -165,6 +167,7 @@ final class ResetCommandTest extends TestCase {
   public function testExecuteDrupal7(): void {
     # Set up params for a couple of runs:
     $simpleParams = [
+      'auth'     => '',
       'branch'   => $this->makeRandomString(),
       'content'  => $this->makeRandomString(),
       'rsync'    => FALSE,
@@ -172,6 +175,7 @@ final class ResetCommandTest extends TestCase {
       'password' => '',
     ];
     $complexParams = [
+      'auth'     => $this->makeRandomString(),
       'branch'   => $this->makeRandomString(),
       'database' => $this->makeRandomString(),
       'files'    => $this->makeRandomString(),
@@ -186,12 +190,14 @@ final class ResetCommandTest extends TestCase {
     $git = $this->getMockBuilder(GitTool::class)
                 ->setMethods(['getStatus', 'run'])
                 ->getMock();
-    $git->expects($this->exactly(3))
-        ->method('getStatus')
-        ->will($this->onConsecutiveCalls($cleanFalse, $cleanTrue, $cleanTrue));
     $git->expects($this->exactly(4))
+        ->method('getStatus')
+        ->will($this->onConsecutiveCalls($cleanFalse, $cleanTrue, $cleanTrue, $cleanTrue));
+    $git->expects($this->exactly(6))
         ->method('run')
         ->withConsecutive(
+          $this->equalTo(['checkout', $simpleParams['branch']]),
+          $this->equalTo(['pull']),
           $this->equalTo(['checkout', $simpleParams['branch']]),
           $this->equalTo(['pull']),
           $this->equalTo(['checkout', $complexParams['branch']]),
@@ -201,16 +207,19 @@ final class ResetCommandTest extends TestCase {
 
     # Set up Lando tool:
     $lando = $this->getMockBuilder(LandoTool::class)
-                  ->setMethods(['requireStarted', 'run'])
+                  ->setMethods(['needsAuth', 'requireStarted', 'run'])
                   ->getMock();
-    $lando->expects($this->exactly(2))
+    $lando->expects($this->exactly(3))
+          ->method('needsAuth')
+          ->will($this->onConsecutiveCalls(FALSE, TRUE, TRUE));
+    $lando->expects($this->exactly(3))
           ->method('requireStarted')
           ->willReturn(TRUE);
     $lando->expects($this->exactly(2))
           ->method('run')
           ->withConsecutive(
               ['pull --code=none --database=' . $simpleParams['content'] . ' --files=' . $simpleParams['content']],
-              ['pull --code=none --database=' . $complexParams['database'] . ' --files=' . $complexParams['files'] . ' --rsync']
+              ['pull --code=none --database=' . $complexParams['database'] . ' --files=' . $complexParams['files'] . ' --rsync --auth=' . $complexParams['auth']]
             )
           ->willReturn(0);
 
@@ -230,22 +239,25 @@ final class ResetCommandTest extends TestCase {
           ->method('find')
           ->with($this->equalTo('drush'))
           ->willReturn($drush);
-    $jorge->expects($this->exactly(3))
+    $jorge->expects($this->exactly(4))
           ->method('getPath')
           ->withConsecutive(
+              [$this->equalTo(''), $this->isFalse()],
               [$this->equalTo(''), $this->isFalse()],
               [$this->equalTo(''), $this->isFalse()],
               [$this->equalTo(''), $this->isFalse()]
             )
           ->willReturn(getcwd());
-    $jorge->expects($this->exactly(6))
+    $jorge->expects($this->exactly(8))
           ->method('getTool')
           ->withConsecutive(
+              $this->equalTo('git'), $this->equalTo('lando'),
               $this->equalTo('git'), $this->equalTo('lando'),
               $this->equalTo('git'), $this->equalTo('lando'),
               $this->equalTo('git'), $this->equalTo('lando')
             )
           ->will($this->onConsecutiveCalls(
+              $git, $lando,
               $git, $lando,
               $git, $lando,
               $git, $lando
@@ -272,6 +284,14 @@ final class ResetCommandTest extends TestCase {
     $this->assertNull($command->execute($input, $output));
     $this->verifyMessages([], $command->messages);
 
+    # Same params should fail when missing required auth:
+    $this->assertSame(1, $command->execute($input, $output));
+    $expect = [
+      [LogLevel::ERROR, '{mockReset} This version of Lando requires an auth token to pull. Aborting.'],
+    ];
+    $this->verifyMessages($expect, $command->messages);
+    $command->messages = [];
+
     # Run with rsync and username/$password:
     $command->setParams($complexParams);
     $this->assertNull($command->execute($input, $output));
@@ -281,6 +301,7 @@ final class ResetCommandTest extends TestCase {
   public function testExecuteDrupal8(): void {
     # Set up params for a couple of runs:
     $simpleParams = [
+      'auth'     => '',
       'branch'   => $this->makeRandomString(),
       'content'  => $this->makeRandomString(),
       'rsync'    => FALSE,
@@ -288,6 +309,7 @@ final class ResetCommandTest extends TestCase {
       'password' => '',
     ];
     $complexParams = [
+      'auth'     => $this->makeRandomString(),
       'branch'   => $this->makeRandomString(),
       'database' => $this->makeRandomString(),
       'files'    => $this->makeRandomString(),
@@ -300,7 +322,7 @@ final class ResetCommandTest extends TestCase {
     $compo = $this->getMockBuilder(ComposerTool::class)
                   ->setMethods(['run'])
                   ->getMock();
-    $compo->expects($this->exactly(2))
+    $compo->expects($this->exactly(3))
           ->method('run')
           ->with(['command' => 'install'])
           ->willReturn(0);
@@ -311,12 +333,14 @@ final class ResetCommandTest extends TestCase {
     $git = $this->getMockBuilder(GitTool::class)
                 ->setMethods(['getStatus', 'run'])
                 ->getMock();
-    $git->expects($this->exactly(3))
-        ->method('getStatus')
-        ->will($this->onConsecutiveCalls($cleanFalse, $cleanTrue, $cleanTrue));
     $git->expects($this->exactly(4))
+        ->method('getStatus')
+        ->will($this->onConsecutiveCalls($cleanFalse, $cleanTrue, $cleanTrue, $cleanTrue));
+    $git->expects($this->exactly(6))
         ->method('run')
         ->withConsecutive(
+          $this->equalTo(['checkout', $simpleParams['branch']]),
+          $this->equalTo(['pull']),
           $this->equalTo(['checkout', $simpleParams['branch']]),
           $this->equalTo(['pull']),
           $this->equalTo(['checkout', $complexParams['branch']]),
@@ -326,16 +350,19 @@ final class ResetCommandTest extends TestCase {
 
     # Set up Lando tool:
     $lando = $this->getMockBuilder(LandoTool::class)
-                  ->setMethods(['requireStarted', 'run'])
+                  ->setMethods(['needsAuth', 'requireStarted', 'run'])
                   ->getMock();
-    $lando->expects($this->exactly(2))
+    $lando->expects($this->exactly(3))
+          ->method('needsAuth')
+          ->will($this->onConsecutiveCalls(FALSE, TRUE, TRUE));
+    $lando->expects($this->exactly(3))
           ->method('requireStarted')
           ->willReturn(TRUE);
     $lando->expects($this->exactly(2))
           ->method('run')
           ->withConsecutive(
               ['pull --code=none --database=' . $simpleParams['content'] . ' --files=' . $simpleParams['content']],
-              ['pull --code=none --database=' . $complexParams['database'] . ' --files=' . $complexParams['files'] . ' --rsync']
+              ['pull --code=none --database=' . $complexParams['database'] . ' --files=' . $complexParams['files'] . ' --rsync --auth=' . $complexParams['auth']]
             )
           ->willReturn(0);
 
@@ -355,22 +382,25 @@ final class ResetCommandTest extends TestCase {
           ->method('find')
           ->with($this->equalTo('drush'))
           ->willReturn($drush);
-    $jorge->expects($this->exactly(3))
+    $jorge->expects($this->exactly(4))
           ->method('getPath')
           ->withConsecutive(
+              [$this->equalTo(''), $this->isFalse()],
               [$this->equalTo(''), $this->isFalse()],
               [$this->equalTo(''), $this->isFalse()],
               [$this->equalTo(''), $this->isFalse()]
             )
           ->willReturn(getcwd());
-    $jorge->expects($this->exactly(9))
+    $jorge->expects($this->exactly(12))
           ->method('getTool')
           ->withConsecutive(
+              $this->equalTo('composer'), $this->equalTo('git'), $this->equalTo('lando'),
               $this->equalTo('composer'), $this->equalTo('git'), $this->equalTo('lando'),
               $this->equalTo('composer'), $this->equalTo('git'), $this->equalTo('lando'),
               $this->equalTo('composer'), $this->equalTo('git'), $this->equalTo('lando')
             )
           ->will($this->onConsecutiveCalls(
+              $compo, $git, $lando,
               $compo, $git, $lando,
               $compo, $git, $lando,
               $compo, $git, $lando
@@ -396,6 +426,14 @@ final class ResetCommandTest extends TestCase {
     $command->setParams($simpleParams);
     $this->assertNull($command->execute($input, $output));
     $this->verifyMessages([], $command->messages);
+
+    # Same params should fail when missing required auth:
+    $this->assertSame(1, $command->execute($input, $output));
+    $expect = [
+      [LogLevel::ERROR, '{mockReset} This version of Lando requires an auth token to pull. Aborting.'],
+    ];
+    $this->verifyMessages($expect, $command->messages);
+    $command->messages = [];
 
     # Run with rsync and username/$password:
     $command->setParams($complexParams);

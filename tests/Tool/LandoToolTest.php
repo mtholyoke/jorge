@@ -65,6 +65,16 @@ final class LandoToolTest extends TestCase {
     $this->verifyMessages($expect, $messages);
   }
 
+  public function testNeedsAuth() {
+    $tool = new MockLandoTool();
+    $tool->setVersion('v3.0.0-beta.36');
+    $this->assertFalse($tool->needsAuth());
+    $tool->setVersion('v3.0.0-rc.1');
+    $this->assertFalse($tool->needsAuth());
+    $tool->setVersion('v3.0.0-rc.2');
+    $this->assertTrue($tool->needsAuth());
+  }
+
   public function testParseLandoList() {
     $tool = new MockLandoTool();
     $text = $this->makeRandomString();
@@ -75,6 +85,7 @@ final class LandoToolTest extends TestCase {
     $valkey = (object) [$val => $key];
 
     # Make sure we can skip over version complaints and other preamble text.
+    $tool->setVersion('v3.0.0-beta.36');
     $lines = [
       $text,
       '',
@@ -84,7 +95,20 @@ final class LandoToolTest extends TestCase {
     ];
     $this->assertEquals($keyval, $tool->parseLandoList($lines)[0]);
 
-    # Make sure we can parse output from lando 3.0.0 >= beta.37
+    # Make sure we can parse output from lando 3.0.0 <= beta.36
+    $lines = [
+      '{',
+      '"' . $key . '": "' . $val .'"',
+      '}',
+      '{',
+      '"' . $val . '": "' . $key .'"',
+      '}',
+    ];
+    $this->assertEquals($keyval, $tool->parseLandoList($lines)[0]);
+    $this->assertEquals($valkey, $tool->parseLandoList($lines)[1]);
+
+    # Make sure we can parse output from 3.0.0-beta.37 to 3.0.0-rc.1
+    $tool->setVersion('v3.0.0-beta.48');
     $lines = [
       '[',
       '{',
@@ -98,17 +122,24 @@ final class LandoToolTest extends TestCase {
     $this->assertEquals($keyval, $tool->parseLandoList($lines)[0]);
     $this->assertEquals($valkey, $tool->parseLandoList($lines)[1]);
 
-    # Make sure we can parse output from lando 3.0.0 <= beta.36
+    # Make sure we can parse output from 3.0.0 >= rc.2
+    $tool->setVersion('v3.0.0-rc.9');
     $lines = [
       '{',
-      '"' . $key . '": "' . $val .'"',
-      '}',
+      $text . ': [',
       '{',
-      '"' . $val . '": "' . $key .'"',
+      $key . ": '" . $val . "'",
+      '},',
+      '{',
+      $val . ": '" . $key . "'",
+      '}',
+      ']',
       '}',
     ];
-    $this->assertEquals($keyval, $tool->parseLandoList($lines)[0]);
-    $this->assertEquals($valkey, $tool->parseLandoList($lines)[1]);
+    $this->assertEquals($text, $tool->parseLandoList($lines)[0]->name);
+    $this->assertTrue($tool->parseLandoList($lines)[0]->running);
+    $this->assertEquals($keyval, $tool->parseLandoList($lines)[0]->info[0]);
+    $this->assertEquals($valkey, $tool->parseLandoList($lines)[0]->info[1]);
   }
 
   /**
@@ -123,12 +154,41 @@ final class LandoToolTest extends TestCase {
     $tool->enable();
     $tool->messages = [];
 
-    # Make sure the tool is ready, then call the method.
+    # Make sure the tool is ready.
     $this->assertTrue($tool->isEnabled());
-    $tool->requireStarted();
 
-    # Make sure it executed the things and the status is now running.
+    # First test should fail: can’t determine version.
+    $tool->requireStarted();
     $expect = [
+      [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => "$echo version"]],
+      [LogLevel::ERROR,  '{mockLando} Unable to determine version', []],
+    ];
+    $this->verifyMessages($expect, $tool->messages, TRUE);
+    $this->assertFalse($tool->isEnabled());
+    $tool->enable();
+    $tool->messages = [];
+
+    # Second test should succeed with warning because version is weird.
+    $tool->requireStarted();
+    $expect = [
+      [LogLevel::NOTICE,  '{mockLando} $ {%command}', ['%command' => "$echo version"]],
+      [LogLevel::WARNING, '{mockLando} Unrecognized Lando version %v; some functions may not work.', ['%v' => $tool->getVersion()]],
+      [LogLevel::NOTICE,  '{mockLando} $ {%command}', ['%command' => "$echo list"]],
+      [LogLevel::WARNING, '{mockLando} Unable to determine status for Lando environment "{%name}"', ['%name' => $project]],
+      [LogLevel::NOTICE,  '{mockLando} $ {%command}', ['%command' => "$echo start"]],
+      [LogLevel::NOTICE,  '{mockLando} $ {%command}', ['%command' => "$echo list"]],
+    ];
+    $this->verifyMessages($expect, $tool->messages, TRUE);
+    $this->assertTrue($tool->getStatus()->running);
+    $tool->setStatus(NULL);
+    $tool->setVersion(NULL);
+    $tool->messages = [];
+
+    # Third test should succeed without warning.
+    # Make sure it executed the things and the status is now running.
+    $tool->requireStarted();
+    $expect = [
+      [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => "$echo version"]],
       [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => "$echo list"]],
       [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => "$echo start"]],
       [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => "$echo list"]],
@@ -157,11 +217,22 @@ final class LandoToolTest extends TestCase {
     $echo = $tool->getExecutable();
     $tool->messages = [];
 
+    # Make sure it fails if it can’t find this project’s name.
+    do {
+      $unknown = $this->makeRandomString();
+    } while ($unknown == $project);
+    $tool->updateStatus($unknown);
+    $expect = [
+      [LogLevel::NOTICE,  '{mockLando} $ {%command}', ['%command' => "$echo list"]],
+      [LogLevel::WARNING, '{mockLando} Unable to determine status for Lando environment "{%name}"', ['%name' => $unknown]],
+    ];
+    $this->verifyMessages($expect, $tool->messages, TRUE);
+    $tool->messages = [];
+
     # Make sure it fails if the tool is disabled.
     $this->assertFalse($tool->isEnabled());
     $tool->updateStatus();
     $expect = [
-      [LogLevel::NOTICE,  '{mockLando} $ {%command}', ['%command' => "$echo list"]],
       [LogLevel::WARNING, '{mockLando} No Lando environment configured or specified', []],
     ];
     $this->verifyMessages($expect, $tool->messages, TRUE);
@@ -176,16 +247,5 @@ final class LandoToolTest extends TestCase {
     ];
     $this->verifyMessages($expect, $tool->messages, TRUE);
     $tool->messages = [];
-
-    # Make sure it fails if it can’t find this project’s name.
-    do {
-      $unknown = $this->makeRandomString();
-    } while ($unknown == $project);
-    $tool->updateStatus($unknown);
-    $expect = [
-      [LogLevel::NOTICE,  '{mockLando} $ {%command}', ['%command' => "$echo list"]],
-      [LogLevel::WARNING, '{mockLando} Unable to determine status for Lando environment "{%name}"', ['%name' => $unknown]],
-    ];
-    $this->verifyMessages($expect, $tool->messages, TRUE);
   }
 }
