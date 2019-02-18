@@ -30,8 +30,8 @@ use Symfony\Component\Yaml\Yaml;
  * @link https://github.com/mtholyoke/jorge
  *
  * @author Jason Proctor <jproctor@mtholyoke.edu>
- * @copyright 2018 Trustees of Mount Holyoke College
- * @version 0.6.2
+ * @copyright 2018–2019 Trustees of Mount Holyoke College
+ * @version 0.6.3
  */
 class Jorge extends Application {
   /** @var array $config Project configuration from .jorge/config.yml */
@@ -69,7 +69,7 @@ class Jorge extends Application {
    */
   public function configure() {
     $this->setName('Jorge');
-    $this->setVersion('0.6.2');
+    $this->setVersion('0.6.3');
 
     if ($this->rootPath = $this->findRootPath()) {
       $this->log(LogLevel::NOTICE, 'Project root: {%root}', ['%root' => $this->rootPath]);
