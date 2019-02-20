@@ -94,20 +94,22 @@ class LandoTool extends Tool {
       $p = $this->version['prerelease'] = $matches[1];
       $i = $this->version['iteration']  = $matches[2];
 
-      switch ($p) {
-        case 'alpha':
-          $this->version['functions']['auth'] = FALSE;
-          $this->version['functions']['list'] = 0;
-          break;
-        case 'beta':
-          $this->version['functions']['auth'] = FALSE;
-          $this->version['functions']['list'] = ($i < 37) ? 0 : 1;
-          break;
-        case 'rc':
-          if ($i == 1) {
+      if (substr($raw, 0, 7) == 'v3.0.0-') {
+        switch ($p) {
+          case 'alpha':
             $this->version['functions']['auth'] = FALSE;
-            $this->version['functions']['list'] = 1;
-          } # else defaults.
+            $this->version['functions']['list'] = 0;
+            break;
+          case 'beta':
+            $this->version['functions']['auth'] = FALSE;
+            $this->version['functions']['list'] = ($i < 37) ? 0 : 1;
+            break;
+          case 'rc':
+            if ($i == 1) {
+              $this->version['functions']['auth'] = FALSE;
+              $this->version['functions']['list'] = 1;
+            } # else defaults.
+        }
       }
     } elseif (!empty($suffix)) {
       $this->version['suffix'] = $suffix;
@@ -148,7 +150,6 @@ class LandoTool extends Tool {
    * Checks the version to see if an auth token is required to pull.
    *
    * TODO: check for TERMINUS_TOKEN in environment.
-   * TODO: consolidate regex with parseLandoList.
    *
    * @return boolean
    */
@@ -159,8 +160,6 @@ class LandoTool extends Tool {
 
   /**
    * Parse the output from `lando list`, which is not quite JSON.
-   *
-   * TODO: consolidate regex with needsAuth.
    *
    * @param array $lines Raw output from `lando list`
    * @return array
