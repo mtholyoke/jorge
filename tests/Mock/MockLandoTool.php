@@ -19,6 +19,9 @@ class MockLandoTool extends LandoTool {
   /** @var int $sequence The number of times exec() has been called */
   public static $sequence = 0;
 
+  /** @var string $setVersion The version we want exec to return. */
+  public $setVersion;
+
   /**
    * Saves the name it’s passed to use later as a Lando environment.
    */
@@ -49,24 +52,38 @@ class MockLandoTool extends LandoTool {
     # Establish mocked responses.
     $fixtures = [];
 
-    # 0 testRequireStarted calls exec('version'); first time should fail.
+    # testGetVersion calls both setVersion() and exec('version'):
+    $fixtures[] = ['output' => [$this->setVersion], 'status' => 0];
+    $fixtures[] = ['output' => [],                  'status' => 1];
+    $fixtures[] = ['output' => ['v2.71828'],        'status' => 0];
+    $fixtures[] = ['output' => [$this->setVersion], 'status' => 0];
+    $fixtures[] = ['output' => ['X', 'v3.14.159'],  'status' => 0];
+    $fixtures[] = ['output' => [$this->setVersion], 'status' => 0];
+    $fixtures[] = ['output' => [$this->setVersion], 'status' => 0];
+
+    # testNeedsAuth calls setVersion() three times.
+    $fixtures[] = ['output' => [$this->setVersion], 'status' => 0];
+    $fixtures[] = ['output' => [$this->setVersion], 'status' => 0];
+    $fixtures[] = ['output' => [$this->setVersion], 'status' => 0];
+
+    # testParseLandoList calls setVersion() three times.
+    $fixtures[] = ['output' => [$this->setVersion], 'status' => 0];
+    $fixtures[] = ['output' => [$this->setVersion], 'status' => 0];
+    $fixtures[] = ['output' => [$this->setVersion], 'status' => 0];
+
+    # 0 testRequireStarted calls exec('list'); first time should fail.
     $fixtures[] = [
       'status' => 1,
     ];
 
-    # 1a testRequireStarted calls exec('version'); second time should be weird.
-    $fixtures[] = [
-      'output' => ['v2.71828'],
-      'status' => 0,
-    ];
-    # 1b testRequireStarted calls exec('list')
+    # 1a testRequireStarted calls exec('list'); not running, weird version
     $fixtures[] = [
       'output' => ['{}'],
       'status' => 0,
     ];
-    # 1c testRequireStarted calls run('start')
+    # 1b testRequireStarted calls run('start')
     $fixtures[] = ['status' => 0];
-    # 1d testRequireStarted calls exec('list')
+    # 1c testRequireStarted calls exec('list'); rc.2+ list is expected default
     $fixtures[] = [
       'output' => [
         '{',
@@ -82,13 +99,13 @@ class MockLandoTool extends LandoTool {
       ],
       'status' => 0,
     ];
-
-    # 2a testRequireStarted calls exec('version'); this should be valid.
+    # 1d testRequireStarted calls exec('version')
     $fixtures[] = [
-      'output' => ['v3.0.0-beta.36'],
+      'output' => ['v2.6.9'],
       'status' => 0,
     ];
-    # 2b testRequireStarted calls exec('list')
+
+    # 2a testRequireStarted calls exec('list'); this should be valid.
     $fixtures[] = [
       'output' => [
         '{',
@@ -96,6 +113,11 @@ class MockLandoTool extends LandoTool {
         '"running": false',
         '}',
       ],
+      'status' => 0,
+    ];
+    # 2b testRequireStarted calls exec('version')
+    $fixtures[] = [
+      'output' => ['v3.0.0-beta.36'],
       'status' => 0,
     ];
     # 2c testRequireStarted calls run('start')
@@ -122,18 +144,7 @@ class MockLandoTool extends LandoTool {
       'status' => 0,
     ];
 
-    # 4 testUpdateStatus calls exec('list') to test disabled tool
-    $fixtures[] = [
-      'output' => [
-        '{',
-        '"name": "' . $this->project . '",',
-        '"running": false',
-        '}',
-      ],
-      'status' => 0,
-    ];
-
-    # 5 testUpdateStatus calls exec('list') to test bad exit code
+    # 4 testUpdateStatus calls exec('list') to test bad exit code
     $fixtures[] = [
       'output' => [
         '{',
@@ -144,7 +155,7 @@ class MockLandoTool extends LandoTool {
       'status' => 1,
     ];
 
-    # 6 testUpdateStatus calls exec('list') to test name mismatch
+    # 5 testUpdateStatus calls exec('list') and exec('version') to test name mismatch
     $fixtures[] = [
       'output' => [
         '{',
@@ -154,18 +165,13 @@ class MockLandoTool extends LandoTool {
       ],
       'status' => 0,
     ];
+    $fixtures[] = [
+      'output' => ['v3.0.0-beta.36'],
+      'status' => 0,
+    ];
 
     # Return the mocked response.
     return $fixtures[self::$sequence++];
-  }
-
-  /**
-   * Gets the version so we can test requireStarted().
-   *
-   * @return string
-   */
-  public function getVersion() {
-    return $this->version;
   }
 
   /**
@@ -181,6 +187,10 @@ class MockLandoTool extends LandoTool {
    * @param string $version The version this tool reports.
    */
   public function setVersion($version) {
-    $this->version = $version;
+    $this->version = NULL;
+    if (!is_null($version)) {
+      $this->setVersion = $version;
+      $this->getVersion();
+    }
   }
 }

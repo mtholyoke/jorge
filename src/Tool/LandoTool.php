@@ -16,7 +16,7 @@ use Symfony\Component\Yaml\Yaml;
  * @copyright 2018 Trustees of Mount Holyoke College
  */
 class LandoTool extends Tool {
-  /** @var string $version Lando version */
+  /** @var array $version Lando version, parsed */
   protected $version;
 
   /**
@@ -48,6 +48,82 @@ class LandoTool extends Tool {
   }
 
   /**
+   * Gets the version of Lando installed so we can parse its output.
+   *
+   * @return array|null
+   */
+  public function getVersion() {
+    if (isset($this->version)) {
+      return $this->version;
+    }
+
+    $exec = $this->exec('version');
+    if ($exec['status'] != 0 || count($exec['output']) == 0) {
+      $this->log(LogLevel::ERROR, 'Unable to determine version');
+      $this->disable();
+      return NULL;
+    }
+    # Version string is in the last line, even if there’s an upgrade warning.
+    $raw = $exec['output'][count($exec['output']) - 1];
+
+    $regex = preg_match('/^v(\d+)\.(\d+)\.(\d+)(.*)$/', $raw, $matches);
+    if (!$regex) {
+      $this->log(LogLevel::ERROR, 'Unable to parse version');
+      $this->disable();
+      return NULL;
+    }
+    if ($matches[1] != 3) {
+      $this->log(
+        LogLevel::WARNING,
+        'Unrecognized Lando version %v; some functions may not work.',
+        ['%v' => $raw]
+      );
+    }
+    $this->version = [
+      'raw'   => $raw,
+      'major' => $matches[1],
+      'minor' => $matches[2],
+      'patch' => $matches[3],
+      'functions' => [
+        'auth' => TRUE,
+        'list' => 2,
+      ],
+    ];
+    $suffix = $matches[4];
+    if (preg_match('/^-(alpha|beta|rc)\.(\d+)$/', $suffix, $matches)) {
+      $p = $this->version['prerelease'] = $matches[1];
+      $i = $this->version['iteration']  = $matches[2];
+
+      if (substr($raw, 0, 7) == 'v3.0.0-') {
+        switch ($p) {
+          case 'alpha':
+            $this->version['functions']['auth'] = FALSE;
+            $this->version['functions']['list'] = 0;
+            break;
+          case 'beta':
+            $this->version['functions']['auth'] = FALSE;
+            $this->version['functions']['list'] = ($i < 37) ? 0 : 1;
+            break;
+          case 'rc':
+            if ($i == 1) {
+              $this->version['functions']['auth'] = FALSE;
+              $this->version['functions']['list'] = 1;
+            } # else defaults.
+        }
+      }
+    } elseif (!empty($suffix)) {
+      $this->version['suffix'] = $suffix;
+      $this->log(
+        LogLevel::WARNING,
+        'Unrecognized Lando version suffix %s in %v; some functions may not work.',
+        ['%s' => $suffix, '%v' => $raw]
+      );
+    }
+
+    return $this->version;
+  }
+
+  /**
    * Reads the Lando config file, and enables the tool if config is present.
    */
   protected function initialize() {
@@ -74,24 +150,16 @@ class LandoTool extends Tool {
    * Checks the version to see if an auth token is required to pull.
    *
    * TODO: check for TERMINUS_TOKEN in environment.
-   * TODO: consolidate regex with parseLandoList.
    *
    * @return boolean
    */
   public function needsAuth() {
-    $version_regex = '/^v3\.0\.0-rc\.(\d+)$/';
-    if (preg_match($version_regex, $this->version, $matches)) {
-      if ($matches[1] >= 2) {
-        return TRUE;
-      }
-    }
-    return FALSE;
+    $v = $this->getVersion();
+    return $v['functions']['auth'];
   }
 
   /**
    * Parse the output from `lando list`, which is not quite JSON.
-   *
-   * TODO: consolidate regex with needsAuth.
    *
    * @param array $lines Raw output from `lando list`
    * @return array
@@ -109,11 +177,9 @@ class LandoTool extends Tool {
       ]];
     }
 
-    $version_regex = '/^v3\.0\.0-(alpha|beta|rc)\.(\d+)$/';
-    if (preg_match($version_regex, $this->version, $matches)) {
-      $type = $matches[1];
-      $iter = $matches[2];
-      if ($type == 'alpha' || ($type == 'beta' && $iter < 37)) {
+    $v = $this->getVersion();
+    switch ($v['functions']['list']) {
+      case 0:
         # Versions before v3.0.0-beta.37 return a series of {}s. Make a list.
         for ($i = 0; $i < (count($lines) - 1); $i++) {
           # Append a comma to every line except the last.
@@ -122,10 +188,9 @@ class LandoTool extends Tool {
           }
         }
         return json_decode('[' . implode('', $lines) . ']');
-      } elseif (($type == 'beta' && $iter >= 37) || ($type == 'rc' && $iter == 1)) {
+      case 1:
         # v3.0.0-beta.37 to v3.0.0-rc.1 return a valid list of {}s.
         return json_decode(implode('', $lines));
-      }
     }
 
     # v3.0.0-rc.2 changed the syntax again. The new structure is a {} with
@@ -158,25 +223,8 @@ class LandoTool extends Tool {
    * Ensures that Lando is started in the current project.
    */
   public function requireStarted() {
-    # Test for version, since it matters.
-    if (!isset($this->version)) {
-      $exec = $this->exec('version');
-      if ($exec['status'] != 0 || count($exec['output']) != 1) {
-        $this->log(LogLevel::ERROR, 'Unable to determine version');
-        $this->disable();
-        return;
-      }
-      $this->version = $exec['output'][0];
-      if (substr($this->version, 0, 3) != 'v3.') {
-        $this->log(
-          LogLevel::WARNING,
-          'Unrecognized Lando version %v; some functions may not work.',
-          ['%v' => $this->version]
-        );
-      }
-    }
     $status = $this->getStatus(TRUE);
-    if (is_null($status) || !$status->running) {
+    if ($this->isEnabled() && (is_null($status) || !$status->running)) {
       $this->run('start');
       $this->updateStatus();
     }
@@ -202,9 +250,11 @@ class LandoTool extends Tool {
         return;
       }
     }
+
     $exec = $this->exec('list');
     if ($exec['status'] != 0) {
       $this->log(LogLevel::ERROR, 'Unable to determine status');
+      $this->disable();
       return;
     }
 
