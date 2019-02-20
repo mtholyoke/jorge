@@ -51,6 +51,116 @@ final class LandoToolTest extends TestCase {
     $this->assertSame('lando', $tool->getName());
   }
 
+  public function testGetVersion() {
+    $tool = new MockLandoTool();
+
+    # Return a version that’s already set.
+    $tool->setVersion('v3.0.0-beta.36');
+    $this->assertSame('v3.0.0-beta.36', $tool->getVersion()['raw']);
+    $expect = [
+      [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => 'version']],
+    ];
+    $this->verifyMessages($expect, $tool->messages, TRUE);
+    $tool->messages = [];
+
+    # Fail if nonzero exit code.
+    $tool->enable();
+    $tool->setVersion(NULL);
+    $this->assertNull($tool->getVersion());
+    $expect = [
+      [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => 'version']],
+      [LogLevel::ERROR,  '{mockLando} Unable to determine version', []],
+    ];
+    $this->verifyMessages($expect, $tool->messages, TRUE);
+    $this->assertFalse($tool->isEnabled());
+    $tool->messages = [];
+
+    # Fail if standard regex fails
+    $tool->enable();
+    $tool->setVersion(NULL);
+    $this->assertNull($tool->getVersion());
+    $expect = [
+      [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => 'version']],
+      [LogLevel::ERROR,  '{mockLando} Unable to parse version', []],
+    ];
+    $this->verifyMessages($expect, $tool->messages, TRUE);
+    $this->assertFalse($tool->isEnabled());
+    $tool->messages = [];
+
+    # Warn if regex succeeds but not version 3.x
+    $tool->enable();
+    $tool->setVersion('v2.7.2');
+    $this->assertSame('v2.7.2', $tool->getVersion()['raw']);
+    $expect = [
+      [LogLevel::NOTICE,  '{mockLando} $ {%command}', ['%command' => 'version']],
+      [LogLevel::WARNING, '{mockLando} Unrecognized Lando version %v; some functions may not work.', ['%v' => 'v2.7.2']],
+    ];
+    $this->verifyMessages($expect, $tool->messages, TRUE);
+    $this->assertTrue($tool->isEnabled());
+    $tool->messages = [];
+
+    # Strip leading text, verify default assignments
+    $version = [
+      'raw'   => 'v3.14.159',
+      'major' => '3',
+      'minor' => '14',
+      'patch' => '159',
+      'functions' => [
+        'auth' => TRUE,
+        'list' => 2,
+      ],
+    ];
+    $tool->setVersion(NULL);
+    $this->assertSame($version, $tool->getVersion());
+    $expect = [
+      [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => 'version']],
+    ];
+    $this->verifyMessages($expect, $tool->messages, TRUE);
+    $tool->messages = [];
+
+    # Verify alpha is parsed. Other prerelease levels handled elsewhere.
+    $version = [
+      'raw'   => 'v3.0.0-alpha.1',
+      'major' => '3',
+      'minor' => '0',
+      'patch' => '0',
+      'functions' => [
+        'auth' => FALSE,
+        'list' => 0,
+      ],
+      'prerelease' => 'alpha',
+      'iteration'  => '1',
+    ];
+    $tool->setVersion($version['raw']);
+    $this->assertSame($version, $tool->getVersion());
+    $expect = [
+      [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => 'version']],
+    ];
+    $this->verifyMessages($expect, $tool->messages, TRUE);
+    $tool->messages = [];
+
+    # Make sure we throw a warning about an unknown suffix.
+    $version = [
+      'raw'   => 'v3.0.0-omega.24',
+      'major' => '3',
+      'minor' => '0',
+      'patch' => '0',
+      'functions' => [
+        'auth' => TRUE,
+        'list' => 2,
+      ],
+      'suffix' => '-omega.24',
+    ];
+    $tool->setVersion($version['raw']);
+    $this->assertSame($version, $tool->getVersion());
+    $expect = [
+      [LogLevel::NOTICE,  '{mockLando} $ {%command}', ['%command' => 'version']],
+      [LogLevel::WARNING, '{mockLando} Unrecognized Lando version suffix %s in %v; some functions may not work.', ['%s' => '-omega.24', '%v' => 'v3.0.0-omega.24']],
+    ];
+    $this->verifyMessages($expect, $tool->messages, TRUE);
+    $tool->messages = [];
+  }
+
   public function testInitialize(): void {
     $messages = $this->runAllToolInitTests('lando');
     $mockName = '{mockLando} ';
@@ -157,11 +267,11 @@ final class LandoToolTest extends TestCase {
     # Make sure the tool is ready.
     $this->assertTrue($tool->isEnabled());
 
-    # First test should fail: can’t determine version.
+    # First test should fail: can’t determine status.
     $tool->requireStarted();
     $expect = [
-      [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => "$echo version"]],
-      [LogLevel::ERROR,  '{mockLando} Unable to determine version', []],
+      [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => "$echo list"]],
+      [LogLevel::ERROR,  '{mockLando} Unable to determine status', []],
     ];
     $this->verifyMessages($expect, $tool->messages, TRUE);
     $this->assertFalse($tool->isEnabled());
@@ -171,12 +281,12 @@ final class LandoToolTest extends TestCase {
     # Second test should succeed with warning because version is weird.
     $tool->requireStarted();
     $expect = [
-      [LogLevel::NOTICE,  '{mockLando} $ {%command}', ['%command' => "$echo version"]],
-      [LogLevel::WARNING, '{mockLando} Unrecognized Lando version %v; some functions may not work.', ['%v' => $tool->getVersion()]],
       [LogLevel::NOTICE,  '{mockLando} $ {%command}', ['%command' => "$echo list"]],
       [LogLevel::WARNING, '{mockLando} Unable to determine status for Lando environment "{%name}"', ['%name' => $project]],
       [LogLevel::NOTICE,  '{mockLando} $ {%command}', ['%command' => "$echo start"]],
       [LogLevel::NOTICE,  '{mockLando} $ {%command}', ['%command' => "$echo list"]],
+      [LogLevel::NOTICE,  '{mockLando} $ {%command}', ['%command' => "$echo version"]],
+      [LogLevel::WARNING, '{mockLando} Unrecognized Lando version %v; some functions may not work.', ['%v' => $tool->getVersion()['raw']]],
     ];
     $this->verifyMessages($expect, $tool->messages, TRUE);
     $this->assertTrue($tool->getStatus()->running);
@@ -188,8 +298,8 @@ final class LandoToolTest extends TestCase {
     # Make sure it executed the things and the status is now running.
     $tool->requireStarted();
     $expect = [
-      [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => "$echo version"]],
       [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => "$echo list"]],
+      [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => "$echo version"]],
       [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => "$echo start"]],
       [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => "$echo list"]],
     ];
@@ -217,18 +327,6 @@ final class LandoToolTest extends TestCase {
     $echo = $tool->getExecutable();
     $tool->messages = [];
 
-    # Make sure it fails if it can’t find this project’s name.
-    do {
-      $unknown = $this->makeRandomString();
-    } while ($unknown == $project);
-    $tool->updateStatus($unknown);
-    $expect = [
-      [LogLevel::NOTICE,  '{mockLando} $ {%command}', ['%command' => "$echo list"]],
-      [LogLevel::WARNING, '{mockLando} Unable to determine status for Lando environment "{%name}"', ['%name' => $unknown]],
-    ];
-    $this->verifyMessages($expect, $tool->messages, TRUE);
-    $tool->messages = [];
-
     # Make sure it fails if the tool is disabled.
     $this->assertFalse($tool->isEnabled());
     $tool->updateStatus();
@@ -244,6 +342,19 @@ final class LandoToolTest extends TestCase {
     $expect = [
       [LogLevel::NOTICE, '{mockLando} $ {%command}', ['%command' => "$echo list"]],
       [LogLevel::ERROR,  '{mockLando} Unable to determine status', []],
+    ];
+    $this->verifyMessages($expect, $tool->messages, TRUE);
+    $tool->messages = [];
+
+    # Make sure it fails if it can’t find this project’s name.
+    do {
+      $unknown = $this->makeRandomString();
+    } while ($unknown == $project);
+    $tool->updateStatus($unknown);
+    $expect = [
+      [LogLevel::NOTICE,  '{mockLando} $ {%command}', ['%command' => "$echo list"]],
+      [LogLevel::NOTICE,  '{mockLando} $ {%command}', ['%command' => "$echo version"]],
+      [LogLevel::WARNING, '{mockLando} Unable to determine status for Lando environment "{%name}"', ['%name' => $unknown]],
     ];
     $this->verifyMessages($expect, $tool->messages, TRUE);
     $tool->messages = [];
