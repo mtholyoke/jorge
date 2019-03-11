@@ -29,9 +29,9 @@ class LandoTool extends Tool {
     $verbosityMap = [
       OutputInterface::VERBOSITY_QUIET        => '2>&1',
       OutputInterface::VERBOSITY_NORMAL       => '',
-      OutputInterface::VERBOSITY_VERBOSE      => '-- -v',
-      OutputInterface::VERBOSITY_VERY_VERBOSE => '-- -vv',
-      OutputInterface::VERBOSITY_DEBUG        => '-- -vvvv',
+      OutputInterface::VERBOSITY_VERBOSE      => '-v',
+      OutputInterface::VERBOSITY_VERY_VERBOSE => '-vv',
+      OutputInterface::VERBOSITY_DEBUG        => '-vvvv',
     ];
 
     if (array_key_exists($this->verbosity, $verbosityMap)) {

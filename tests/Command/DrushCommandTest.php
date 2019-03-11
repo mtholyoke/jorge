@@ -154,11 +154,5 @@ final class DrushCommandTest extends TestCase {
     $input = new ArrayInput(['drush_command' => [$dc], '--no-interaction' => TRUE]);
     $command->initialize($input, $output);
     $this->assertSame("$dc --no", $command->getDrushCommand());
-
-    $dc = $this->makeRandomString();
-    $input = new ArrayInput(['drush_command' => [$dc]]);
-    $output->setVerbosity(OutputInterface::VERBOSITY_VERBOSE);
-    $command->initialize($input, $output);
-    $this->assertSame("$dc --verbose", $command->getDrushCommand());
   }
 }

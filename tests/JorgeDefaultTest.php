@@ -35,8 +35,7 @@ final class JorgeDefaultTest extends TestCase {
    */
   public function testConfigure(): void {
     $defaultCommands = $this->jorge->all();
-    $defaultTools = $this->jorge->allTools();
-
+    $defaultTools = $this->jorge->allTools() ?: [];
     $this->jorge->configure();
 
     $this->assertSame('Jorge', $this->jorge->getName());

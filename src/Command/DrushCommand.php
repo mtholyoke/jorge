@@ -161,8 +161,5 @@ only apply to Drush, you can escape -v/--verbose as above.
       }
       $this->drush_command = implode(' ', $arguments);
     }
-    if ($this->verbosity > OutputInterface::VERBOSITY_NORMAL) {
-      $this->drush_command = trim($this->drush_command . ' --verbose');
-    }
   }
 }
