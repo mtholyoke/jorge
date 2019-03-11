@@ -233,7 +233,7 @@ class ResetCommand extends Command {
     $lando->requireStarted();
     $lando_tooling = $lando->getConfig('tooling');
     if (!empty($lando_tooling) && array_key_exists('ssh-agent-pull', $lando_tooling)) {
-      $lando->writeln('If you use an ssh key passphrase, you may need to enter it now.');
+      $this->jorge->getOutput()->writeln('If you use an ssh key passphrase, you may need to enter it now.');
       $lando_pull = 'ssh-agent-pull';
     } else {
       $lando_pull = 'pull';
