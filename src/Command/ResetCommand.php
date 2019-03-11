@@ -231,7 +231,7 @@ class ResetCommand extends Command {
     $git->run(['pull']);
     $composer->run(['command' => 'install']);
     $lando->requireStarted();
-    $lando_pull = 'pull --code=none --database=' . $this->params['database'] . ' --files=' . $this->params['files'];
+    $lando_pull = 'ssh-agent-pull --code=none --database=' . $this->params['database'] . ' --files=' . $this->params['files'];
     if ($this->params['rsync']) {
       $lando_pull .= ' --rsync';
     }
@@ -242,6 +242,7 @@ class ResetCommand extends Command {
       }
       $lando_pull .= ' --auth=' . $this->params['auth'];
     }
+    $this->jorge->getOutput()->writeln('If you use an ssh key passphrase, enter it now.');
     $lando->run($lando_pull);
 
     $drushSequence = [
