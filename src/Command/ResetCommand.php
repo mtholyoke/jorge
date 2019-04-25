@@ -40,18 +40,20 @@ class ResetCommand extends Command {
       ->setDescription('Aligns code, database, and files to a specified state')
       ->addOption('auth',     'a', InputOption::VALUE_OPTIONAL, 'Terminus machine token to use')
       ->addOption('branch',   'b', InputOption::VALUE_OPTIONAL, 'Git branch to use <fg=yellow>[default: "master"]</>')
+      ->addOption('import',   'i', InputOption::VALUE_NONE,     'Import config after db pull (recommended with -b)')
       ->addOption('content',  'c', InputOption::VALUE_OPTIONAL, 'Environment to load database and files from <fg=yellow>[default: "dev"]</>')
       ->addOption('database', 'd', InputOption::VALUE_OPTIONAL, 'Environment to load database from <fg=yellow>[default: "dev"]</>')
       ->addOption('files',    'f', InputOption::VALUE_OPTIONAL, 'Environment to copy files from <fg=yellow>[default: "dev"]</>')
       ->addOption('username', 'u', InputOption::VALUE_OPTIONAL, 'Admin account to have local password set')
       ->addOption('password', 'p', InputOption::VALUE_OPTIONAL, 'Local password for admin account')
-      ->setHelp('This command updates the local git environment to the latest master, copies the latest database and files from the specified environment on Pantheon, and imports the default config suitable for a hands-on development instance.')
+      ->setHelp('This command updates the local git environment to the latest master, copies the latest database and files from the specified environment on Pantheon, and imports the default dev config suitable for a hands-on development instance.')
     ;
 
     # These can be set by config.yml, and set or overridden by command line options
     $this->params = [
       'auth'     => '',
       'branch'   => 'master',
+      'import'   => FALSE,
       'content'  => 'dev',
       'rsync'    => TRUE,
       'username' => '',
@@ -189,6 +191,10 @@ class ResetCommand extends Command {
     $lando->run($lando_pull);
 
     $drushSequence = [['drush_command' => ['cc', 'all']]];
+    if ($this->params['import']) {
+      $drushSequence[] = ['drush_command' => ['cim'], '--yes' => TRUE];
+      $drushSequence[] = ['drush_command' => ['cc', 'all']];
+    }
     if (!empty($this->params['username']) && !empty($this->params['password'])) {
       $drushSequence[] = [
         'drush_command' => [
@@ -251,11 +257,13 @@ class ResetCommand extends Command {
     }
     $lando->run($lando_pull);
 
-    $drushSequence = [
-      ['drush_command' => ['cr']                                 ],
-      ['drush_command' => ['csim', 'config_dev'], '--yes' => TRUE],
-      ['drush_command' => ['updb'],               '--yes' => TRUE],
-    ];
+    $drushSequence = [['drush_command' => ['cr']]];
+    if ($this->params['import']) {
+      $drushSequence[] = ['drush_command' => ['cim'], '--yes' => TRUE];
+      $drushSequence[] = ['drush_command' => ['cr']];
+    }
+    $drushSequence[] = ['drush_command' => ['csim', 'config_dev'], '--yes' => TRUE];
+    $drushSequence[] = ['drush_command' => ['updb'],               '--yes' => TRUE];
     if (!empty($this->params['username']) && !empty($this->params['password'])) {
       $drushSequence[] = [
         'drush_command' => [

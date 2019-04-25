@@ -48,6 +48,7 @@ Optionally, you may also have the key `include_config`, which specifies a list o
 A config file may include the key `reset`, which contains a block that provides any of seven optional parameters to the `reset` command (described below):
 - `auth    ` - A Terminus machine token to authenticate with Pantheon for the reset
 - `branch  ` - Which Git branch to reset your current codebase to (default is `master`)
+- `import  ` - Whether to run `drush config-import` after pulling the database (default is `FALSE`)
 - `content ` - Which Pantheon environment to copy database and files from (default is `dev`)
 - `database` - Which Pantheon environment to copy the database from (default matches `content`)
 - `files   ` - Which Pantheon environment to copy the files from (default matches `database`)
@@ -93,6 +94,8 @@ Sets up the local development environment as specified in the configuration file
 Starts Lando if it is not already running, then uses `lando pull` to fetch the site from Pantheon.
 
 Optionally takes command-line switches which will override the settings described above (except `rsync`); see `jorge help reset` for details.
+
+If you are resetting to a branch other than master (using `-b`), you may need to also use `-i` if the branch has config different from the database to be pulled.
 
 If an admin account username is provided but no password is supplied, Jorge will prompt you for one. If you leave that blank also, the password will not be reset.
 
