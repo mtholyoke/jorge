@@ -31,7 +31,7 @@ final class ResetCommandTest extends TestCase {
     $this->assertSame(0, count($arguments));
     $this->assertSame(0, $definition->getArgumentRequiredCount());
     $options = $definition->getOptions();
-    $this->assertSame(7, count($options));
+    $this->assertSame(8, count($options));
     $this->assertNotEmpty($command->getHelp());
     # testInitialize() checks $->params in a mock instance.
   }
@@ -42,13 +42,14 @@ final class ResetCommandTest extends TestCase {
 
     $command = new MockResetCommand();
     $command->setName('mockReset');
-    $this->assertSame(6, count($command->getParams()));
+    $this->assertSame(7, count($command->getParams()));
     $this->assertSame($command, $jorge->add($command));
 
     $appType = $this->makeRandomString();
     $reset = [
       'auth'     => $this->makeRandomString(),
       'branch'   => $this->makeRandomString(),
+      'import'   => $this->makeRandomBoolean(),
       'content'  => $this->makeRandomString(),
       'rsync'    => $this->makeRandomBoolean(),
       'username' => $this->makeRandomString(),
@@ -89,8 +90,8 @@ final class ResetCommandTest extends TestCase {
     # Make sure command-line options are correctly applied:
     $config = [];
     foreach (array_keys($reset) as $key) {
-      if ($key == 'rsync') {
-        $config[$key] = $reset['rsync'];
+      if (in_array($key, ['import', 'rsync'])) {
+        $config[$key] = $reset[$key];
       } else {
         $config[$key] = $options["--$key"];
       }
@@ -169,6 +170,7 @@ final class ResetCommandTest extends TestCase {
     $simpleParams = [
       'auth'     => '',
       'branch'   => $this->makeRandomString(),
+      'import'   => FALSE,
       'content'  => $this->makeRandomString(),
       'rsync'    => FALSE,
       'username' => '',
@@ -177,6 +179,7 @@ final class ResetCommandTest extends TestCase {
     $complexParams = [
       'auth'     => $this->makeRandomString(),
       'branch'   => $this->makeRandomString(),
+      'import'   => TRUE,
       'database' => $this->makeRandomString(),
       'files'    => $this->makeRandomString(),
       'rsync'    => TRUE,
@@ -227,7 +230,7 @@ final class ResetCommandTest extends TestCase {
     $drush = $this->getMockBuilder(DrushCommand::class)
                   ->setMethods(['run'])
                   ->getMock();
-    $drush->expects($this->exactly(4))
+    $drush->expects($this->exactly(6))
           ->method('run')
           ->willReturn(0);
 
@@ -303,6 +306,7 @@ final class ResetCommandTest extends TestCase {
     $simpleParams = [
       'auth'     => '',
       'branch'   => $this->makeRandomString(),
+      'import'   => FALSE,
       'content'  => $this->makeRandomString(),
       'rsync'    => FALSE,
       'username' => '',
@@ -311,6 +315,7 @@ final class ResetCommandTest extends TestCase {
     $complexParams = [
       'auth'     => $this->makeRandomString(),
       'branch'   => $this->makeRandomString(),
+      'import'   => TRUE,
       'database' => $this->makeRandomString(),
       'files'    => $this->makeRandomString(),
       'rsync'    => TRUE,
@@ -350,8 +355,12 @@ final class ResetCommandTest extends TestCase {
 
     # Set up Lando tool:
     $lando = $this->getMockBuilder(LandoTool::class)
-                  ->setMethods(['needsAuth', 'requireStarted', 'run'])
+                  ->setMethods(['getConfig', 'needsAuth', 'requireStarted', 'run'])
                   ->getMock();
+    $lando->expects($this->exactly(3))
+          ->method('getConfig')
+          ->with('tooling')
+          ->will($this->onConsecutiveCalls(NULL, NULL, ['ssh-agent-pull' => TRUE]));
     $lando->expects($this->exactly(3))
           ->method('needsAuth')
           ->will($this->onConsecutiveCalls(FALSE, TRUE, TRUE));
@@ -362,7 +371,7 @@ final class ResetCommandTest extends TestCase {
           ->method('run')
           ->withConsecutive(
               ['pull --code=none --database=' . $simpleParams['content'] . ' --files=' . $simpleParams['content']],
-              ['pull --code=none --database=' . $complexParams['database'] . ' --files=' . $complexParams['files'] . ' --rsync --auth=' . $complexParams['auth']]
+              ['ssh-agent-pull --code=none --database=' . $complexParams['database'] . ' --files=' . $complexParams['files'] . ' --rsync --auth=' . $complexParams['auth']]
             )
           ->willReturn(0);
 
@@ -370,7 +379,7 @@ final class ResetCommandTest extends TestCase {
     $drush = $this->getMockBuilder(DrushCommand::class)
                   ->setMethods(['run'])
                   ->getMock();
-    $drush->expects($this->exactly(9))
+    $drush->expects($this->exactly(11))
           ->method('run')
           ->willReturn(0);
 
