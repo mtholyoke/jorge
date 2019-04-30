@@ -34,6 +34,9 @@ use Symfony\Component\Yaml\Yaml;
  * @version 0.6.7
  */
 class Jorge extends Application {
+  /** @var \Composer\Autoload\ClassLoader $autoload The autoloader */
+  protected $autoload;
+
   /** @var array $config Project configuration from .jorge/config.yml */
   protected $config = [];
 
@@ -49,7 +52,7 @@ class Jorge extends Application {
   /** @var string $rootPath The fully qualified path of the project root */
   private $rootPath;
 
-  /** @var Tool\Tool[] $tools The instances of Tool\Tool available to this app. */
+  /** @var Tool\Tool[] $tools The Tool\Tool instances available to this app */
   private $tools;
 
   /**
@@ -282,5 +285,16 @@ class Jorge extends Application {
     $path = preg_replace('#^(\.{0,2}' . $ds . '\s*)*#', '', $path);
     // TODO: what else?
     return $path;
+  }
+
+  /**
+   * Saves the autoloader so we can add plugins to it.
+   *
+   * @param \Composer\Autoload\ClassLoader $autoload The autoloader
+   * @return self
+   */
+  public function setAutoload($autoload) {
+    $this->autoload = $autoload;
+    return $this;
   }
 }

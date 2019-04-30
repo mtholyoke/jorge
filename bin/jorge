@@ -5,17 +5,29 @@
  * This script runs Jorge, MHC’s command-line tool for automating development tasks.
  */
 
-// TODO: this is ugly; can we do better?
-if (is_dir(__DIR__ . '/../vendor')) {
-  // If we’re running from a clone of the Git repo
-  require_once __DIR__ . '/../vendor/autoload.php';
-} else {
-  // If we’re added by cgr
-  require_once __DIR__ . '/../../../autoload.php';
+$autoload_paths = [
+  '/../vendor/autoload.php', // clone of Git repo
+  '/../../autoload.php',
+  '/../../../autoload.php',  // cgr
+];
+
+error_reporting(E_ALL ^ E_WARNING);
+foreach ($autoload_paths as $autoload_path) {
+  $autoload = include_once(__DIR__ . $autoload_path);
+  if ($autoload) {
+    break;
+  }
+}
+error_reporting(E_ALL);
+
+if (!$autoload) {
+  fwrite(STDERR, 'Can’t find autoload.php');
+  exit(1);
 }
 
 use MountHolyoke\Jorge\Jorge;
 
 $JORGE = new Jorge();
+$JORGE->setAutoload($autoload);
 $JORGE->configure();
 $JORGE->run();
