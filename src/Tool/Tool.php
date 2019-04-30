@@ -112,7 +112,7 @@ class Tool {
     $return = ['command' => $command];
     $this->log(LogLevel::NOTICE, '$ {%command}', ['%command' => $command]);
     if ($prompt) {
-      $process = new Process($command);
+      $process = Process::fromShellCommandLine($command);
       $process->setInput(STDIN);
       $process->start();
       while ($process->isRunning()) {
