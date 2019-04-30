@@ -2,7 +2,7 @@
 
 namespace MountHolyoke\Jorge;
 
-use MountHolyoke\Jorge\Command\DrushCommand;
+// use MountHolyoke\Jorge\Command\DrushCommand;
 use MountHolyoke\Jorge\Command\HonkCommand;
 use MountHolyoke\Jorge\Command\ResetCommand;
 use MountHolyoke\Jorge\Tool\ComposerTool;
@@ -18,6 +18,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Finder\Finder;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -97,9 +98,42 @@ class Jorge extends Application
             }
         }
 
-        $this->add(new DrushCommand());
+        // $this->add(new DrushCommand());
         $this->add(new HonkCommand());
+
+        // Scan for plugins.
+        $plugins = $this->rootPath . DIRECTORY_SEPARATOR . 'plugins';
+        $finder = new Finder();
+        $finder->directories()->in($plugins);
+        foreach ($finder as $plugin) {
+            $name = $plugin->getRelativePathName();
+            $namespace = 'MountHolyoke\\Jorge\\Plugins\\' . $name . '\\';
+            $this->autoload->addPsr4($namespace, $plugin->__toString());
+            $info_file = $name . DIRECTORY_SEPARATOR . $name . '.info.yml';
+            $info = $this->loadConfigFile('plugins' . DIRECTORY_SEPARATOR . $info_file);
+            $classname = $namespace . $name;
+            switch ($info['type']) {
+                case 'command':
+                    $classname .= 'Command';
+                    $this->add(new $classname());
+                    break;
+
+                case 'tool':
+                    $classname .= 'Tool';
+                    $this->addTool(new $classname());
+                    break;
+
+                default:
+                    $this->log(
+                        LogLevel::WARNING,
+                        'Plugin {%plughin} has unknown type',
+                        ['%plugin' => $plugin->__toString()]
+                    );
+            }
+        }
+
         $this->add(new ResetCommand());
+
 
         $this->addTool(new ComposerTool());
         $this->addTool(new GitTool());
@@ -119,7 +153,7 @@ class Jorge extends Application
     {
         $name = $tool->setApplication($this, $executable)->getName();
         if (!empty($this->tools) && array_key_exists($name, $this->tools)) {
-            $message = sprintf('The tool defined in "%s" duplicates an existing tool’s name.', get_class($tool))
+            $message = sprintf('The tool defined in "%s" duplicates an existing tool’s name.', get_class($tool));
             throw new LogicException($message);
         }
         $this->tools[$name] = $tool;
@@ -236,7 +270,7 @@ class Jorge extends Application
         $file = $this->sanitizePath($file);
         $pathfile = $this->rootPath . DIRECTORY_SEPARATOR . $file;
         if (is_file($pathfile) && is_readable($pathfile)) {
-          // TODO: sanitize values?
+            // TODO: sanitize values?
             switch (pathinfo($pathfile, PATHINFO_EXTENSION)) {
                 case 'yaml':
                 case 'yml':
@@ -295,10 +329,10 @@ class Jorge extends Application
     protected static function sanitizePath($path)
     {
         $path = trim($path);
-      # Strip leading '/', './', or '../'.
+        # Strip leading '/', './', or '../'.
         $ds = (DIRECTORY_SEPARATOR == '#') ? '\#' : DIRECTORY_SEPARATOR;
         $path = preg_replace('#^(\.{0,2}' . $ds . '\s*)*#', '', $path);
-      // TODO: what else?
+        // TODO: what else?
         return $path;
     }
 

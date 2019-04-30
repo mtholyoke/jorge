@@ -1,6 +1,6 @@
 <?php
 
-namespace MountHolyoke\Jorge\Command;
+namespace MountHolyoke\Jorge\Plugins\Drush;
 
 use MountHolyoke\Jorge\Helper\JorgeTrait;
 use Psr\Log\LogLevel;
