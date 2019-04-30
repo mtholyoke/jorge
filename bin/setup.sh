@@ -63,3 +63,10 @@ else
 		exit
 	fi
 fi
+
+
+# Set up PHP CodeSniffer if installed
+if [ -e "$BIN/../vendor/bin/phpcs" ]
+then
+	eval "$BIN/../vendor/bin/phpcs --config-set default_standard PSR12"
+fi

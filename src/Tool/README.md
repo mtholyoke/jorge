@@ -11,49 +11,54 @@ namespace MountHolyoke\Jorge\Tool;
 
 use MountHolyoke\Jorge\Tool\Tool;
 
-class SampleTool extends Tool {
-...
+class SampleTool extends Tool
+{
+    ...
 }
 ```
 
 When a tool is instantiated, its `configure()` method is called. If the application does not provide a name for the tool, then your implementation of `configure()` _must_ call `$this->setName()`. Note: the environment is available to `configure()` for establishing any default configuration, but the application (including its deduced project root, &c.) is not available yet.
 
 ```php
-protected function configure() {
-  $this->setName('sample');
+protected function configure()
+{
+    $this->setName('sample');
 }
 ```
 
 When the tool is added to the application, the application can provide an executable or the tool will attempt to deduce it from its name. After this, its `initialize()` method is called, for any application-specific configuration. This is usually the first good opportunity to determine whether the tool should be enabled.
 
 ```php
-protected function initialize() {
-  if (!empty($this->getExecutable())) {
-    $this->enable();
-  }
+protected function initialize()
+{
+    if (!empty($this->getExecutable())) {
+        $this->enable();
+    }
 }
 ```
 
 `getStatus()` (see below) runs `updateStatus()` (if it has not previously been run) and returns the result of the most recent status update. `updateStatus()` defaults to `isEnabled()`, but can be overridden to provide something more useful to the specific tool, including optional arguments. Note also in this sample that the Jorge application is available as `$this->jorge` (in addition to the more conventional `$this->getApplication()`).
 
 ```php
-public function updateStatus($args = NULL) {
-  # Status is TRUE if we’re currently working in the project root.
-  $cwd = getcwd();
-  $root = $this->jorge->getPath();
-  $this->setStatus($cwd == $root);
+public function updateStatus($args = NULL)
+{
+    # Status is TRUE if we’re currently working in the project root.
+    $cwd = getcwd();
+    $root = $this->jorge->getPath();
+    $this->setStatus($cwd == $root);
 }
 ```
 
 Many tools have options for specifying more (or less) verbosity in the results. As a Symfony Console Application, Jorge has five levels: quiet, normal, verbose, very verbose, and debug. Create a mapping from those to the options for the tool.
 ```php
-protected function applyVerbosity($argv = '') {
-  if ($this->verbosity == OutputInterface::VERBOSITY_QUIET) {
-    $argv .= ' -q';
-  elseif ($this->verbosity == OutputInterface::VERBOSITY_DEBUG) {
-    $argv .= ' --debug';
-  }
-  return $argv;
+protected function applyVerbosity($argv = '')
+{
+    if ($this->verbosity == OutputInterface::VERBOSITY_QUIET) {
+        $argv .= ' -q';
+    elseif ($this->verbosity == OutputInterface::VERBOSITY_DEBUG) {
+        $argv .= ' --debug';
+    }
+    return $argv;
 }
 ```
 
@@ -91,19 +96,21 @@ The Jorge application has an `addTool()` method which takes a new instance of th
 ```php
 use MountHolyoke\Jorge\Tool\LandoTool;
 // ...
-public function configure() {
-  // ...
-  $this->addTool(new LandoTool());
+public function configure()
+{
+    // ...
+    $this->addTool(new LandoTool());
 }
 ```
 ... and its usage in `ResetCommand`:
 ```php
-protected function executeDrupal8() {
-  $lando = $this->jorge->getTool('lando');
-  // ...
-  if (!$lando->getStatus()->running) {
-    $lando->run('start');
-  }
-  // ...
+protected function executeDrupal8()
+{
+    $lando = $this->jorge->getTool('lando');
+    // ...
+    if (!$lando->getStatus()->running) {
+        $lando->run('start');
+    }
+    // ...
 }
 ```

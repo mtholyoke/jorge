@@ -13,12 +13,13 @@ use Symfony\Component\Console\Output\OutputInterface;
  * @author Jason Proctor <jproctor@mtholyoke.edu>
  * @copyright 2018 Trustees of Mount Holyoke College
  */
-trait JorgeTrait {
+trait JorgeTrait
+{
   /** @var \MountHolyoke\Jorge\Jorge $jorge The running application */
-  protected $jorge = NULL;
+    protected $jorge = null;
 
   /** @var int $verbosity The verbosity level specified on the command line */
-  protected $verbosity = OutputInterface::VERBOSITY_NORMAL;
+    protected $verbosity = OutputInterface::VERBOSITY_NORMAL;
 
   /**
    * Establish some properties that are common to all Jorge commands and tools.
@@ -27,10 +28,11 @@ trait JorgeTrait {
    * is not invoked until the command is being run). Tools get it automatically:
    * @used-by \MountHolyoke\Jorge\Tool\Tool::setApplication()
    */
-  protected function initializeJorge() {
-    $this->jorge = $this->getApplication();
-    $this->verbosity = $this->jorge->getOutput()->getVerbosity();
-  }
+    protected function initializeJorge()
+    {
+        $this->jorge = $this->getApplication();
+        $this->verbosity = $this->jorge->getOutput()->getVerbosity();
+    }
 
   /**
    * Sends a message prefixed with command name to the application’s logger.
@@ -40,12 +42,13 @@ trait JorgeTrait {
    * @param array       $context Variable substitutions for $message
    * @see Symfony\Component\Console\Logger\ConsoleLogger
    */
-  protected function log($level, $message, array $context = []) {
-    if ($level !== NULL) {
-      $message = '{' . $this->getName() . '} ' . $message;
-      $this->jorge->log($level, $message, $context);
+    protected function log($level, $message, array $context = [])
+    {
+        if ($level !== null) {
+            $message = '{' . $this->getName() . '} ' . $message;
+            $this->jorge->log($level, $message, $context);
+        }
     }
-  }
 
   /**
    * Sends text directly to the application's output interface.
@@ -54,7 +57,8 @@ trait JorgeTrait {
    * @param int          $options  A bitmask of options
    * @see Symfony\Component\Console\Output\OutputInterface
    */
-  protected function writeln($messages, $options = 0) {
-    $this->jorge->getOutput()->writeln($messages, $options);
-  }
+    protected function writeln($messages, $options = 0)
+    {
+        $this->jorge->getOutput()->writeln($messages, $options);
+    }
 }

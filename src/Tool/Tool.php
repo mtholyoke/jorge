@@ -28,40 +28,42 @@ use Symfony\Component\Process\Process;
  * @author Jason Proctor <jproctor@mtholyoke.edu>
  * @copyright 2018 Trustees of Mount Holyoke College
  */
-class Tool {
-  use JorgeTrait;
+class Tool
+{
+    use JorgeTrait;
 
   /** @var mixed $config Tool-specific configuration */
-  protected $config;
+    protected $config;
 
     /** @var boolean $enabled Indicates the tool is applicable to the current project */
-  protected $enabled = FALSE;
+    protected $enabled = false;
 
     /** @var string $executable The executable command associated with this tool */
-  protected $executable;
+    protected $executable;
 
     /** @var \Symfony\Component\Console\Helper\HelperSet $helperSet */
-  protected $helperSet = NULL;
+    protected $helperSet = null;
 
     /** @var string $name The name of the tool, used as an index in the application */
-  protected $name;
+    protected $name;
 
     /** @var mixed $status Tool-specific status report */
-  protected $status;
+    protected $status;
 
   /**
    * @param string|NULL $name The name of the tool
    * @throws \Symfony\Component\Console\Exception\LogicException when the tool name is empty
    */
-  public function __construct($name = NULL) {
-    if (!empty($name)) {
-      $this->name = $name;
+    public function __construct($name = null)
+    {
+        if (!empty($name)) {
+            $this->name = $name;
+        }
+        $this->configure();
+        if (empty($this->getName())) {
+            throw new LogicException('Tool name cannot be empty');
+        }
     }
-    $this->configure();
-    if (empty($this->getName())) {
-      throw new LogicException('Tool name cannot be empty');
-    }
-  }
 
   /**
    * Alters the arguments/options to include the verbosity setting.
@@ -69,31 +71,35 @@ class Tool {
    * @param mixed $argv Arguments/options for the command
    * @return mixed
    */
-  protected function applyVerbosity($argv) {
-    return $argv;
-  }
+    protected function applyVerbosity($argv)
+    {
+        return $argv;
+    }
 
   /**
    * Establishes the tool.
    *
    * This function must call setName() unless one is provided to the constructor.
    */
-  protected function configure() {
-  }
+    protected function configure()
+    {
+    }
 
   /**
    * Disables the tool.
    */
-  protected function disable() {
-    $this->enabled = FALSE;
-  }
+    protected function disable()
+    {
+        $this->enabled = false;
+    }
 
   /**
    * Enables the tool.
    */
-  protected function enable() {
-    $this->enabled = TRUE;
-  }
+    protected function enable()
+    {
+        $this->enabled = true;
+    }
 
   /**
    * Executes the tool command and returns the result array and status.
@@ -102,40 +108,42 @@ class Tool {
    * @param bool|null $prompt Require interaction mid-command
    * @return array The command with its output and exit status
    */
-  protected function exec($argv = '', $prompt = FALSE) {
-    $command = trim($this->getExecutable() . ' ' . $argv);
-    if (empty($command)) {
-      $this->log(LogLevel::ERROR, 'Cannot execute a blank command');
-      return ['command' => '', 'status' => 1];
-    }
+    protected function exec($argv = '', $prompt = false)
+    {
+        $command = trim($this->getExecutable() . ' ' . $argv);
+        if (empty($command)) {
+            $this->log(LogLevel::ERROR, 'Cannot execute a blank command');
+            return ['command' => '', 'status' => 1];
+        }
 
-    $return = ['command' => $command];
-    $this->log(LogLevel::NOTICE, '$ {%command}', ['%command' => $command]);
-    if ($prompt) {
-      $process = Process::fromShellCommandLine($command);
-      $process->setInput(STDIN);
-      $process->start();
-      while ($process->isRunning()) {
-        print $process->getIncrementalOutput();
-        print $process->getIncrementalErrorOutput();
-      }
-      $return['output'] = [];
-      $return['status'] = $process->getExitCode();
-    } else {
-      exec($command, $output, $status);
-      $return['output'] = $output;
-      $return['status'] = $status;
-    }
+        $return = ['command' => $command];
+        $this->log(LogLevel::NOTICE, '$ {%command}', ['%command' => $command]);
+        if ($prompt) {
+            $process = Process::fromShellCommandLine($command);
+            $process->setInput(STDIN);
+            $process->start();
+            while ($process->isRunning()) {
+                print $process->getIncrementalOutput();
+                print $process->getIncrementalErrorOutput();
+            }
+            $return['output'] = [];
+            $return['status'] = $process->getExitCode();
+        } else {
+            exec($command, $output, $status);
+            $return['output'] = $output;
+            $return['status'] = $status;
+        }
 
-    return $return;
-  }
+        return $return;
+    }
 
   /**
    * @return \Symfony\Component\Console\Application
    */
-  public function getApplication() {
-    return $this->jorge;
-  }
+    public function getApplication()
+    {
+        return $this->jorge;
+    }
 
   /**
    * Return a parameter from configuration.
@@ -143,45 +151,49 @@ class Tool {
    * @param string|null $key     The key to get from config, NULL for all
    * @param mixed       $default The value to return if key not present
    */
-  public function getConfig($key = NULL, $default = NULL) {
-    if ($key === NULL) {
-      if (isset($this->config)) {
-        return $this->config;
-      } else {
+    public function getConfig($key = null, $default = null)
+    {
+        if ($key === null) {
+            if (isset($this->config)) {
+                return $this->config;
+            } else {
+                return $default;
+            }
+        }
+        if (isset($this->config) && array_key_exists($key, $this->config)) {
+            return $this->config[$key];
+        }
         return $default;
-      }
     }
-    if (isset($this->config) && array_key_exists($key, $this->config)) {
-      return $this->config[$key];
-    }
-    return $default;
-  }
 
   /**
    * @return string
    */
-  public function getExecutable() {
-    return $this->executable;
-  }
+    public function getExecutable()
+    {
+        return $this->executable;
+    }
 
   /**
    * @return string
    */
-  public function getName() {
-    return $this->name;
-  }
+    public function getName()
+    {
+        return $this->name;
+    }
 
   /**
    * @param boolean $update Whether to call updateStatus() before returning
    * @param mixed   $args   Arguments for updateStatus() if necessary
    * @return mixed
    */
-  public function getStatus($update = FALSE, $args = NULL) {
-    if (empty($this->status) || $update) {
-      $this->updateStatus($args);
+    public function getStatus($update = false, $args = null)
+    {
+        if (empty($this->status) || $update) {
+            $this->updateStatus($args);
+        }
+        return $this->status;
     }
-    return $this->status;
-  }
 
   /**
    * Sets up the tool in context of the application.
@@ -190,15 +202,17 @@ class Tool {
    * usually the first opportunity to determine whether the tool is enabled,
    * meaning it is used in the current project being supported by Jorge.
    */
-  protected function initialize() {
-  }
+    protected function initialize()
+    {
+    }
 
   /**
    * @return boolean
    */
-  public function isEnabled() {
-    return $this->enabled;
-  }
+    public function isEnabled()
+    {
+        return $this->enabled;
+    }
 
   /**
    * Checks that the tool is enabled before running it.
@@ -207,13 +221,14 @@ class Tool {
    * @param bool|null $prompt Require interaction mid-command
    * @return null|int
    */
-  public function run($argv = NULL, $prompt = NULL) {
-    if (!$this->isEnabled()) {
-      $this->log(LogLevel::ERROR, 'Tool not enabled');
-      return;
+    public function run($argv = null, $prompt = null)
+    {
+        if (!$this->isEnabled()) {
+            $this->log(LogLevel::ERROR, 'Tool not enabled');
+            return;
+        }
+        return $this->runThis($argv, $prompt);
     }
-    return $this->runThis($argv, $prompt);
-  }
 
   /**
    * Runs the tool with the given subcommands/options.
@@ -222,19 +237,20 @@ class Tool {
    * @param bool|null $prompt Require interaction mid-command
    * @return null|int
    */
-  public function runThis($argv = NULL, $prompt = NULL) {
-    $command = $this->applyVerbosity($argv);
+    public function runThis($argv = null, $prompt = null)
+    {
+        $command = $this->applyVerbosity($argv);
 
-    $result = $this->exec($command, $prompt);
+        $result = $this->exec($command, $prompt);
 
-    if ($this->verbosity != OutputInterface::VERBOSITY_QUIET) {
-      if (array_key_exists('output', $result)) {
-        $this->writeln($result['output']);
-      }
+        if ($this->verbosity != OutputInterface::VERBOSITY_QUIET) {
+            if (array_key_exists('output', $result)) {
+                $this->writeln($result['output']);
+            }
+        }
+
+        return $result['status'];
     }
-
-    return $result['status'];
-  }
 
   /**
    * Connects the tool with the application.
@@ -245,21 +261,22 @@ class Tool {
    * @param string $executable Command the user would type to use this tool
    * @return $this
    */
-  public function setApplication(Application $application, $executable = '') {
-    $this->jorge = $application;
-    $this->helperSet = $application->getHelperSet();
-    $this->initializeJorge();
+    public function setApplication(Application $application, $executable = '')
+    {
+        $this->jorge = $application;
+        $this->helperSet = $application->getHelperSet();
+        $this->initializeJorge();
 
-    if (empty($this->getExecutable())) {
-      if (empty($executable)) {
-        $executable = $this->getName();
-      }
-      $this->setExecutable($executable);
+        if (empty($this->getExecutable())) {
+            if (empty($executable)) {
+                $executable = $this->getName();
+            }
+            $this->setExecutable($executable);
+        }
+
+        $this->initialize();
+        return $this;
     }
-
-    $this->initialize();
-    return $this;
-  }
 
   /**
    * Sets the command-line executable for this tool.
@@ -267,25 +284,26 @@ class Tool {
    * @param string $executable A command the current user has permission to run
    * @return $this
    */
-  protected function setExecutable($executable) {
-    $executable = escapeshellcmd($executable);
-    exec("which $executable", $output, $status);
-    if ($status === 0 && count($output) == 1) {
-      $this->executable = $output[0];
-      $this->log(
-        LogLevel::DEBUG,
-        'Executable is "{%executable}"',
-        ['%executable' => $this->getExecutable()]
-      );
-    } else {
-      $this->log(
-        LogLevel::ERROR,
-        'Cannot set executable "{%executable}"',
-        ['%executable' => $executable]
-      );
+    protected function setExecutable($executable)
+    {
+        $executable = escapeshellcmd($executable);
+        exec("which $executable", $output, $status);
+        if ($status === 0 && count($output) == 1) {
+            $this->executable = $output[0];
+            $this->log(
+                LogLevel::DEBUG,
+                'Executable is "{%executable}"',
+                ['%executable' => $this->getExecutable()]
+            );
+        } else {
+            $this->log(
+                LogLevel::ERROR,
+                'Cannot set executable "{%executable}"',
+                ['%executable' => $executable]
+            );
+        }
+        return $this;
     }
-    return $this;
-  }
 
   /**
    * Sets the name of the tool.
@@ -293,10 +311,11 @@ class Tool {
    * @param string $name The tool name
    * @return $this
    */
-  protected function setName($name) {
-    $this->name = $name;
-    return $this;
-  }
+    protected function setName($name)
+    {
+        $this->name = $name;
+        return $this;
+    }
 
   /**
    * Sets the current status.
@@ -304,17 +323,19 @@ class Tool {
    * @param mixed $status The status to save
    * @return $this
    */
-  public function setStatus($status) {
-    $this->status = $status;
-    return $this;
-  }
+    public function setStatus($status)
+    {
+        $this->status = $status;
+        return $this;
+    }
 
   /**
    * Computes and saves a status.
    *
    * @param mixed $args Any arguments necessary to determine the status
    */
-  public function updateStatus($args = NULL) {
-    $this->setStatus($this->isEnabled());
-  }
+    public function updateStatus($args = null)
+    {
+        $this->setStatus($this->isEnabled());
+    }
 }

@@ -19,33 +19,35 @@ use Symfony\Component\Console\Output\OutputInterface;
  * @author Jason Proctor <jproctor@mtholyoke.edu>
  * @copyright 2018 Trustees of Mount Holyoke College
  */
-class ComposerTool extends Tool {
+class ComposerTool extends Tool
+{
   /** @var MountHolyoke\Jorge\Helper\ComposerApplication $composerApplication The instance of Composer */
-  protected $composerApplication = NULL;
+    protected $composerApplication = null;
 
   /**
    * {@inheritDoc}
    */
-  protected function applyVerbosity($argv = []) {
-    switch ($this->verbosity) {
-      case OutputInterface::VERBOSITY_QUIET:
-        $argv['-q'] = TRUE;
-        break;
-      case OutputInterface::VERBOSITY_NORMAL:
-      default:
-        break;
-      case OutputInterface::VERBOSITY_VERBOSE:
-      $argv['-v'] = TRUE;
-        break;
-      case OutputInterface::VERBOSITY_VERY_VERBOSE:
-      $argv['-vv'] = TRUE;
-        break;
-      case OutputInterface::VERBOSITY_DEBUG:
-      $argv['-vvv'] = TRUE;
-        break;
+    protected function applyVerbosity($argv = [])
+    {
+        switch ($this->verbosity) {
+            case OutputInterface::VERBOSITY_QUIET:
+                $argv['-q'] = true;
+                break;
+            case OutputInterface::VERBOSITY_NORMAL:
+            default:
+                break;
+            case OutputInterface::VERBOSITY_VERBOSE:
+                $argv['-v'] = true;
+                break;
+            case OutputInterface::VERBOSITY_VERY_VERBOSE:
+                $argv['-vv'] = true;
+                break;
+            case OutputInterface::VERBOSITY_DEBUG:
+                $argv['-vvv'] = true;
+                break;
+        }
+        return $argv;
     }
-    return $argv;
-  }
 
   /**
    * Joins arguments and options as if they were on the command line.
@@ -53,31 +55,33 @@ class ComposerTool extends Tool {
    * @param array $argv Command, arguments, and options for run()
    * @return string The joined string of arguments and options
    */
-  protected function argvJoin(array $argv = []) {
-    if (array_key_exists('command', $argv)) {
-      unset($argv['command']);
-    }
-    $joinable = [];
-    foreach ($argv as $k => $v) {
-      if (is_bool($v)) {
-        if ($v) {
-          $joinable[] = $k;
+    protected function argvJoin(array $argv = [])
+    {
+        if (array_key_exists('command', $argv)) {
+            unset($argv['command']);
         }
-      } elseif ($v === NULL) {
-        $joinable[] = $k;
-      } else {
-        $joinable[] = "$k=$v";
-      }
+        $joinable = [];
+        foreach ($argv as $k => $v) {
+            if (is_bool($v)) {
+                if ($v) {
+                    $joinable[] = $k;
+                }
+            } elseif ($v === null) {
+                $joinable[] = $k;
+            } else {
+                $joinable[] = "$k=$v";
+            }
+        }
+        return implode(' ', $joinable);
     }
-    return implode(' ', $joinable);
-  }
 
   /**
    * Establishes the `composer` tool.
    */
-  protected function configure() {
-    $this->setName('composer');
-  }
+    protected function configure()
+    {
+        $this->setName('composer');
+    }
 
   /**
    * Executes the tool command and returns the result array and status.
@@ -89,55 +93,57 @@ class ComposerTool extends Tool {
    * @param bool|null $prompt Require interaction mid-command
    * @return array The command passed to the Composer application and its exit code.
    */
-  protected function exec($argv = [], $prompt = FALSE) {
-    if ($argv === NULL || !isset($argv) || !is_array($argv)) {
-      $argv = [];
-    }
-    $input = new ArrayInput($argv);
-    $output = $this->jorge->getOutput();
+    protected function exec($argv = [], $prompt = false)
+    {
+        if ($argv === null || !isset($argv) || !is_array($argv)) {
+            $argv = [];
+        }
+        $input = new ArrayInput($argv);
+        $output = $this->jorge->getOutput();
 
-    if (!array_key_exists('command', $argv)) {
-      $argv['command'] = '';
+        if (!array_key_exists('command', $argv)) {
+            $argv['command'] = '';
+        }
+        $this->log(
+            LogLevel::NOTICE,
+            '% composer {%cmd} {%argv}',
+            ['%cmd' => $argv['command'], '%argv' => $this->argvJoin($argv)]
+        );
+        $status = $this->composerApplication->run($input, $output);
+        return [
+        'command' => $input,
+        'output' => '',
+        'status' => $status,
+        ];
     }
-    $this->log(
-      LogLevel::NOTICE,
-      '% composer {%cmd} {%argv}',
-      ['%cmd' => $argv['command'], '%argv' => $this->argvJoin($argv)]
-    );
-    $status = $this->composerApplication->run($input, $output);
-    return [
-      'command' => $input,
-      'output' => '',
-      'status' => $status,
-    ];
-  }
 
   /**
    * Creates a Composer object to use for running commands.
    */
-  protected function initialize() {
-    if (empty($this->getExecutable())) {
-      return;
-    }
-    if (($rootPath = $this->jorge->getPath()) === NULL) {
-      return;
-    }
+    protected function initialize()
+    {
+        if (empty($this->getExecutable())) {
+            return;
+        }
+        if (($rootPath = $this->jorge->getPath()) === null) {
+            return;
+        }
 
-    # Fail silently if the current project doesn’t use Composer.
-    $this->config = $this->jorge->loadConfigFile('composer.json', NULL);
-    if (empty($this->config)) {
-      return;
-    }
-    $composerJson = $rootPath . DIRECTORY_SEPARATOR . 'composer.json';
+      # Fail silently if the current project doesn’t use Composer.
+        $this->config = $this->jorge->loadConfigFile('composer.json', null);
+        if (empty($this->config)) {
+            return;
+        }
+        $composerJson = $rootPath . DIRECTORY_SEPARATOR . 'composer.json';
 
-    $factory  = new Factory();
-    $composer = $factory->createComposer(new NullIO, $composerJson, FALSE, $rootPath);
-    $this->composerApplication = new ComposerApplication();
-    $this->composerApplication->setComposer($composer);
-    $this->composerApplication->setAutoExit(FALSE);
+        $factory  = new Factory();
+        $composer = $factory->createComposer(new NullIO(), $composerJson, false, $rootPath);
+        $this->composerApplication = new ComposerApplication();
+        $this->composerApplication->setComposer($composer);
+        $this->composerApplication->setAutoExit(false);
 
-    if (!empty($this->composerApplication)) {
-      $this->enable();
+        if (!empty($this->composerApplication)) {
+            $this->enable();
+        }
     }
-  }
 }

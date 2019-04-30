@@ -14,17 +14,19 @@ use Symfony\Component\Console\Output\OutputInterface;
  * @author Jason Proctor <jproctor@mtholyoke.edu>
  * @copyright 2018 Trustees of Mount Holyoke College
  */
-class HonkCommand extends Command {
+class HonkCommand extends Command
+{
   /**
    * Establishes the `honk` command.
    */
-  protected function configure() {
-    $this
-      ->setName('honk')
-      ->setDescription('Honks at you')
-      ->setHelp('This command is a simple output test to verify that Jorge is running.')
-    ;
-  }
+    protected function configure()
+    {
+        $this
+        ->setName('honk')
+        ->setDescription('Honks at you')
+        ->setHelp('This command is a simple output test to verify that Jorge is running.')
+        ;
+    }
 
   /**
    * Executes the `honk` command.
@@ -35,7 +37,8 @@ class HonkCommand extends Command {
    * @param \Symfony\Component\Console\Output\OutputInterface $output
    * @return null|int
    */
-  protected function execute(InputInterface $input, OutputInterface $output) {
-    $output->writeln('Honk!');
-  }
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        $output->writeln('Honk!');
+    }
 }
