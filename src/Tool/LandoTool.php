@@ -86,11 +86,11 @@ class LandoTool extends Tool {
       'patch' => $matches[3],
       'functions' => [
         'auth' => TRUE,
-        'list' => 2,
+        'list' => 3,
       ],
     ];
     $suffix = $matches[4];
-    if (preg_match('/^-(alpha|beta|rc)\.(\d+)$/', $suffix, $matches)) {
+    if (preg_match('/^-(alpha|beta|rc|aft|rrc)\.(\d+)$/', $suffix, $matches)) {
       $p = $this->version['prerelease'] = $matches[1];
       $i = $this->version['iteration']  = $matches[2];
 
@@ -108,7 +108,14 @@ class LandoTool extends Tool {
             if ($i == 1) {
               $this->version['functions']['auth'] = FALSE;
               $this->version['functions']['list'] = 1;
-            } # else defaults.
+            } else {
+              $this->version['functions']['list'] = ($i < 13) ? 2 : 3;
+            }
+            break;
+          # Newest behavior is default:
+          // case 'aft':
+          // case 'rrc':
+          //   $this->version['functions']['list'] = 3;
         }
       }
     } elseif (!empty($suffix)) {
@@ -119,7 +126,6 @@ class LandoTool extends Tool {
         ['%s' => $suffix, '%v' => $raw]
       );
     }
-
     return $this->version;
   }
 
@@ -166,7 +172,7 @@ class LandoTool extends Tool {
    */
   protected function parseLandoList(array $lines = []) {
     # Skip over Lando complaining about updates.
-    while (!empty($lines) && $lines[0] != '[' && $lines[0] != '{') {
+    while (!empty($lines) && substr($lines[0], 0, 1) != '[' && $lines[0] != '{') {
       array_shift($lines);
     }
 
@@ -191,32 +197,53 @@ class LandoTool extends Tool {
       case 1:
         # v3.0.0-beta.37 to v3.0.0-rc.1 return a valid list of {}s.
         return json_decode(implode('', $lines));
+      case 2:
+        # v3.0.0-rc.2 to v3.0.0-rc.12 return a {} with keys as the names
+        # of the Lando projects, and values a list of {}s similar to the
+        # output of `lando info`. As far as I know, 2019-02-15, the presence
+        # of a key is sufficient to assume it is running, so we make it look
+        # enough like the others to pass the tests. Note that whenever Lando
+        # is running, even if no projects are, there is a "_global_" key.
+        foreach ($lines as &$line) {
+          # Until Lando PR #1457 is merged we don’t get good json.
+          if (preg_match('/^\s*(\w+):(.*)$/', $line, $matches)) {
+            $line = ' "' . $matches[1] . '":' . str_replace("'", '"', $matches[2]);
+          } elseif (preg_match("/^(.*?)'(.*)'(.*)$/", $line, $matches)) {
+            $line = $matches[1] . '"' . $matches[2] . '"' . $matches[3];
+          }
+          $line = preg_replace('#\\x1b[[][^A-Za-z]*[A-Za-z]#', '', $line);
+        }
+        $json = json_decode(implode(' ', $lines));
+        $list = [];
+        foreach ($json as $name => $info) {
+          $list[] = (object) [
+            'name'    => $name,
+            'running' => TRUE,
+            'info'    => $info,
+          ];
+        }
+        return $list;
     }
 
-    # v3.0.0-rc.2 changed the syntax again. The new structure is a {} with
-    # keys for each Lando project and values a list of {}s similar to the
-    # output of `lando info`. As far as I know, 2019-02-15, the presence
-    # of a key is sufficient to assume it is running, so we make it look
-    # enough like the others to pass the tests.
-    foreach ($lines as &$line) {
-      # Until Lando PR #1457 is merged we don’t get good json.
-      if (preg_match('/^\s*(\w+):(.*)$/', $line, $matches)) {
-        $line = ' "' . $matches[1] . '":' . str_replace("'", '"', $matches[2]);
-      } elseif (preg_match("/^(.*?)'(.*)'(.*)$/", $line, $matches)) {
-        $line = $matches[1] . '"' . $matches[2] . '"' . $matches[3];
-      }
-      $line = preg_replace('#\\x1b[[][^A-Za-z]*[A-Za-z]#', '', $line);
-    }
+    # v3.0.0-rc.13 to current (v.3.0.0-rrc.2 as of 2020-03-28) return a []
+    # of the inner {} parts of the rc.2 structure, concatenated. They can be
+    # associated with a project by the contents of the "app" key. There may
+    # be more than one item per project. Whenever Lando is running, even if
+    # no projects are, there is a "_global_" app.
     $json = json_decode(implode(' ', $lines));
     $list = [];
-    foreach ($json as $name => $info) {
-      $list[] = (object) [
-        'name'    => $name,
+    foreach ($json as $item) {
+      if (array_key_exists($item->app, $list)) {
+        $list[$item->app]->info[] = $item;
+        continue;
+      }
+      $list[$item->app] = (object) [
+        'name'    => $item->app,
         'running' => TRUE,
-        'info'    => $info,
+        'info'    => [$item],
       ];
     }
-    return $list;
+    return array_values($list);
   }
 
   /**
@@ -251,7 +278,12 @@ class LandoTool extends Tool {
       }
     }
 
-    $exec = $this->exec('list');
+    $v = $this->getVersion();
+    $list_command = 'list';
+    if ($v['functions']['list'] == 3) {
+      $list_command .= ' --format json';
+    }
+    $exec = $this->exec($list_command);
     if ($exec['status'] != 0) {
       $this->log(LogLevel::ERROR, 'Unable to determine status');
       $this->disable();
