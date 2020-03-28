@@ -58,7 +58,7 @@ class LandoTool extends Tool {
     }
 
     $exec = $this->exec('version');
-    if ($exec['status'] != 0 || count($exec['output']) == 0) {
+    if ($exec['status'] != 0 || !array_key_exists('output', $exec) || count($exec['output']) == 0) {
       $this->log(LogLevel::ERROR, 'Unable to determine version');
       $this->disable();
       return NULL;
@@ -232,6 +232,9 @@ class LandoTool extends Tool {
     # no projects are, there is a "_global_" app.
     $json = json_decode(implode(' ', $lines));
     $list = [];
+    if (empty($json)) {
+      return $list;
+    }
     foreach ($json as $item) {
       if (array_key_exists($item->app, $list)) {
         $list[$item->app]->info[] = $item;
