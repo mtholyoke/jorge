@@ -86,7 +86,7 @@ class LandoTool extends Tool {
       'patch' => $matches[3],
       'functions' => [
         'auth' => TRUE,
-        'list' => 3,
+        'list' => 4,
       ],
     ];
     $suffix = $matches[4];
@@ -115,7 +115,7 @@ class LandoTool extends Tool {
           # Newest behavior is default:
           // case 'aft':
           // case 'rrc':
-          //   $this->version['functions']['list'] = 3;
+          //   $this->version['functions']['list'] = 4;
         }
       }
     } elseif (!empty($suffix)) {
@@ -213,6 +213,10 @@ class LandoTool extends Tool {
           }
           $line = preg_replace('#\\x1b[[][^A-Za-z]*[A-Za-z]#', '', $line);
         }
+        # ... and continue into case 3:
+      case 3:
+        # v3.0.0=rc.13 to v3.0.0-rc.23 have the same structure as above,
+        # but can format the output as valid JSON to start with.
         $json = json_decode(implode(' ', $lines));
         $list = [];
         foreach ($json as $name => $info) {
@@ -225,7 +229,7 @@ class LandoTool extends Tool {
         return $list;
     }
 
-    # v3.0.0-rc.13 to current (v.3.0.0-rrc.2 as of 2020-03-28) return a []
+    # v3.0.0-aft.1 to current (v.3.0.0-rrc.2 as of 2020-03-28) return a []
     # of the inner {} parts of the rc.2 structure, concatenated. They can be
     # associated with a project by the contents of the "app" key. There may
     # be more than one item per project. Whenever Lando is running, even if
@@ -283,7 +287,8 @@ class LandoTool extends Tool {
 
     $v = $this->getVersion();
     $list_command = 'list';
-    if ($v['functions']['list'] == 3) {
+    if ($v['functions']['list'] >= 3) {
+      # Switch introduced in v3.0.0-rc.13
       $list_command .= ' --format json';
     }
     $exec = $this->exec($list_command);

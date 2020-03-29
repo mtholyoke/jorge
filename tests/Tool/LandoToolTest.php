@@ -107,7 +107,7 @@ final class LandoToolTest extends TestCase {
       'patch' => '159',
       'functions' => [
         'auth' => TRUE,
-        'list' => 3,
+        'list' => 4,
       ],
     ];
     $tool->setVersion(NULL);
@@ -147,7 +147,7 @@ final class LandoToolTest extends TestCase {
       'patch' => '0',
       'functions' => [
         'auth' => TRUE,
-        'list' => 3,
+        'list' => 4,
       ],
       'suffix' => '-omega.24',
     ];
