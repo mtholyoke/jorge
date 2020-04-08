@@ -265,11 +265,12 @@ class ResetCommand extends Command {
     $drushSequence[] = ['drush_command' => ['csim', 'config_dev'], '--yes' => TRUE];
     $drushSequence[] = ['drush_command' => ['updb'],               '--yes' => TRUE];
     if (!empty($this->params['username']) && !empty($this->params['password'])) {
+      $passwordFlag = ($lando->getDrushVersion() < 9) ? '--password=' : '';
       $drushSequence[] = [
         'drush_command' => [
           'upwd',
           $this->params['username'],
-          '--password="' . $this->params['password'] . '"',
+          $passwordFlag . '"' . $this->params['password'] . '"',
         ],
       ];
     }
