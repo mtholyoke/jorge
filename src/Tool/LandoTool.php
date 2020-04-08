@@ -48,6 +48,22 @@ class LandoTool extends Tool {
   }
 
   /**
+   * Gets the Drush version.
+   *
+   * TODO: This really belongs in the Drush command but it was easier here.
+   */
+  public function getDrushVersion() {
+    $exec = $this->exec('drush version');
+    if ($exec['status'] != 0 || !array_key_exists('output', $exec) || count($exec['output']) == 0) {
+      $this->log(LogLevel::ERROR, 'Unable to determine Drush version');
+      $this->disable();
+      return NULL;
+    }
+    preg_match('/Drush version : (\d+)\./', $exec['output'][0], $matches);
+    return $matches[1];
+  }
+
+  /**
    * Gets the version of Lando installed so we can parse its output.
    *
    * @return array|null
