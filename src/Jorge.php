@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace MountHolyoke\Jorge;
 
 use Psr\Log\LogLevel;
@@ -53,10 +55,19 @@ class Jorge extends Application
     /**
      * Reads configuration and adds commands.
      */
-    public function configure()
+    public function configure(): void
     {
         $this->setName('Jorge');
         $this->setVersion('0.7.x-dev');
+    }
+
+
+    /**
+     * @return \Symfony\Component\Console\Output\OutputInterface
+     */
+    public function getOutput()
+    {
+        return $this->output;
     }
 
     /**
@@ -67,8 +78,9 @@ class Jorge extends Application
      * @param array       $context Variable substitutions for $message
      * @see \Symfony\Component\Console\Logger\ConsoleLogger
      */
-    public function log($level, $message, array $context = []) {
-        if ($level !== NULL) {
+    public function log($level, $message, array $context = []): void
+    {
+        if ($level !== null) {
             $this->logger->log($level, $message, $context);
         }
     }
@@ -80,9 +92,9 @@ class Jorge extends Application
      * {@inheritDoc}
      */
     public function run(
-        InputInterface $input = NULL,
-        OutputInterface $output = NULL
-    ) {
+        InputInterface $input = null,
+        OutputInterface $output = null
+    ): int {
         if (empty($input)) {
             $input = $this->input;
         }
