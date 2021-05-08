@@ -1,8 +1,8 @@
 #!/bin/sh
 #
 # This script should be run any time the repo is set up anew. It establishes
-# two git hooks to prevent accidental commits to master.
-VER="0.1"
+# two git hooks to prevent accidental commits to the main branch.
+VER="0.1.1"
 
 ### HELP FUNCTION ###
 usage()

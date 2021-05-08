@@ -2,16 +2,15 @@
 <?php
 
 /**
- * This script runs Jorge, MHC’s command-line tool for automating development tasks.
+ * This script runs Jorge, a tool for automating development tasks.
  */
 
-// TODO: this is ugly; can we do better?
 if (is_dir(__DIR__ . '/../vendor')) {
-  // If we’re running from a clone of the Git repo
-  require_once __DIR__ . '/../vendor/autoload.php';
+    // Running from a clone of the Git repo:
+    require_once __DIR__ . '/../vendor/autoload.php';
 } else {
-  // If we’re added by cgr
-  require_once __DIR__ . '/../../../autoload.php';
+    // Running from a copy installed by composer global require:
+    require_once __DIR__ . '/../../../autoload.php';
 }
 
 use MountHolyoke\Jorge\Jorge;
