@@ -1,33 +1,32 @@
 {
-  "name": "mtholyoke/jorge",
-  "description": "MHC’s command-line tool for automating development tasks",
-  "keywords": [ "cli", "mtholyoke" ],
-  "homepage": "https://www.mtholyoke.edu",
-  "license": "MIT",
-  "minimum-stability": "dev",
-  "prefer-stable": true,
-  "require": {
-    "php": ">=7.1.0",
-    "psr/log": "^1.0.2",
-    "symfony/console": "^4.0",
-    "symfony/yaml": "^4.0",
-    "composer/composer": "1.9.3",
-    "symfony/process": "^4.1"
-  },
-  "require-dev": {
-    "phpunit/phpunit": "^7",
-    "spatie/temporary-directory": "^1.1"
-  },
-  "autoload": {
-    "psr-4": {
-      "MountHolyoke\\Jorge\\": "src/",
-      "MountHolyoke\\JorgeTests\\": "tests/"
+    "name": "mtholyoke/jorge",
+    "description": "MHC’s command-line tool for automating development tasks",
+    "keywords": [ "cli", "mtholyoke" ],
+    "homepage": "https://www.mtholyoke.edu",
+    "license": "MIT",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "composer/composer": "^1.10.22",
+        "php": ">=7.3.0",
+        "psr/log": "^1.0.2",
+        "symfony/console": "^5.2",
+        "symfony/yaml": "^5.2",
+        "symfony/process": "^5.2"
+    },
+    "require-dev": {
+        "squizlabs/php_codesniffer": "^3.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "MountHolyoke\\Jorge\\": "src/",
+            "MountHolyoke\\JorgeTests\\": "tests/"
+        }
+    },
+    "bin": [
+        "bin/jorge"
+    ],
+    "scripts": {
+        "phpunit": "vendor/bin/phpunit"
     }
-  },
-  "bin": [
-    "bin/jorge"
-  ],
-  "scripts": {
-    "phpunit": "vendor/bin/phpunit"
-  }
 }
