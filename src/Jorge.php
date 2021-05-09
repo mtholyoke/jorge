@@ -54,11 +54,18 @@ class Jorge extends Application
 
     /**
      * Reads configuration and adds commands.
+     *
+     * @param \Symfony\Component\Console\Output\OutputInterface|null $output
      */
-    public function configure(): void
+    public function configure($output = null): void
     {
         $this->setName('Jorge');
         $this->setVersion('0.7.x-dev');
+        if (!is_null($output)) {
+            $this->output = $output;
+            $this->configureIO($this->input, $output);
+            $this->logger = new ConsoleLogger($output);
+        }
     }
 
 
@@ -95,27 +102,8 @@ class Jorge extends Application
         InputInterface $input = null,
         OutputInterface $output = null
     ): int {
-        if (empty($input)) {
-            $input = $this->input;
-        }
-        if (empty($output)) {
-            $output = $this->output;
-        }
+        $input = $input ?? $this->input;
+        $output = $output ?? $this->output;
         return parent::run($input, $output);
-    }
-
-    /**
-     * Changes the output mechanism.
-     *
-     * @param \Symfony\Component\Console\Output\OutputInterface $output
-     *   The new output interface.
-     *
-     * @todo This is only used for testing; move to Mock?
-     */
-    public function setOutput(OutputInterface $output): void
-    {
-        $this->output = $output;
-        $this->configureIO($this->input, $output);
-        $this->logger = new ConsoleLogger($output);
     }
 }

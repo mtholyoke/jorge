@@ -58,12 +58,12 @@ final class JorgeDefaultTest extends TestCase
     /**
      * Test logging.
      *
-     * @todo This is the only use of setOutput(); move to Mock?
+     * @todo Use a mock for output?
      */
     public function testLog(): void
     {
         $output = new BufferedOutput();
-        $this->jorge->setOutput($output);
+        $this->jorge->configure($output);
         $expect = "[warning] testLog\n";
         $this->jorge->log(LogLevel::WARNING, 'testLog');
         $this->assertSame($expect, $output->fetch());
