@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace MountHolyoke\JorgeTests;
 
@@ -55,7 +55,7 @@ final class JorgeDefaultTest extends TestCase
             '/^\d+\.\d+\.(?:\d+|x)/',
             $this->jorge->getVersion()
         );
-        $this->assertSame(__DIR__, $this->jorge->getPath('tests', TRUE));
+        $this->assertSame(__DIR__, $this->jorge->getPath('tests', true));
         $this->assertSame('jorge', $this->jorge->getConfig('appType'));
     }
 
@@ -87,7 +87,7 @@ final class JorgeDefaultTest extends TestCase
 
     public function testRun(): void
     {
-        $this->jorge->setAutoExit(FALSE);
+        $this->jorge->setAutoExit(false);
         $output = $this->jorge->getOutput();
         $output->setVerbosity(OutputInterface::VERBOSITY_QUIET);
         $this->assertSame(0, $this->jorge->run());

@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace MountHolyoke\JorgeTests;
 
@@ -14,10 +14,10 @@ trait RandomStringTrait
      *
      * @return boolean
      */
-    public function makeRandomBoolean():bool
+    public function makeRandomBoolean(): bool
     {
         $int = rand(0, 1);
-        return ($int == 1) ? TRUE : FALSE;
+        return ($int == 1) ? true : false;
     }
 
     /**
@@ -27,7 +27,7 @@ trait RandomStringTrait
     * @param int $max Maximum number of bytes, must be >= $min
     * @return string
     */
-    public function makeRandomString(int $min = 4, int $max = 8):string
+    public function makeRandomString(int $min = 4, int $max = 8): string
     {
         $min  = ($min >= 1) ? $min : 1;
         $max  = ($max >= $min) ? $max : $min;
