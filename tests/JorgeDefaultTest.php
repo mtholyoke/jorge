@@ -6,6 +6,8 @@ namespace MountHolyoke\JorgeTests;
 
 use MountHolyoke\Jorge\Jorge;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LogLevel;
+use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -41,11 +43,37 @@ final class JorgeDefaultTest extends TestCase
     }
 
     /**
+     * Test default configuration.
+     */
+    public function testConfigure(): void
+    {
+        $this->jorge->configure();
+        $this->assertSame('Jorge', $this->jorge->getName());
+        $this->assertMatchesRegularExpression(
+            '/^\d+\.\d+\.(?:\d+|x)/',
+            $this->jorge->getVersion()
+        );
+    }
+
+    /**
+     * Test logging.
+     *
+     * @todo This is the only use of setOutput(); move to Mock?
+     */
+    public function testLog(): void
+    {
+        $output = new BufferedOutput();
+        $this->jorge->setOutput($output);
+        $expect = "[warning] testLog\n";
+        $this->jorge->log(LogLevel::WARNING, 'testLog');
+        $this->assertSame($expect, $output->fetch());
+    }
+
+    /**
      * Make sure Jorge runs without errors.
      */
     public function testRun(): void
     {
-        $this->jorge->configure();
         $this->jorge->setAutoExit(FALSE);
         $output = $this->jorge->getOutput();
         $output->setVerbosity(OutputInterface::VERBOSITY_QUIET);

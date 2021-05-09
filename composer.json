@@ -28,6 +28,9 @@
         "bin/jorge"
     ],
     "scripts": {
-        "phpunit": "vendor/bin/phpunit"
+        "phpunit": [
+            "@putenv XDEBUG_MODE=coverage",
+            "vendor/bin/phpunit"
+        ]
     }
 }

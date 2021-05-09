@@ -103,4 +103,19 @@ class Jorge extends Application
         }
         return parent::run($input, $output);
     }
+
+    /**
+     * Changes the output mechanism.
+     *
+     * @param \Symfony\Component\Console\Output\OutputInterface $output
+     *   The new output interface.
+     *
+     * @todo This is only used for testing; move to Mock?
+     */
+    public function setOutput(OutputInterface $output): void
+    {
+        $this->output = $output;
+        $this->configureIO($this->input, $output);
+        $this->logger = new ConsoleLogger($output);
+    }
 }
