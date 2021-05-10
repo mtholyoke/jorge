@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MountHolyoke\Jorge;
 
+use MountHolyoke\Jorge\Command\HonkCommand;
 use Psr\Log\LogLevel;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\ArgvInput;
@@ -84,6 +85,8 @@ class Jorge extends Application
         } else {
             $this->log(LogLevel::WARNING, 'Can’t find project root');
         }
+
+        $this->add(new HonkCommand());
     }
 
     /**

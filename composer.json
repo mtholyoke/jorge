@@ -28,6 +28,7 @@
         "bin/jorge"
     ],
     "scripts": {
+        "phpcs": "vendor/bin/phpcs --standard=PSR12 src tests",
         "phpunit": [
             "@putenv XDEBUG_MODE=coverage",
             "vendor/bin/phpunit"

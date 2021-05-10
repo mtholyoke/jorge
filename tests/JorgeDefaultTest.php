@@ -61,6 +61,7 @@ final class JorgeDefaultTest extends TestCase
 
     public function testGetConfig(): void
     {
+        $defaultCommands = count($this->jorge->all());
         $this->jorge->configure();
 
         $expect = ['appType' => 'jorge'];
@@ -71,10 +72,20 @@ final class JorgeDefaultTest extends TestCase
         $default = $this->makeRandomString();
         $value = $this->jorge->getConfig($key, $default);
         $this->assertSame($default, $value);
+
+        $currentCommands = count($this->jorge->all());
+        $this->assertEquals($defaultCommands + 1, $currentCommands);
     }
 
     /**
-     * @todo Use a mock for output?
+     * @todo This sets up a BufferedOutput instance because the default is
+     * to not log below “warning”, and output at that level goes to stderr,
+     * which we can’t see with $this->expectOutputString(). Some old versions
+     * of tests in other files use a MockConsoleOutput; likely we will bring
+     * that into this version, and should update this test. Additionally,
+     * this is the only place where we use configure() to set the output
+     * interface, so we coul consider moving this test to a file where we’re
+     * testing via subclass.
      */
     public function testLog(): void
     {
