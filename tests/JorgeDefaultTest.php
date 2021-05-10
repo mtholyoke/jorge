@@ -91,7 +91,7 @@ final class JorgeDefaultTest extends TestCase
     {
         $output = new BufferedOutput();
         $this->jorge->configure($output);
-        $expect = "[warning] testLog\n";
+        $expect = '[warning] testLog' . PHP_EOL;
         $this->jorge->log(LogLevel::WARNING, 'testLog');
         $this->assertSame($expect, $output->fetch());
     }
