@@ -86,6 +86,14 @@ class Jorge extends Application
             $this->log(LogLevel::WARNING, 'Can’t find project root');
         }
 
+        // If the config file specifies additional config, load that too.
+        if (
+            !empty($this->config)
+            && array_key_exists('include_config', $this->config)
+        ) {
+            $this->includeConfig($this->config['include_config']);
+        }
+
         $this->add(new HonkCommand());
     }
 
@@ -154,7 +162,9 @@ class Jorge extends Application
             throw new \DomainException('Project root path is required.');
         }
 
-        $subdir = $this->sanitizePath($subdir);
+        if (!is_null($subdir)) {
+            $subdir = $this->sanitizePath($subdir);
+        }
         if (empty($subdir)) {
             return $path;
         }
@@ -176,6 +186,28 @@ class Jorge extends Application
             ['%subdir' => $subdir]
         );
         return null;
+    }
+
+    /**
+     * Includes an additional config file specified in main config.
+     *
+     * @param string|array $inclusion Config file(s) to include
+     */
+    public function includeConfig($inclusion): void
+    {
+        if (!is_array($inclusion)) {
+            $inclusion = [ $inclusion ];
+        }
+        foreach ($inclusion as $file) {
+            $configFile = '.jorge' . DIRECTORY_SEPARATOR . $file;
+            $this->log(
+                LogLevel::DEBUG,
+                'Including config file {%filename}',
+                ['%filename' => $configFile]
+            );
+            $addition = $this->loadConfigFile($configFile);
+            $this->config = array_merge_recursive($this->config, $addition);
+        }
     }
 
     /**
